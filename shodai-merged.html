@@ -796,11 +796,15 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
   const [filter,setFilter]=useState("open");
   const [categoryFilter,setCategoryFilter]=useState("all");
   const [showAddForm,setShowAddForm]=useState(false);
+  const [editingId,setEditingId]=useState(null);
   const [newText,setNewText]=useState("");const [newCategory,setNewCategory]=useState("personal");
   const [newDeadline,setNewDeadline]=useState("");const [newIsPublic,setNewIsPublic]=useState(false);
   const [newPhoto,setNewPhoto]=useState(null);
   const [addedToast,setAddedToast]=useState(null);
   const photoInputRef=useRef(null);
+  const startEdit=(k)=>{setEditingId(k.id);setNewText(k.text);setNewCategory(k.category);setNewDeadline(k.deadline||"");setNewIsPublic(k.isPublic);setNewPhoto(k.photo||null);setShowAddForm(true);};
+  const cancelEdit=()=>{setEditingId(null);setNewText("");setNewCategory("personal");setNewDeadline("");setNewIsPublic(false);setNewPhoto(null);setShowAddForm(false);};
+  const saveEdit=()=>{if(!newText.trim())return;setKinenList(p=>p.map(k=>k.id===editingId?{...k,text:newText.trim(),category:newCategory,deadline:newDeadline||null,isPublic:newIsPublic,photo:newPhoto}:k));cancelEdit();};
 
   const filtered=useMemo(()=>{let list=[...kinenList];if(filter==="open")list=list.filter(k=>k.isOpen);if(filter==="closed")list=list.filter(k=>!k.isOpen);if(categoryFilter!=="all")list=list.filter(k=>k.category===categoryFilter);return list;},[kinenList,filter,categoryFilter]);
   const filteredFollowing=useMemo(()=>{let list=[...followingKinen];if(filter==="open")list=list.filter(k=>k.isOpen);if(filter==="closed")list=list.filter(k=>!k.isOpen);if(categoryFilter!=="all")list=list.filter(k=>k.category===categoryFilter);return list;},[followingKinen,filter,categoryFilter]);
@@ -810,7 +814,7 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
   const toggleOpen=(id)=>setKinenList(p=>p.map(k=>k.id===id?{...k,isOpen:!k.isOpen}:k));
   const togglePublic=(id)=>setKinenList(p=>p.map(k=>k.id===id?{...k,isPublic:!k.isPublic}:k));
   const deleteKinen=(id)=>setKinenList(p=>p.filter(k=>k.id!==id));
-  const addKinen=()=>{if(!newText.trim())return;setKinenList(p=>[...p,{id:Date.now(),text:newText.trim(),category:newCategory,isOpen:true,isPublic:newIsPublic,deadline:newDeadline||null,createdAt:new Date().toISOString().split("T")[0],photo:newPhoto}]);setNewText("");setNewCategory("personal");setNewDeadline("");setNewIsPublic(false);setNewPhoto(null);setShowAddForm(false);};
+  const addKinen=()=>{if(!newText.trim())return;setKinenList(p=>[...p,{id:Date.now(),text:newText.trim(),category:newCategory,isOpen:true,isPublic:newIsPublic,deadline:newDeadline||null,createdAt:new Date().toISOString().split("T")[0],photo:newPhoto,subtasks:[]}]);cancelEdit();};
   const handlePhotoSelect=(e)=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=(ev)=>setNewPhoto(ev.target.result);reader.readAsDataURL(file);};
   const handleAddToMine=(k)=>{onAddToMine(k.text,k.category);setAddedToast(k.id);setTimeout(()=>setAddedToast(null),2000);};
 
@@ -821,7 +825,7 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
       <div style={{padding:"0 24px 12px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
           <div><h2 style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:800,color:T.colors.accent,letterSpacing:"-0.02em",textTransform:"uppercase"}}>{t("kinen_title")}</h2></div>
-          {viewMode==="mine"&&(<button onClick={()=>setShowAddForm(!showAddForm)} style={{width:40,height:40,borderRadius:20,border:`1px solid ${T.colors.border}`,background:showAddForm?T.colors.accentSoft:"transparent",color:T.colors.accent,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:T.fonts.body}}>{showAddForm?"×":"+"}</button>)}
+          {viewMode==="mine"&&(<button onClick={()=>{if(showAddForm){cancelEdit();}else{setEditingId(null);setShowAddForm(true);}}} style={{width:40,height:40,borderRadius:20,border:`1px solid ${T.colors.border}`,background:showAddForm?T.colors.accentSoft:"transparent",color:T.colors.accent,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:T.fonts.body}}>{showAddForm?"×":"+"}</button>)}
         </div>
 
         {/* Mine / Following toggle */}
@@ -851,7 +855,10 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
               <input type="date" value={newDeadline} onChange={e=>setNewDeadline(e.target.value)} style={{flex:1,padding:"8px 12px",borderRadius:10,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.mono,fontSize:12,outline:"none"}}/>
               <button onClick={()=>setNewIsPublic(!newIsPublic)} style={{padding:"8px 14px",borderRadius:10,fontSize:11,border:`1px solid ${newIsPublic?T.colors.accent:T.colors.border}`,background:newIsPublic?T.colors.accentSoft:"transparent",color:newIsPublic?T.colors.accent:T.colors.textMuted,cursor:"pointer",fontFamily:T.fonts.body}}>{newIsPublic?"🔓":"🔒"}</button>
             </div>
-            <button onClick={addKinen} disabled={!newText.trim()} style={{width:"100%",marginTop:12,padding:"12px 20px",borderRadius:12,border:"none",background:newText.trim()?T.colors.accent:T.colors.ring,color:newText.trim()?T.colors.bg:T.colors.textDim,fontFamily:T.fonts.body,fontSize:14,fontWeight:600,cursor:newText.trim()?"pointer":"default"}}>{t("kinen_add")}</button>
+            <div style={{display:"flex",gap:8,marginTop:12}}>
+              {editingId&&<button onClick={cancelEdit} style={{flex:1,padding:"12px 20px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:14,fontWeight:600,cursor:"pointer"}}>{t("cancel")}</button>}
+              <button onClick={editingId?saveEdit:addKinen} disabled={!newText.trim()} style={{flex:1,padding:"12px 20px",borderRadius:12,border:"none",background:newText.trim()?T.colors.accent:T.colors.ring,color:newText.trim()?T.colors.bg:T.colors.textDim,fontFamily:T.fonts.body,fontSize:14,fontWeight:600,cursor:newText.trim()?"pointer":"default"}}>{editingId?"保存":t("kinen_add")}</button>
+            </div>
           </div>
         )}
 
@@ -889,6 +896,7 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
                   </button>
                 </div>
                 <div style={{display:"flex",gap:12,marginTop:10,paddingTop:8,borderTop:`1px solid ${T.colors.borderLight}`}}>
+                  <button onClick={()=>startEdit(kinen)} style={{fontSize:10,color:T.colors.accent,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body,padding:0}}>✏️ 編集</button>
                   <button onClick={()=>togglePublic(kinen.id)} style={{fontSize:10,color:T.colors.textDim,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body,padding:0}}>{kinen.isPublic?"🔓 公開中":"🔒 非公開"}</button>
                   <button onClick={()=>deleteKinen(kinen.id)} style={{fontSize:10,color:T.colors.danger,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body,padding:0,marginLeft:"auto"}}>{t("kinen_delete")}</button>
                 </div>
