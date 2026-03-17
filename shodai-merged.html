@@ -1,0 +1,1811 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shodai - 唱題アプリ</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://unpkg.com/mapbox-gl@2.15.0/dist/mapbox-gl.css" rel="stylesheet">
+  <script src="https://unpkg.com/mapbox-gl@2.15.0/dist/mapbox-gl.js"></script>
+  <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
+  <style>
+    .mapbox-pulse-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #FF6B6B; cursor: pointer;
+      box-shadow: 0 0 6px rgba(255,107,107,0.6);
+    }
+    .mapbox-pulse-dot::after {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%); width: 24px; height: 24px;
+      border-radius: 50%; background: rgba(255,107,107,0.25);
+      animation: mapPulse 2.5s ease-out infinite;
+    }
+    @keyframes mapPulse {
+      0% { transform: translate(-50%,-50%) scale(0.5); opacity: 1; }
+      100% { transform: translate(-50%,-50%) scale(2); opacity: 0; }
+    }
+    .mapboxgl-ctrl-logo, .mapboxgl-ctrl-attrib { display: none !important; }
+    @keyframes scanLine {
+      0% { top: 0; }
+      50% { top: calc(100% - 2px); }
+      100% { top: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+// ─── Mapbox Access Token ───
+mapboxgl.accessToken = "pk.eyJ1Ijoic2hvZ28wNDEwIiwiYSI6ImNtbTdzNnlmODB4dWYycW4wdWhobXJuMnIifQ.d4ryHN7J6IdwjbVN0TlmnQ";
+
+// ─── Design Tokens (Glossy Dark UI) ───
+const T = {
+  colors: {
+    bg: "#050508", surface: "rgba(255,255,255,0.045)", surfaceAlt: "rgba(255,255,255,0.065)",
+    surfaceSolid: "#141418",
+    accent: "#CEFF00", accentSoft: "rgba(206,255,0,0.08)", accentGlow: "rgba(206,255,0,0.30)",
+    text: "#FFFFFF", textMuted: "#AAAAAA", textDim: "#777777",
+    border: "rgba(255,255,255,0.08)", borderLight: "rgba(255,255,255,0.05)",
+    success: "#00E676", successSoft: "rgba(0,230,118,0.1)",
+    ring: "rgba(255,255,255,0.06)", ringActive: "rgba(206,255,0,0.15)",
+    danger: "#FF5252", dangerSoft: "rgba(255,82,82,0.08)",
+    live: "#FF6B6B", liveSoft: "rgba(255,107,107,0.10)", liveGlow: "rgba(255,107,107,0.4)",
+    journal: "#82B1FF", journalSoft: "rgba(130,177,255,0.10)",
+    tag: { personal:"#64B5F6", family:"#FFB74D", work:"#69F0AE", health:"#F06292", study:"#B388FF", other:"#999999" },
+  },
+  fonts: {
+    display: "'Inter', 'Noto Sans JP', sans-serif",
+    body: "'Inter', 'Noto Sans JP', sans-serif",
+    mono: "'JetBrains Mono', monospace",
+  },
+  glass: {
+    shadow: "0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)",
+    shadowLg: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
+    blur: "blur(20px)",
+  },
+};
+
+// ─── Glass Card Style Helpers ───
+const G = {
+  card: { backdropFilter:T.glass.blur, WebkitBackdropFilter:T.glass.blur, boxShadow:T.glass.shadow },
+  cardLg: { backdropFilter:T.glass.blur, WebkitBackdropFilter:T.glass.blur, boxShadow:T.glass.shadowLg },
+};
+
+// ─── i18n (Internationalization) ───
+let currentLang = "ja";
+const LANG = {
+  ja: {
+    // Nav
+    nav_chanting:"唱題", nav_live:"LIVE", nav_kinen:"記念帳", nav_journal:"記録", nav_mypage:"マイ",
+    // Chanting
+    timer_5m:"5分", timer_10m:"10分", timer_15m:"15分", timer_30m:"30分", timer_1h:"1時間", timer_free:"自由",
+    free_mode:"自由モード", change_time:"時間を変更", approx_hen:"遍",
+    btn_start:"唱題を始める", btn_pause:"一時停止", btn_resume:"再開", btn_stop:"終了",
+    phase_idle:"準備", phase_chanting:"唱題中", phase_paused:"一時停止", phase_completed:"完了",
+    post_chanting_done:"お疲れさまでした", skip:"スキップ", cancel:"キャンセル", save:"記録する",
+    today_total:"今日の唱題", sessions:"セッション",
+    chant_timer_label:"タイマー", chant_cards_label:"祈念",
+    // LIVE
+    live_title:"LIVE", live_subtitle:"世界中の同志とつながる", live_people_chanting:"人が唱題中",
+    live_japan:"日本", live_world:"世界", live_following_chanting:"フォロー中 · 唱題中",
+    live_min_ago:"分前から唱題中", live_kinen_count:"祈念", live_public_kinen:"の公開祈念",
+    live_active:"active",
+    // Kinen
+    kinen_title:"ご祈念帳", kinen_subtitle:"祈りを込めて",
+    kinen_mine:"自分の祈念", kinen_following:"フォロー中",
+    kinen_open:"Open", kinen_achieved:"達成", kinen_all:"すべて",
+    kinen_placeholder:"祈念を入力...", kinen_add:"追加する", kinen_delete:"削除",
+    kinen_pray_together:"+ 一緒に祈る", kinen_added:"✓ 追加済",
+    kinen_public_count:"件の公開祈念", kinen_no_achieved:"達成した祈念はまだありません",
+    kinen_try_add:"祈念を追加してみましょう", kinen_no_following:"フォロー中の公開祈念はありません",
+    // Journal
+    journal_title:"ジャーナル", journal_subtitle:"唱題の記録と気づき",
+    journal_this_week:"今週", journal_total:"累計", journal_top_mood:"よく感じる",
+    journal_count:"件", journal_today:"今日", journal_yesterday:"昨日",
+    journal_feeling:"今の気持ち", journal_placeholder:"唱題で感じたこと、気づき、決意...",
+    journal_photo:"写真", journal_photo_added:"写真あり",
+    journal_public:"公開", journal_private:"非公開",
+    journal_public_label:"🔓 公開中", journal_private_label:"🔒 非公開",
+    journal_delete:"削除", journal_empty:"まだジャーナルがありません",
+    journal_photo_preview:"📷 写真プレビュー",
+    // MyPage
+    mypage_title:"マイページ", mypage_subtitle:"プロフィールと実績",
+    mypage_edit:"プロフィール編集", mypage_edit_title:"プロフィール編集",
+    mypage_name_placeholder:"名前", mypage_bio_placeholder:"自己紹介...",
+    mypage_save:"保存", mypage_cancel:"キャンセル",
+    mypage_member_days:"参加", mypage_member_days_suffix:"日目",
+    mypage_stat_total:"累計", mypage_stat_streak:"連続", mypage_stat_best:"最長",
+    mypage_stat_hen:"遍", mypage_stat_days:"日",
+    mypage_stat_total_time:"累計時間", mypage_stat_sessions:"セッション",
+    mypage_stat_sessions_unit:"回", mypage_stat_journals:"ジャーナル",
+    mypage_badges:"実績バッジ", mypage_following:"フォロー中", mypage_followers:"フォロワー",
+    mypage_add:"追加",
+    mypage_profile_public:"プロフィール公開", mypage_profile_public_desc:"他のユーザーにプロフィールを表示",
+    mypage_live_display:"LIVE表示", mypage_live_display_desc:"唱題中にLIVEマップに表示",
+    mypage_journal_default:"ジャーナル公開設定", mypage_journal_default_desc:"新規ジャーナルをデフォルトで公開",
+    mypage_language:"言語 / Language",
+    // Charts
+    chart_weekly:"今週のアクティビティ", chart_streak_days:"日連続", chart_best:"最長",
+    chart_trend_30d:"30日間のトレンド", chart_vs_prev:"vs前週", chart_30d_ago:"30日前",
+    chart_today:"今日", chart_mood_dist:"ムード分布", chart_entries:"entries",
+    chart_activity:"アクティビティ", chart_less:"少", chart_more:"多",
+    // Friend Modal
+    friend_add_title:"友達を追加", friend_id_search:"ID検索", friend_qr:"QRコード",
+    friend_search_placeholder:"IDまたは名前で検索...", friend_not_found:"ユーザーが見つかりません",
+    friend_search_hint:"IDまたは名前を入力して検索",
+    friend_follow:"フォロー", friend_following:"フォロー中",
+    friend_followed_toast:"をフォローしました",
+    friend_my_qr:"マイQRコード", friend_copy_id:"IDをコピー", friend_copied:"コピーしました!",
+    friend_scan:"📷 QRコードを読み取る", friend_scanning:"📷 スキャン中...", friend_scan_label:"スキャン中...",
+    // Categories
+    cat_personal:"自分", cat_family:"家族", cat_work:"仕事", cat_health:"健康", cat_study:"学会", cat_other:"その他",
+    // Moods
+    mood_peaceful:"穏やか", mood_passionate:"情熱", mood_grateful:"感謝", mood_determined:"決意",
+    mood_growth:"成長", mood_tears:"涙", mood_conviction:"確信", mood_joy:"歓喜",
+    // Reactions
+    react_gassho:"合掌", react_fire:"燃えろ", react_strength:"頑張れ",
+    react_sakura:"桜", react_shine:"輝け", react_love:"愛",
+    // Journal Prompts
+    prompt_1:"今日の唱題で感じたことは？", prompt_2:"心に浮かんだ決意は？",
+    prompt_3:"感謝したいことは？", prompt_4:"明日への一歩は？",
+    prompt_5:"今の自分に言いたいことは？", prompt_6:"祈りの中で見えたことは？",
+  },
+  en: {
+    // Nav
+    nav_chanting:"Chant", nav_live:"LIVE", nav_kinen:"Prayers", nav_journal:"Journal", nav_mypage:"My",
+    // Chanting
+    timer_5m:"5m", timer_10m:"10m", timer_15m:"15m", timer_30m:"30m", timer_1h:"1h", timer_free:"Free",
+    free_mode:"Free Mode", change_time:"Change Time", approx_hen:"recitations",
+    btn_start:"Start Chanting", btn_pause:"Pause", btn_resume:"Resume", btn_stop:"Stop",
+    phase_idle:"Ready", phase_chanting:"Chanting", phase_paused:"Paused", phase_completed:"Done",
+    post_chanting_done:"Well done!", skip:"Skip", cancel:"Cancel", save:"Save",
+    today_total:"Today's Chanting", sessions:"Sessions",
+    chant_timer_label:"Timer", chant_cards_label:"Kinen",
+    // LIVE
+    live_title:"LIVE", live_subtitle:"Connect with fellow practitioners", live_people_chanting:"chanting now",
+    live_japan:"Japan", live_world:"World", live_following_chanting:"Following · Chanting",
+    live_min_ago:"min ago", live_kinen_count:"prayers", live_public_kinen:"'s public prayers",
+    live_active:"active",
+    // Kinen
+    kinen_title:"Prayer Book", kinen_subtitle:"With heartfelt prayers",
+    kinen_mine:"My Prayers", kinen_following:"Following",
+    kinen_open:"Open", kinen_achieved:"Achieved", kinen_all:"All",
+    kinen_placeholder:"Enter a prayer...", kinen_add:"Add", kinen_delete:"Delete",
+    kinen_pray_together:"+ Pray Together", kinen_added:"✓ Added",
+    kinen_public_count:" public prayers", kinen_no_achieved:"No achieved prayers yet",
+    kinen_try_add:"Try adding a prayer", kinen_no_following:"No public prayers from following",
+    // Journal
+    journal_title:"Journal", journal_subtitle:"Chanting records & insights",
+    journal_this_week:"This Week", journal_total:"Total", journal_top_mood:"Top Mood",
+    journal_count:"", journal_today:"Today", journal_yesterday:"Yesterday",
+    journal_feeling:"How do you feel?", journal_placeholder:"Thoughts, insights, determinations from chanting...",
+    journal_photo:"Photo", journal_photo_added:"Photo added",
+    journal_public:"Public", journal_private:"Private",
+    journal_public_label:"🔓 Public", journal_private_label:"🔒 Private",
+    journal_delete:"Delete", journal_empty:"No journal entries yet",
+    journal_photo_preview:"📷 Photo preview",
+    // MyPage
+    mypage_title:"My Page", mypage_subtitle:"Profile & achievements",
+    mypage_edit:"Edit Profile", mypage_edit_title:"Edit Profile",
+    mypage_name_placeholder:"Name", mypage_bio_placeholder:"Bio...",
+    mypage_save:"Save", mypage_cancel:"Cancel",
+    mypage_member_days:"Member for", mypage_member_days_suffix:"days",
+    mypage_stat_total:"Total", mypage_stat_streak:"Streak", mypage_stat_best:"Best",
+    mypage_stat_hen:"reps", mypage_stat_days:"days",
+    mypage_stat_total_time:"Total Time", mypage_stat_sessions:"Sessions",
+    mypage_stat_sessions_unit:"", mypage_stat_journals:"Journals",
+    mypage_badges:"Badges", mypage_following:"Following", mypage_followers:"Followers",
+    mypage_add:"Add",
+    mypage_profile_public:"Public Profile", mypage_profile_public_desc:"Show profile to other users",
+    mypage_live_display:"LIVE Display", mypage_live_display_desc:"Show on LIVE map while chanting",
+    mypage_journal_default:"Journal Default", mypage_journal_default_desc:"Publish new entries by default",
+    mypage_language:"言語 / Language",
+    // Charts
+    chart_weekly:"Weekly Activity", chart_streak_days:"day streak", chart_best:"Best",
+    chart_trend_30d:"30-Day Trend", chart_vs_prev:"vs last week", chart_30d_ago:"30d ago",
+    chart_today:"Today", chart_mood_dist:"Mood Distribution", chart_entries:"entries",
+    chart_activity:"Activity", chart_less:"Less", chart_more:"More",
+    // Friend Modal
+    friend_add_title:"Add Friend", friend_id_search:"ID Search", friend_qr:"QR Code",
+    friend_search_placeholder:"Search by ID or name...", friend_not_found:"User not found",
+    friend_search_hint:"Enter ID or name to search",
+    friend_follow:"Follow", friend_following:"Following",
+    friend_followed_toast:" followed",
+    friend_my_qr:"My QR Code", friend_copy_id:"Copy ID", friend_copied:"Copied!",
+    friend_scan:"📷 Scan QR Code", friend_scanning:"📷 Scanning...", friend_scan_label:"Scanning...",
+    // Categories
+    cat_personal:"Personal", cat_family:"Family", cat_work:"Work", cat_health:"Health", cat_study:"Study", cat_other:"Other",
+    // Moods
+    mood_peaceful:"Peaceful", mood_passionate:"Passionate", mood_grateful:"Grateful", mood_determined:"Determined",
+    mood_growth:"Growth", mood_tears:"Tears", mood_conviction:"Conviction", mood_joy:"Joy",
+    // Reactions
+    react_gassho:"Pray", react_fire:"Fire", react_strength:"Strength",
+    react_sakura:"Blossom", react_shine:"Shine", react_love:"Love",
+    // Journal Prompts
+    prompt_1:"What did you feel during chanting?", prompt_2:"What determination arose?",
+    prompt_3:"What are you grateful for?", prompt_4:"What's your next step?",
+    prompt_5:"What would you say to yourself?", prompt_6:"What did you see in prayer?",
+  }
+};
+const t = (key) => LANG[currentLang]?.[key] || LANG.ja[key] || key;
+
+const getCATEGORIES = () => [
+  { id:"personal", label:t("cat_personal"), color:T.colors.tag.personal },
+  { id:"family", label:t("cat_family"), color:T.colors.tag.family },
+  { id:"work", label:t("cat_work"), color:T.colors.tag.work },
+  { id:"health", label:t("cat_health"), color:T.colors.tag.health },
+  { id:"study", label:t("cat_study"), color:T.colors.tag.study },
+  { id:"other", label:t("cat_other"), color:T.colors.tag.other },
+];
+// 静的参照用（既存コードとの互換性）
+const CATEGORIES = getCATEGORIES();
+
+const getREACTIONS = () => [
+  { emoji:"🙏", label:t("react_gassho") },{ emoji:"🔥", label:t("react_fire") },{ emoji:"💪", label:t("react_strength") },
+  { emoji:"🌸", label:t("react_sakura") },{ emoji:"✨", label:t("react_shine") },{ emoji:"❤️", label:t("react_love") },
+];
+// 静的参照用
+const REACTIONS = getREACTIONS();
+
+const getMOODS = () => [
+  { emoji:"😊", label:t("mood_peaceful"), color:"#7BD4A0" },
+  { emoji:"🔥", label:t("mood_passionate"), color:"#E8C547" },
+  { emoji:"🙏", label:t("mood_grateful"), color:"#C8A96E" },
+  { emoji:"💪", label:t("mood_determined"), color:"#7B9FD4" },
+  { emoji:"🌱", label:t("mood_growth"), color:"#6ECF8E" },
+  { emoji:"😢", label:t("mood_tears"), color:"#A8B4E0" },
+  { emoji:"⚡", label:t("mood_conviction"), color:"#D4A07B" },
+  { emoji:"🌸", label:t("mood_joy"), color:"#D47BA0" },
+];
+// 静的参照用
+const MOODS = getMOODS();
+
+const getJOURNAL_PROMPTS = () => [t("prompt_1"),t("prompt_2"),t("prompt_3"),t("prompt_4"),t("prompt_5"),t("prompt_6")];
+// 静的参照用
+const JOURNAL_PROMPTS = getJOURNAL_PROMPTS();
+
+const getTIMER_PRESETS = () => [{label:t("timer_5m"),seconds:300},{label:t("timer_10m"),seconds:600},{label:t("timer_15m"),seconds:900},{label:t("timer_30m"),seconds:1800},{label:t("timer_1h"),seconds:3600},{label:t("timer_free"),seconds:0}];
+
+const HEN_PER_SECOND = 10000/(3*3600);
+const secondsToHen = (s) => Math.round(s*HEN_PER_SECOND);
+const formatHen = (n) => n>=10000?`${(n/10000).toFixed(1)}万`:n>=1000?n.toLocaleString():String(n);
+const formatTime = (s) => {const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const sec=s%60;return h>0?`${h}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`:`${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;};
+const formatTimeCompact = (s) => {const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);if(currentLang==="en"){if(h>0&&m>0)return`${h}h ${m}m`;if(h>0)return`${h}h`;if(m>0)return`${m}m`;return`${s}s`;}if(h>0&&m>0)return`${h}時間${m}分`;if(h>0)return`${h}時間`;if(m>0)return`${m}分`;return`${s}秒`;};
+const formatDate = (d) => {if(!d)return"";const date=new Date(d);return`${date.getMonth()+1}/${date.getDate()}`;};
+const isOverdue = (d) => d?new Date(d)<new Date(new Date().toDateString()):false;
+const TIMER_PRESETS = [{label:"5分",seconds:300},{label:"10分",seconds:600},{label:"15分",seconds:900},{label:"30分",seconds:1800},{label:"1時間",seconds:3600},{label:"自由",seconds:0}];
+
+// ─── Chart Utilities ───
+const smoothPath = (pts) => {
+  if(pts.length<2) return "";
+  if(pts.length===2) return `M${pts[0].x},${pts[0].y}L${pts[1].x},${pts[1].y}`;
+  let d=`M${pts[0].x},${pts[0].y}`;
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(pts.length-1,i+2)];
+    const cp1x=p1.x+(p2.x-p0.x)/6,cp1y=p1.y+(p2.y-p0.y)/6;
+    const cp2x=p2.x-(p3.x-p1.x)/6,cp2y=p2.y-(p3.y-p1.y)/6;
+    d+=`C${cp1x},${cp1y},${cp2x},${cp2y},${p2.x},${p2.y}`;
+  }
+  return d;
+};
+const intensityColor = (dur, max) => {
+  if(!dur||dur===0) return T.colors.ring;
+  const r=Math.min(1,dur/(max||1));
+  if(r<0.25) return "#1A3300";
+  if(r<0.5) return "#3D6600";
+  if(r<0.75) return "#6B9900";
+  return T.colors.accent;
+};
+
+// ─── Demo History Generator ───
+const generateDemoHistory = () => {
+  const days=[];const now=new Date();
+  for(let i=59;i>=0;i--){
+    const d=new Date(now);d.setDate(d.getDate()-i);
+    const dateStr=d.toISOString().split("T")[0];
+    const dow=d.getDay();
+    const isMissed=(i>18&&Math.random()<0.12)||(i>=40&&i<=42);
+    if(isMissed){days.push({date:dateStr,totalDuration:0,sessions:[],mood:null});continue;}
+    const sc=dow===0||dow===6?1+Math.floor(Math.random()*2):1+Math.floor(Math.random()*3);
+    const sessions=[];let total=0;
+    for(let s=0;s<sc;s++){const dur=[300,600,900,1200,1800,2700,3600][Math.floor(Math.random()*7)];total+=dur;sessions.push({duration:dur,timestamp:`${6+s*6}:${String(Math.floor(Math.random()*60)).padStart(2,"0")}`});}
+    const mood=MOODS[Math.floor(Math.random()*MOODS.length)];
+    days.push({date:dateStr,totalDuration:total,sessions,mood});
+  }
+  return days;
+};
+
+// ─── Demo Data ───
+const DEMO_KINEN = [
+  {id:1,text:"広宣流布の大願成就",category:"study",isOpen:true,isPublic:true,deadline:null,createdAt:"2025-01-01",photo:"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop"},
+  {id:2,text:"家族全員の健康と幸福",category:"family",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-15",photo:"https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&h=400&fit=crop"},
+  {id:3,text:"仕事のプロジェクト成功",category:"work",isOpen:true,isPublic:false,deadline:"2025-03-31",createdAt:"2025-02-01",photo:"https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop"},
+  {id:4,text:"後輩の成長と勝利",category:"study",isOpen:true,isPublic:true,deadline:"2025-04-15",createdAt:"2025-02-10",photo:null},
+  {id:5,text:"自分自身の人間革命",category:"personal",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-01",photo:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop"},
+  {id:6,text:"地区の折伏目標達成",category:"study",isOpen:true,isPublic:true,deadline:"2025-06-30",createdAt:"2025-01-20",photo:null},
+  {id:7,text:"簿記2級合格",category:"personal",isOpen:false,isPublic:false,deadline:"2025-02-01",createdAt:"2024-11-01",photo:null},
+  {id:8,text:"母の膝の回復",category:"health",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-10",photo:"https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=600&h=400&fit=crop"},
+];
+
+const DEMO_FOLLOWING_KINEN = [
+  {id:"fk1",userId:"f1",userName:"田中さん",avatarColor:"#7B9FD4",text:"世界平和の実現",category:"study",isOpen:true,reactions:{"🙏":5,"✨":3}},
+  {id:"fk2",userId:"f1",userName:"田中さん",avatarColor:"#7B9FD4",text:"父の病気平癒",category:"health",isOpen:true,reactions:{"🙏":12,"❤️":8}},
+  {id:"fk3",userId:"f2",userName:"山本さん",avatarColor:"#D4A07B",text:"転職活動の成功",category:"work",isOpen:true,reactions:{"💪":7,"🔥":4}},
+  {id:"fk4",userId:"f2",userName:"山本さん",avatarColor:"#D4A07B",text:"地区部長としての成長",category:"study",isOpen:true,reactions:{"🙏":9,"✨":6}},
+  {id:"fk5",userId:"f3",userName:"佐藤さん",avatarColor:"#7BD4A0",text:"娘の受験合格",category:"family",isOpen:true,reactions:{"🙏":15,"🌸":10,"✨":5}},
+  {id:"fk6",userId:"f3",userName:"佐藤さん",avatarColor:"#7BD4A0",text:"支部の折伏達成",category:"study",isOpen:true,reactions:{"🔥":11,"💪":8}},
+  {id:"fk7",userId:"f1",userName:"田中さん",avatarColor:"#7B9FD4",text:"英語の資格試験合格",category:"personal",isOpen:false,reactions:{"🌸":6,"✨":12}},
+];
+
+const DEMO_LIVE_DOTS = [
+  {id:"a1",lat:35.68,lng:139.77,delay:0},{id:"a2",lat:35.71,lng:139.65,delay:1.2},
+  {id:"a3",lat:34.69,lng:135.50,delay:0.5},{id:"a4",lat:35.18,lng:136.91,delay:2.1},
+  {id:"a5",lat:33.59,lng:130.40,delay:0.8},{id:"a6",lat:43.06,lng:141.35,delay:1.5},
+  {id:"a7",lat:38.27,lng:140.87,delay:0.3},{id:"a8",lat:34.40,lng:132.46,delay:1.8},
+  {id:"a9",lat:26.34,lng:127.80,delay:2.5},{id:"a10",lat:34.05,lng:-118.24,delay:0.7},
+  {id:"a11",lat:40.71,lng:-74.01,delay:1.1},{id:"a12",lat:51.51,lng:-0.13,delay:1.9},
+  {id:"a13",lat:-23.55,lng:-46.63,delay:0.4},{id:"a14",lat:37.57,lng:126.98,delay:2.3},
+  {id:"a15",lat:37.90,lng:139.02,delay:1.3},{id:"a16",lat:48.86,lng:2.35,delay:0.9},
+  {id:"a17",lat:28.61,lng:77.21,delay:1.7},{id:"a18",lat:35.01,lng:135.77,delay:2.0},
+  {id:"a19",lat:35.45,lng:139.64,delay:1.6},{id:"a20",lat:-33.87,lng:151.21,delay:1.4},
+];
+
+const DEMO_FOLLOWING_LIVE = [
+  {id:"f1",name:"田中さん",region:"東京都",startedMin:12,avatarColor:"#7B9FD4"},
+  {id:"f2",name:"山本さん",region:"大阪府",startedMin:5,avatarColor:"#D4A07B"},
+  {id:"f3",name:"佐藤さん",region:"福岡県",startedMin:22,avatarColor:"#7BD4A0"},
+];
+
+const DEMO_PROFILE = {
+  name: "山田太郎",
+  userId: "shodai_taro_2024",
+  avatarColor: "#C8A96E",
+  bio: "毎日の唱題で人間革命！",
+  joinedDate: "2024-04-01",
+  isPublic: true,
+  livePublic: true,
+  journalDefaultPublic: false,
+};
+
+const DEMO_USERS_DB = [
+  {userId:"tanaka_123",name:"田中さん",avatarColor:"#7B9FD4",bio:"朝の唱題で一日をスタート"},
+  {userId:"yamamoto_456",name:"山本さん",avatarColor:"#D4A07B",bio:"折伏に挑戦中"},
+  {userId:"kimura_789",name:"木村さん",avatarColor:"#E8C547",bio:"地区リーダーとして奮闘中"},
+  {userId:"nakamura_012",name:"中村さん",avatarColor:"#6ECF8E",bio:"毎日30分の唱題を継続"},
+  {userId:"watanabe_345",name:"渡辺さん",avatarColor:"#D47BA0",bio:"家族で唱題しています"},
+  {userId:"suzuki_678",name:"鈴木さん",avatarColor:"#A07BD4",bio:"青年部として頑張ってます"},
+  {userId:"takahashi_901",name:"高橋さん",avatarColor:"#D4C87B",bio:"題目で勝つ！"},
+];
+
+const DEMO_MY_FOLLOWERS = [
+  {id:"fw1",name:"田中さん",avatarColor:"#7B9FD4",since:"2024-06-15"},
+  {id:"fw2",name:"山本さん",avatarColor:"#D4A07B",since:"2024-08-01"},
+  {id:"fw3",name:"佐藤さん",avatarColor:"#7BD4A0",since:"2024-09-20"},
+  {id:"fw4",name:"鈴木さん",avatarColor:"#D47BA0",since:"2024-11-10"},
+  {id:"fw5",name:"高橋さん",avatarColor:"#A07BD4",since:"2025-01-05"},
+];
+
+const DEMO_MY_FOLLOWING = [
+  {id:"fl1",name:"田中さん",avatarColor:"#7B9FD4",since:"2024-05-10"},
+  {id:"fl2",name:"山本さん",avatarColor:"#D4A07B",since:"2024-07-22"},
+  {id:"fl3",name:"佐藤さん",avatarColor:"#7BD4A0",since:"2024-10-01"},
+];
+
+const DEMO_BADGES = [
+  {id:"b1",emoji:"🔥",label:"7日連続唱題",description:"7日間毎日唱題を達成",achieved:true,achievedDate:"2024-12-15",progress:7,target:7},
+  {id:"b2",emoji:"💎",label:"1万遍達成",description:"累計1万遍を突破",achieved:true,achievedDate:"2025-01-20",progress:10000,target:10000},
+  {id:"b3",emoji:"📖",label:"ジャーナル10件",description:"ジャーナルを10件記録",achieved:false,progress:6,target:10},
+  {id:"b4",emoji:"🌟",label:"30日連続唱題",description:"30日間毎日唱題を達成",achieved:false,progress:18,target:30},
+  {id:"b5",emoji:"👥",label:"フォロワー5人",description:"5人にフォローされる",achieved:true,achievedDate:"2025-01-10",progress:5,target:5},
+  {id:"b6",emoji:"🎯",label:"祈念5件達成",description:"5件の祈念を成就",achieved:false,progress:1,target:5},
+  {id:"b7",emoji:"⏱️",label:"累計100時間",description:"唱題累計100時間達成",achieved:false,progress:62,target:100},
+  {id:"b8",emoji:"🌈",label:"全気分コンプ",description:"全8種類の気分を記録",achieved:false,progress:5,target:8},
+];
+
+const DEMO_STATS = {
+  totalTime: 223200,
+  totalHen: secondsToHen(223200),
+  streak: 18,
+  bestStreak: 23,
+  totalSessions: 142,
+  totalJournals: 6,
+  memberSince: "2024-04-01",
+};
+
+const DEMO_JOURNALS = [
+  {id:"j1",date:"2025-02-16",time:"07:15",mood:{emoji:"🔥",label:"情熱",color:"#E8C547"},text:"今朝の唱題は格別だった。後輩のことを真剣に祈っていたら、具体的にどう関わるべきか明確に見えてきた。明日の会合で声をかけよう。",duration:1800,isPublic:false,photo:null},
+  {id:"j2",date:"2025-02-15",time:"21:30",mood:{emoji:"🙏",label:"感謝",color:"#C8A96E"},text:"夜の唱題。今日一日を振り返って、家族の健康に心から感謝。母から電話があって、膝の調子が良くなってきたとのこと。祈りは届いている。",duration:900,isPublic:false,photo:null},
+  {id:"j3",date:"2025-02-15",time:"06:45",mood:{emoji:"💪",label:"決意",color:"#7B9FD4"},text:"朝の勤行。今月の折伏目標について真剣に祈った。自分の弱さと向き合う時間になった。「もう一歩」踏み出す勇気をもらった気がする。",duration:1800,isPublic:true,photo:null},
+  {id:"j4",date:"2025-02-14",time:"12:20",mood:{emoji:"🌱",label:"成長",color:"#6ECF8E"},text:"昼休みに短い唱題。仕事のプレッシャーで押しつぶされそうだったけど、「変毒為薬」の精神を思い出した。この困難は必ず成長の糧になる。",duration:600,isPublic:false,photo:null},
+  {id:"j5",date:"2025-02-13",time:"06:30",mood:{emoji:"😊",label:"穏やか",color:"#7BD4A0"},text:"静かな朝の唱題。特別なことは起きなかったけど、とても穏やかな時間。こういう日常の積み重ねが大事なんだと感じた。",duration:900,isPublic:false,photo:null},
+  {id:"j6",date:"2025-02-12",time:"22:00",mood:{emoji:"😢",label:"涙",color:"#A8B4E0"},text:"夜遅くの唱題。後輩が退転しそうだと聞いて、胸が痛い。自分に何ができるのか。ただ祈ることしかできない今の自分が悔しい。でも、祈り続ける。絶対に。",duration:2700,isPublic:false,photo:null},
+];
+
+// ─── Logo Component (NV2.svg - combined icon + wordmark) ───
+const ShodaiLogo = ({size="md",animate=false,color=T.colors.accent}) => {
+  const widths={sm:24,md:160,lg:220,xl:280};
+  const w=widths[size]||widths.md;
+  // sm = icon only (crop to left part), md/lg/xl = full logo
+  if(size==="sm"){
+    return(
+      <svg width={w} height={w*168/192} viewBox="0 0 192 168" fill="none" style={{flexShrink:0}}>
+        <path d="M96.0158 18.9434C96.518 21.0327 96.8095 24.4162 97.1496 26.6362C98.0598 32.5612 98.5165 39.3677 99.571 45.1975C116.554 35.3317 135.43 24.6408 155.347 22.9021C162.142 22.3089 170.069 25.5428 169.713 33.2991C168.941 50.0926 153.852 68.3107 142.977 79.922C151.454 80.5715 161.53 81.7835 170 82.7688C167.508 83.1811 164.405 83.3003 161.831 83.6199C153.696 84.6302 145.107 85.0617 137.015 86.1235C135.729 87.2044 134.112 88.8259 132.857 90.0011C130.539 92.1866 128.177 94.3265 125.775 96.4206C117.787 103.387 109.344 109.814 100.5 115.656L97.6504 137.941C97.2749 140.791 96.6977 146.493 96.1101 149.136L96.004 149.161L95.9039 148.587C94.7154 139.337 93.5815 130.079 92.502 120.815C76.1152 131.041 55.001 141.676 35.2925 142.679C28.4097 143.029 21.2933 139.624 21.5992 131.854C21.7954 126.871 23.7883 121.438 26.2679 117.087C32.555 106.057 41.5787 94.7094 50.6507 85.7524C41.2906 84.6391 31.7899 83.885 22.4518 82.7731C29.4377 81.9057 36.8225 81.2298 43.8469 80.4979L88.7966 75.7887C89.5052 71.6169 90.0213 66.1752 90.5786 61.8633L94.2692 32.7603C94.7994 28.4406 95.2927 23.1429 96.0158 18.9434ZM55.5713 86.393C49.5912 93.4973 36.7214 110.186 37.6069 120.081C38.7958 133.366 60.6905 126.091 68.4917 123.016C75.2832 120.295 85.2114 115.719 91.3814 111.824C90.5437 104.789 89.6749 96.8463 88.5798 89.876L65.8175 87.4475C63.0766 87.1662 58.1756 86.4608 55.5713 86.393ZM123.769 87.6566C123.595 87.6596 123.501 87.6389 123.351 87.6949C119.189 88.0689 115.033 88.502 110.881 88.991C108.924 89.2104 105.509 89.5064 103.7 89.91C103.531 91.5714 101.792 104.021 102.069 104.674L102.413 104.572C109.051 100.122 115.388 95.2442 121.387 89.9675C121.871 89.5419 123.569 88.1338 123.769 87.6566ZM151.082 39.5213C148.59 37.1093 144.974 36.555 141.636 36.6285C140.992 36.6428 140.318 36.6355 139.693 36.722C128.711 37.7934 117.993 41.8346 107.977 46.3187C105.682 47.3464 102.525 48.8372 100.34 50.0701C101.144 58.4249 102.55 67.1949 103.59 75.5614C106.809 76.2165 112.491 76.6718 115.912 77.0474C121.533 77.6702 127.159 78.2613 132.788 78.8207C140.245 71.5499 152.747 56.3442 153.21 45.3948C153.297 43.3314 152.606 40.9968 151.082 39.5213Z" fill={color}/>
+        <path d="M87.0877 53.4224C87.2479 54.2182 86.8946 56.5438 86.7746 57.3979C78.6603 62.5259 72.1833 66.8455 64.4996 72.5773C64.8323 71.0719 84.1694 55.6192 87.0877 53.4224Z" fill={color}/>
+      </svg>
+    );
+  }
+  return(
+    <div style={{animation:animate?"breathe 6s ease-in-out infinite":"none"}}>
+      <svg width={w} height={w*168/830} viewBox="0 0 830 168" fill="none" style={{display:"block"}}>
+        <path d="M257.5 54.3V52.8H272.1V54.3C270.9 54.3 268.8 54.6 268 55.6C265.8 59.1 266.4 77.8 266.4 90.6V128H263.2V126.1L262.8 128L230.9 61.7L231.1 90.6C231.1 104.4 230.4 121.8 232.7 125.2C233.4 126.3 235.8 126.5 237 126.5V128H222.1V126.5C223.3 126.5 225.5 126.3 226.2 125.2C228.3 121.9 227.8 104.3 227.8 90.5C227.8 78.1 228.2 58.9 226.2 55.6C225.5 54.5 223.3 54.3 222.1 54.3V52.8H236.1L263.2 110V90.5C263.2 78.1 263.7 58.9 261.5 55.6C260.8 54.6 258.7 54.3 257.5 54.3ZM296.074 90.1C296.074 103.7 296.774 117.6 297.674 123.1C297.874 124.6 298.974 125.4 300.774 125.4C308.774 125.2 318.574 125.1 320.574 124.2C322.274 123.2 325.074 112.4 325.674 110.6L327.274 111.3C327.174 115.5 325.874 123.3 325.874 128.1L296.574 128H283.174V126.5C284.374 126.4 286.274 126.4 286.974 125.3C289.074 122.1 288.674 104.1 288.674 90.3C288.674 76.6 289.074 58.7 286.974 55.5C286.274 54.5 284.374 54.4 283.174 54.3V52.8H323.974C323.974 57.6 324.374 62.9 324.474 67.1L322.874 67.8C322.174 65.9 320.474 57.6 318.674 56.5C316.774 55.6 308.374 55.6 300.674 55.4C298.974 55.4 297.874 56.2 297.674 57.7C296.774 62.7 296.174 74.8 296.174 87.5C303.474 87.3 309.274 87.2 311.474 86.3C314.174 85.2 314.674 75.6 315.274 73.8L316.874 74C316.674 82.4 316.674 95.1 316.874 103.5L315.274 103.7C314.674 101.9 314.174 92.3 311.474 91.2C309.274 90.4 303.474 90.2 296.074 90.1ZM361.287 88.1C355.887 75.8 348.687 58.7 345.387 55.6C344.187 54.6 342.087 54.3 340.787 54.3V52.8H360.787V54.3C359.587 54.3 357.287 54.5 356.987 55.6C356.387 58.3 361.787 70.3 366.787 81.5C371.787 70.4 376.987 58.6 376.687 55.8C376.587 54.4 374.687 54.3 373.487 54.3V52.8H388.087V54.3C386.587 54.4 384.687 54.6 383.487 55.7C380.387 58.5 373.887 73.6 368.687 85.6C369.387 87.3 370.187 89 370.887 90.6C376.887 104.4 383.887 121.6 387.487 125C388.587 126.2 390.987 126.5 392.187 126.5V128H372.787L372.687 126.5C373.887 126.5 375.787 126.3 375.887 124.9C376.287 121.7 368.887 105.5 362.987 92C356.987 105.5 349.487 122.1 349.987 125.2C350.087 126.4 351.987 126.5 353.187 126.5V128H338.587V126.5C339.787 126.5 342.087 126.4 343.287 125.1C346.887 121.6 353.887 104.4 359.887 90.6C360.287 89.8 360.787 89 361.287 88.1ZM419.655 55.1C416.455 55.1 411.655 55.4 409.055 57.5C407.255 59.6 406.355 66.4 405.755 68.3L404.155 67.6C404.255 63.4 404.555 57.6 404.555 52.8H449.955C449.955 57.6 450.355 63.4 450.455 67.6L448.855 68.3C448.255 66.4 447.355 59.9 445.555 57.5C442.755 55.6 438.155 55.1 434.855 55.1C433.355 55.1 432.255 55.9 431.955 57.2C430.655 63.6 431.155 79.6 431.155 90.6C431.155 104.4 430.455 121.8 432.755 125.2C433.455 126.3 435.355 126.5 436.555 126.5V128H417.955V126.5C419.155 126.5 421.055 126.3 421.755 125.2C423.955 122 423.455 104.3 423.455 90.5C423.455 79.8 423.855 63.6 422.555 57.2C422.255 55.9 421.155 55.1 419.655 55.1ZM509.408 128H504.308L504.408 127.9L491.108 75.2C490.108 71.1 487.008 58.6 484.508 55.5C483.708 54.6 481.708 54.3 480.408 54.3V52.8H499.508V54.3C498.208 54.3 495.808 54.7 495.508 55.6C494.608 58.7 498.008 71.1 499.008 75.2C500.908 82.7 505.308 100.2 509.008 113.4C512.808 99.9 517.208 82.3 519.008 75.2C520.108 71.1 523.508 58.7 522.608 55.6C522.308 54.7 520.208 54.3 518.808 54.3V52.8H533.408V54.3C532.008 54.4 530.008 54.7 529.208 55.6C526.708 58.7 523.608 71.1 522.608 75.2L509.408 128ZM580.524 90C580.524 69.7 575.624 54.3 564.524 54.3C553.324 54.3 548.624 69.9 548.624 89.9C548.624 110.3 553.324 127 564.524 127C575.624 127 580.524 110.2 580.524 90ZM564.524 52.1C578.524 52.1 589.424 63.5 589.424 90C589.424 116.1 578.524 129.3 564.524 129.3C550.424 129.3 539.724 116.1 539.724 90C539.724 63.8 550.324 52.1 564.524 52.1ZM623.639 90.4C628.939 77.7 636.539 58.6 635.839 55.6C635.639 54.6 633.239 54.3 632.039 54.3V52.8H646.739V54.3C645.539 54.4 643.739 54.5 642.539 55.4C639.039 58.4 630.339 82.9 625.539 94H624.239V94.3L625.539 94C625.339 111 625.039 122 627.139 125.2C627.939 126.3 629.839 126.5 631.039 126.5V128H612.439L612.339 126.5C613.539 126.5 615.539 126.3 616.239 125.2C618.239 122.1 617.839 109 617.739 95.5C612.339 83.2 602.839 58.9 599.239 55.6C598.139 54.5 596.139 54.3 594.839 54.3V52.8H613.739V54.3C612.539 54.3 610.739 54.5 610.439 55.6C609.839 58.5 618.139 78.1 623.639 90.4ZM661.68 96.4H676.88C674.68 87.9 671.88 76.8 669.28 67.7C666.68 77 663.88 88.1 661.68 96.4ZM677.48 98.9H661.08C660.38 101.6 659.78 103.9 659.38 105.6C658.38 109.7 654.98 122.2 655.88 125.3C656.18 126.2 658.28 126.4 659.68 126.5L659.58 128H644.98V126.5C646.38 126.4 648.48 126.2 649.18 125.3C651.68 122.2 654.78 109.7 655.78 105.6L669.08 52.8H673.88C673.88 52.9 673.78 53 673.78 53L674.08 52.8L687.38 105.6C688.38 109.7 691.48 122.2 693.98 125.3C694.68 126.2 696.78 126.4 698.18 126.5L698.08 128H678.68L678.78 126.5C680.08 126.4 682.38 126.2 682.68 125.3C683.58 122.2 680.18 109.7 679.18 105.6C678.68 103.8 678.18 101.6 677.48 98.9ZM705.076 90.2C705.076 64 716.076 52.3 730.076 52.3C735.376 52.3 740.476 53.9 744.476 57.4L746.276 52.3H748.376L747.576 75.9H745.276C743.776 61.9 736.976 54.9 730.676 54.8C719.276 54.6 713.876 70.2 713.876 90.2C713.876 110.5 718.176 126.5 731.876 126.5C739.476 126.5 742.576 120.9 742.976 116.9C742.976 113.9 743.376 97.1 741.276 94C740.576 92.9 736.576 92.2 735.376 92.2V90.5H755.776V92.2C754.576 92.2 752.676 92.4 751.976 93.5C750.976 94.9 750.576 98.5 750.376 103.7L750.276 118.9C747.776 124.5 739.976 129 730.276 129C709.676 129 705.076 106.6 705.076 90.2ZM777.773 90.1C777.773 103.7 778.473 117.6 779.373 123.1C779.573 124.6 780.673 125.4 782.473 125.4C790.473 125.2 800.273 125.1 802.273 124.2C803.973 123.2 806.773 112.4 807.373 110.6L808.973 111.3C808.873 115.5 807.573 123.3 807.573 128.1L778.273 128H764.873V126.5C766.073 126.4 767.973 126.4 768.673 125.3C770.773 122.1 770.373 104.1 770.373 90.3C770.373 76.6 770.773 58.7 768.673 55.5C767.973 54.5 766.073 54.4 764.873 54.3V52.8H805.673C805.673 57.6 806.073 62.9 806.173 67.1L804.573 67.8C803.873 65.9 802.173 57.6 800.373 56.5C798.473 55.6 790.073 55.6 782.373 55.4C780.673 55.4 779.573 56.2 779.373 57.7C778.473 62.7 777.873 74.8 777.873 87.5C785.173 87.3 790.973 87.2 793.173 86.3C795.873 85.2 796.373 75.6 796.973 73.8L798.573 74C798.373 82.4 798.373 95.1 798.573 103.5L796.973 103.7C796.373 101.9 795.873 92.3 793.173 91.2C790.973 90.4 785.173 90.2 777.773 90.1Z" fill={color}/>
+        <path d="M96.0158 18.9434C96.518 21.0327 96.8095 24.4162 97.1496 26.6362C98.0598 32.5612 98.5165 39.3677 99.571 45.1975C116.554 35.3317 135.43 24.6408 155.347 22.9021C162.142 22.3089 170.069 25.5428 169.713 33.2991C168.941 50.0926 153.852 68.3107 142.977 79.922C151.454 80.5715 161.53 81.7835 170 82.7688C167.508 83.1811 164.405 83.3003 161.831 83.6199C153.696 84.6302 145.107 85.0617 137.015 86.1235C135.729 87.2044 134.112 88.8259 132.857 90.0011C130.539 92.1866 128.177 94.3265 125.775 96.4206C117.787 103.387 109.344 109.814 100.5 115.656L97.6504 137.941C97.2749 140.791 96.6977 146.493 96.1101 149.136L96.004 149.161L95.9039 148.587C94.7154 139.337 93.5815 130.079 92.502 120.815C76.1152 131.041 55.001 141.676 35.2925 142.679C28.4097 143.029 21.2933 139.624 21.5992 131.854C21.7954 126.871 23.7883 121.438 26.2679 117.087C32.555 106.057 41.5787 94.7094 50.6507 85.7524C41.2906 84.6391 31.7899 83.885 22.4518 82.7731C29.4377 81.9057 36.8225 81.2298 43.8469 80.4979L88.7966 75.7887C89.5052 71.6169 90.0213 66.1752 90.5786 61.8633L94.2692 32.7603C94.7994 28.4406 95.2927 23.1429 96.0158 18.9434ZM55.5713 86.393C49.5912 93.4973 36.7214 110.186 37.6069 120.081C38.7958 133.366 60.6905 126.091 68.4917 123.016C75.2832 120.295 85.2114 115.719 91.3814 111.824C90.5437 104.789 89.6749 96.8463 88.5798 89.876L65.8175 87.4475C63.0766 87.1662 58.1756 86.4608 55.5713 86.393ZM123.769 87.6566C123.595 87.6596 123.501 87.6389 123.351 87.6949C119.189 88.0689 115.033 88.502 110.881 88.991C108.924 89.2104 105.509 89.5064 103.7 89.91C103.531 91.5714 101.792 104.021 102.069 104.674L102.413 104.572C109.051 100.122 115.388 95.2442 121.387 89.9675C121.871 89.5419 123.569 88.1338 123.769 87.6566ZM151.082 39.5213C148.59 37.1093 144.974 36.555 141.636 36.6285C140.992 36.6428 140.318 36.6355 139.693 36.722C128.711 37.7934 117.993 41.8346 107.977 46.3187C105.682 47.3464 102.525 48.8372 100.34 50.0701C101.144 58.4249 102.55 67.1949 103.59 75.5614C106.809 76.2165 112.491 76.6718 115.912 77.0474C121.533 77.6702 127.159 78.2613 132.788 78.8207C140.245 71.5499 152.747 56.3442 153.21 45.3948C153.297 43.3314 152.606 40.9968 151.082 39.5213Z" fill={color}/>
+        <path d="M87.0877 53.4224C87.2479 54.2182 86.8946 56.5438 86.7746 57.3979C78.6603 62.5259 72.1833 66.8455 64.4996 72.5773C64.8323 71.0719 84.1694 55.6192 87.0877 53.4224Z" fill={color}/>
+      </svg>
+    </div>
+  );
+};
+
+// ─── Shared Components ───
+const FloatingReaction = ({emoji,id,onDone}) => {
+  const [style,setStyle] = useState({position:"absolute",bottom:0,fontSize:28,opacity:1,left:`${30+Math.random()*40}%`,transition:"all 3s cubic-bezier(0.25,0.46,0.45,0.94)",pointerEvents:"none",zIndex:50});
+  useEffect(()=>{requestAnimationFrame(()=>{setStyle(p=>({...p,bottom:`${70+Math.random()*20}%`,opacity:0,transform:`translateX(${(Math.random()-0.5)*60}px) scale(${0.6+Math.random()*0.6})`}));});const t=setTimeout(()=>onDone(id),3200);return()=>clearTimeout(t);},[]);
+  return <div style={style}>{emoji}</div>;
+};
+
+const MiniReactionBar = ({onReact,size="md"}) => {
+  const [sent,setSent] = useState(null);
+  const handle = (r) => {onReact(r.emoji);setSent(r.emoji);setTimeout(()=>setSent(null),1200);};
+  const s = size==="sm"?28:36;
+  const fs = size==="sm"?14:18;
+  return (
+    <div style={{display:"flex",gap:size==="sm"?2:4}}>
+      {REACTIONS.map((r) => (
+        <button key={r.emoji} onClick={()=>handle(r)} style={{width:s,height:s,borderRadius:s/2,border:`1px solid ${T.colors.border}`,background:sent===r.emoji?T.colors.accentSoft:"transparent",fontSize:fs,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s ease",transform:sent===r.emoji?"scale(1.3)":"scale(1)"}}>{r.emoji}</button>
+      ))}
+    </div>
+  );
+};
+
+const ReactionBadges = ({reactions,size="sm"}) => {
+  if (!reactions||Object.keys(reactions).length===0) return null;
+  return (
+    <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+      {Object.entries(reactions).sort((a,b)=>b[1]-a[1]).map(([emoji,count]) => (
+        <span key={emoji} style={{display:"inline-flex",alignItems:"center",gap:2,padding:size==="sm"?"1px 6px":"2px 8px",borderRadius:10,background:T.colors.ring,fontSize:size==="sm"?10:12}}>
+          <span>{emoji}</span>
+          <span style={{fontFamily:T.fonts.mono,color:T.colors.textDim,fontSize:size==="sm"?9:10}}>{count}</span>
+        </span>
+      ))}
+    </div>
+  );
+};
+
+const PhaseIndicator = ({phase}) => (
+  <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 14px",borderRadius:20,background:T.colors.accentSoft,border:`1px solid ${T.colors.border}`,...G.card}}>
+    <div style={{width:6,height:6,borderRadius:"50%",background:phase==="chanting"?T.colors.success:phase==="paused"?T.colors.accent:T.colors.textDim,boxShadow:phase==="chanting"?`0 0 8px ${T.colors.success}`:"none",animation:phase==="chanting"?"pulse 2s infinite":"none"}} />
+    <span style={{fontFamily:T.fonts.body,fontSize:11,fontWeight:700,color:T.colors.textMuted,letterSpacing:"0.08em",textTransform:"uppercase"}}>{{idle:"READY",chanting:"CHANTING",paused:"PAUSED",completed:"DONE"}[phase]}</span>
+  </div>
+);
+
+const CategoryTag = ({categoryId,size="sm"}) => {
+  const cat=CATEGORIES.find(c=>c.id===categoryId)||CATEGORIES[5];
+  return <span style={{display:"inline-flex",padding:size==="sm"?"2px 8px":"4px 12px",borderRadius:10,background:`${cat.color}15`,border:`1px solid ${cat.color}30`,fontFamily:T.fonts.body,fontSize:size==="sm"?10:12,color:cat.color}}>{cat.label}</span>;
+};
+
+const UserAvatar = ({name,color,size=38,showLive=false}) => (
+  <div style={{width:size,height:size,borderRadius:size/2,background:`${color}20`,border:`2px solid ${color}50`,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",flexShrink:0}}>
+    <span style={{fontSize:size*0.37,fontFamily:T.fonts.display,color,fontWeight:500}}>{name[0]}</span>
+    {showLive&&<div style={{position:"absolute",top:-2,right:-2,width:10,height:10,borderRadius:5,background:T.colors.live,border:`2px solid ${T.colors.bg}`,animation:"pulse 2s infinite",boxShadow:`0 0 6px ${T.colors.liveGlow}`}}/>}
+  </div>
+);
+
+// ─── Kinen Card Slideshow (during chanting) ───
+const KinenSlideshow = ({kinenList}) => {
+  const openKinen=kinenList.filter(k=>k.isOpen);
+  const [idx,setIdx]=useState(0);
+  const [exitDir,setExitDir]=useState(0);
+  const [isAnimating,setIsAnimating]=useState(false);
+  const [floats,setFloats]=useState([]);
+  const touchRef=useRef(null);
+  const timerRef=useRef(null);
+
+  useEffect(()=>{const demos=[{delay:3000,emoji:"🙏",from:"田中さん"},{delay:7000,emoji:"🔥",from:"山本さん"},{delay:12000,emoji:"✨",from:"佐藤さん"},{delay:18000,emoji:"💪",from:"田中さん"},{delay:25000,emoji:"🌸",from:"鈴木さん"}];const timers=demos.map(r=>setTimeout(()=>setFloats(p=>[...p,{id:Date.now()+Math.random(),emoji:r.emoji,from:r.from}]),r.delay));return()=>timers.forEach(clearTimeout);},[]);
+  const removeFloat=(id)=>setFloats(p=>p.filter(r=>r.id!==id));
+
+  const n=openKinen.length;
+  const go=(dir)=>{
+    if(isAnimating||n<2)return;
+    setIsAnimating(true);
+    setExitDir(dir);
+    setTimeout(()=>{
+      setIdx(p=>(p+(dir===-1?1:-1)+n)%n);
+      setExitDir(0);
+      setIsAnimating(false);
+    },400);
+  };
+  const goNext=()=>go(-1);
+  const goPrev=()=>go(1);
+
+  useEffect(()=>{
+    if(!n)return;
+    clearInterval(timerRef.current);
+    timerRef.current=setInterval(goNext,8000);
+    return()=>clearInterval(timerRef.current);
+  },[idx,n]);
+
+  const onTouchStart=(e)=>{touchRef.current=e.touches[0].clientX;};
+  const onTouchEnd=(e)=>{
+    if(touchRef.current===null)return;
+    const diff=e.changedTouches[0].clientX-touchRef.current;
+    touchRef.current=null;
+    if(Math.abs(diff)<50)return;
+    if(diff<0)goNext(); else goPrev();
+  };
+  const onTap=(e)=>{
+    if(isAnimating)return;
+    const rect=e.currentTarget.getBoundingClientRect();
+    const x=e.clientX-rect.left;
+    if(x>rect.width/2)goNext(); else goPrev();
+  };
+
+  if(!n)return null;
+
+  const CARD_H=220;
+  const stackCards=[0,1,2].map(offset=>openKinen[(idx+offset)%n]);
+
+  // Background card for items without photo
+  const catGradients={
+    study:"linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+    family:"linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 50%, #441a5e 100%)",
+    work:"linear-gradient(135deg, #1a1a2e 0%, #1b2d2d 50%, #0f4040 100%)",
+    personal:"linear-gradient(135deg, #1a1a2e 0%, #2d2d1b 50%, #3d3d0f 100%)",
+    health:"linear-gradient(135deg, #1a1a2e 0%, #1b2d1b 50%, #0f400f 100%)",
+    other:"linear-gradient(135deg, #1a1a2e 0%, #2d1b1b 50%, #401515 100%)",
+  };
+
+  const renderCard=(card,style,isfront)=>{
+    const hasPhoto=!!card.photo;
+    const bg=hasPhoto
+      ?{backgroundImage:`url(${card.photo})`,backgroundSize:"cover",backgroundPosition:"center"}
+      :{background:catGradients[card.category]||catGradients.other};
+    return(
+      <div style={{position:"absolute",left:0,right:0,top:0,height:CARD_H,borderRadius:22,overflow:"hidden",cursor:isfront?"pointer":"default",border:`1px solid rgba(255,255,255,0.1)`,...bg,...style,transition:"all 0.4s cubic-bezier(0.4,0,0.2,1)"}}>
+        {/* Dark gradient overlay for readability */}
+        <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.75) 100%)",borderRadius:22}}/>
+        {isfront&&(
+          <div style={{position:"relative",zIndex:2,height:"100%",display:"flex",flexDirection:"column",padding:"16px 20px"}}>
+            {/* Top row: category + counter */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <CategoryTag categoryId={card.category}/>
+              <span style={{fontSize:10,color:"rgba(255,255,255,0.6)",fontFamily:T.fonts.mono,backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",padding:"2px 8px",borderRadius:8,background:"rgba(0,0,0,0.3)"}}>{idx%n+1}/{n}</span>
+            </div>
+            {/* Center: prayer text */}
+            <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"8px 0"}}>
+              <p style={{fontFamily:T.fonts.display,fontSize:18,fontWeight:700,color:"#fff",lineHeight:1.6,textAlign:"center",textShadow:"0 2px 8px rgba(0,0,0,0.5)",maxHeight:80,overflow:"hidden"}}>{card.text}</p>
+            </div>
+            {/* Bottom: deadline + dots */}
+            <div>
+              {card.deadline&&<div style={{textAlign:"center",marginBottom:6}}><span style={{fontSize:9,fontFamily:T.fonts.mono,color:"rgba(255,255,255,0.5)",padding:"2px 8px",borderRadius:6,background:"rgba(0,0,0,0.3)"}}>〆 {card.deadline}</span></div>}
+              <div style={{display:"flex",justifyContent:"center",gap:4}}>
+                {openKinen.map((_,i)=><div key={i} style={{width:i===idx%n?16:5,height:5,borderRadius:3,background:i===idx%n?T.colors.accent:"rgba(255,255,255,0.25)",transition:"all 0.4s ease"}}/>)}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const exitStyle=exitDir!==0?{
+    transform:`translateX(${exitDir*110}%) scale(0.9) rotate(${exitDir*6}deg)`,
+    opacity:0,zIndex:4,
+  }:null;
+
+  return(
+    <div style={{width:"100%",padding:"0 24px",position:"relative"}}>
+      <div style={{position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:50}}>
+        {floats.map(r=><FloatingReaction key={r.id} emoji={r.emoji} id={r.id} onDone={removeFloat}/>)}
+      </div>
+
+      <div style={{position:"relative",height:CARD_H+28,perspective:1000}}
+        onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} onClick={onTap}>
+
+        {/* Back card (3rd) */}
+        {n>=3&&renderCard(stackCards[2],{zIndex:1,transform:"scale(0.91) translateY(20px) rotate(-1deg)",opacity:0.25,pointerEvents:"none",filter:"blur(1px)"},false)}
+
+        {/* Middle card (2nd) */}
+        {n>=2&&renderCard(stackCards[1],{zIndex:2,transform:"scale(0.955) translateY(10px) rotate(0.5deg)",opacity:0.45,pointerEvents:"none"},false)}
+
+        {/* Front card */}
+        {renderCard(stackCards[0],{zIndex:3,transform:"scale(1) translateY(0)",opacity:1,boxShadow:"0 8px 40px rgba(0,0,0,0.5), 0 2px 12px rgba(0,0,0,0.3)",...(exitStyle||{})},true)}
+      </div>
+
+      {floats.length>0&&<div style={{marginTop:4,textAlign:"center",fontSize:11,color:T.colors.textMuted,animation:"fadeIn 0.5s ease"}}>{floats[floats.length-1]?.from}さんから {floats[floats.length-1]?.emoji}</div>}
+    </div>
+  );
+};
+
+// ─── LIVE Tab (from v7) ───
+const LiveTab = ({followingKinen,onReactKinen,onAddToMine}) => {
+  const [totalOnline,setTotalOnline]=useState(23);
+  const [mapView,setMapView]=useState("japan");
+  const [expandedUser,setExpandedUser]=useState(null);
+  const [sentReactions,setSentReactions]=useState({});
+  const [addedToast,setAddedToast]=useState(null);
+  const mapContainerRef=useRef(null);
+  const mapRef=useRef(null);
+  const markersRef=useRef([]);
+
+  useEffect(()=>{const iv=setInterval(()=>setTotalOnline(p=>Math.max(15,Math.min(50,p+(Math.random()>0.5?1:-1)))),5000);return()=>clearInterval(iv);},[]);
+
+  // Mapbox初期化
+  useEffect(()=>{
+    if(!mapContainerRef.current)return;
+    // 既存のマップがあれば破棄
+    if(mapRef.current){mapRef.current.remove();mapRef.current=null;}
+    markersRef.current.forEach(m=>m.marker.remove());
+    markersRef.current=[];
+
+    const map=new mapboxgl.Map({
+      container:mapContainerRef.current,
+      style:"mapbox://styles/mapbox/dark-v11",
+      center:[138.0,36.5],
+      zoom:4.5,
+      attributionControl:false,
+    });
+    map.addControl(new mapboxgl.NavigationControl({showCompass:false}),"top-right");
+    map.on("load",()=>{
+      map.resize();
+      // マーカーを追加
+      DEMO_LIVE_DOTS.forEach(dot=>{
+        const el=document.createElement("div");
+        el.className="mapbox-pulse-dot";
+        el.style.position="relative";
+        el.style.animationDelay=dot.delay+"s";
+        const marker=new mapboxgl.Marker({element:el}).setLngLat([dot.lng,dot.lat]).addTo(map);
+        markersRef.current.push({marker,dot});
+      });
+    });
+    mapRef.current=map;
+    // コンテナサイズ確定後にリサイズ
+    setTimeout(()=>{if(mapRef.current)mapRef.current.resize();},100);
+    return()=>{
+      markersRef.current.forEach(m=>m.marker.remove());
+      markersRef.current=[];
+      if(mapRef.current){mapRef.current.remove();mapRef.current=null;}
+    };
+  },[]);
+
+  // 日本/世界切替
+  useEffect(()=>{
+    if(!mapRef.current)return;
+    const japanDots=DEMO_LIVE_DOTS.filter(d=>d.lat>24&&d.lat<46&&d.lng>128&&d.lng<148);
+    if(mapView==="japan"){
+      mapRef.current.flyTo({center:[138.0,36.5],zoom:4.5,duration:1500});
+    }else{
+      mapRef.current.flyTo({center:[139.0,20.0],zoom:1.2,duration:1500});
+    }
+    // マーカーの表示/非表示
+    markersRef.current.forEach(({marker,dot})=>{
+      const isJapan=dot.lat>24&&dot.lat<46&&dot.lng>128&&dot.lng<148;
+      const el=marker.getElement();
+      if(mapView==="japan"&&!isJapan){el.style.display="none";}
+      else{el.style.display="block";}
+    });
+  },[mapView]);
+
+  const activeDots=mapView==="japan"?DEMO_LIVE_DOTS.filter(d=>d.lat>24&&d.lat<46&&d.lng>128&&d.lng<148):DEMO_LIVE_DOTS;
+
+  const handleSendReaction=(emoji,targetName)=>{setSentReactions(p=>({...p,[targetName]:[...(p[targetName]||[]),{emoji,time:new Date()}]}));};
+  const handleAddToMine=(kinen)=>{onAddToMine(kinen.text,kinen.category);setAddedToast(kinen.id);setTimeout(()=>setAddedToast(null),2000);};
+
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{padding:"0 24px 12px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+          <div>
+            <h2 style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:800,color:T.colors.live,letterSpacing:"-0.02em",textTransform:"uppercase"}}>{t("live_title")}</h2>
+            <p style={{fontSize:11,color:T.colors.textDim,marginTop:2}}>{t("live_subtitle")}</p>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 16px",borderRadius:20,background:T.colors.liveSoft,border:`1px solid ${T.colors.live}30`,...G.card}}>
+            <div style={{width:8,height:8,borderRadius:"50%",background:T.colors.live,animation:"pulse 2s infinite",boxShadow:`0 0 10px ${T.colors.liveGlow}`}}/>
+            <span style={{fontFamily:T.fonts.mono,fontSize:16,fontWeight:400,color:T.colors.live}}>{totalOnline}</span>
+            <span style={{fontSize:11,color:T.colors.textMuted}}>{t("live_people_chanting")}</span>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:6,marginBottom:12}}>
+          {[{key:"japan",label:t("live_japan")},{key:"world",label:t("live_world")}].map(v=>(
+            <button key={v.key} onClick={()=>setMapView(v.key)} style={{padding:"6px 16px",borderRadius:16,fontSize:12,fontFamily:T.fonts.body,border:`1px solid ${mapView===v.key?T.colors.live+"60":T.colors.border}`,background:mapView===v.key?T.colors.liveSoft:"transparent",color:mapView===v.key?T.colors.live:T.colors.textMuted,cursor:"pointer"}}>{v.label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Mapbox Map */}
+      <div style={{margin:"0 24px",borderRadius:20,overflow:"hidden",position:"relative",height:240,border:`1px solid ${T.colors.border}`,background:"#111",boxShadow:T.glass.shadow}}>
+        <div ref={mapContainerRef} style={{position:"absolute",top:0,left:0,right:0,bottom:0}}/>
+        <div style={{position:"absolute",bottom:8,left:12,fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.mono,zIndex:2,background:"rgba(0,0,0,0.5)",padding:"2px 6px",borderRadius:6}}>{mapView==="japan"?"JAPAN":"WORLDWIDE"} · {activeDots.length} active</div>
+      </div>
+
+      {/* Following users + kinen */}
+      <div style={{padding:"16px 24px 24px",flex:1,overflowY:"auto"}}>
+        <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>{t("live_following_chanting")}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {DEMO_FOLLOWING_LIVE.map((user,i)=>{
+            const isExp=expandedUser===user.id;
+            const userKinen=followingKinen.filter(k=>k.userId===user.id&&k.isOpen);
+            const userReactions=sentReactions[user.name]||[];
+            return(
+              <div key={user.id} style={{borderRadius:16,background:T.colors.surface,border:`1px solid ${isExp?T.colors.live+"40":T.colors.border}`,overflow:"hidden",animation:`slideUp ${0.15+i*0.08}s ease`,transition:"border-color 0.3s ease",...G.card}}>
+                <div onClick={()=>setExpandedUser(isExp?null:user.id)} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",cursor:"pointer"}}>
+                  <UserAvatar name={user.name} color={user.avatarColor} showLive/>
+                  <div style={{flex:1}}>
+                    <div style={{fontFamily:T.fonts.body,fontSize:14,fontWeight:500,color:T.colors.text}}>{user.name}</div>
+                    <div style={{fontSize:11,color:T.colors.textMuted,marginTop:2}}>{user.region} · {user.startedMin}{t("live_min_ago")}</div>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    {userKinen.length>0&&<span style={{fontSize:9,color:T.colors.textDim,padding:"2px 6px",borderRadius:8,background:T.colors.ring}}>祈念{userKinen.length}</span>}
+                    <div style={{padding:"4px 10px",borderRadius:10,background:T.colors.liveSoft,fontFamily:T.fonts.mono,fontSize:12,color:T.colors.live}}>{user.startedMin}分</div>
+                  </div>
+                </div>
+                {isExp&&(
+                  <div style={{borderTop:`1px solid ${T.colors.borderLight}`,animation:"slideUp 0.2s ease"}}>
+                    <div style={{padding:"10px 16px",borderBottom:`1px solid ${T.colors.borderLight}`}}>
+                      <div style={{fontSize:10,color:T.colors.textDim,marginBottom:8}}>{user.name}にエールを送る</div>
+                      <MiniReactionBar onReact={(emoji)=>handleSendReaction(emoji,user.name)}/>
+                      {userReactions.length>0&&<div style={{marginTop:6,fontSize:10,color:T.colors.textDim}}>送信済み: {userReactions.map(r=>r.emoji).join(" ")}</div>}
+                    </div>
+                    {userKinen.length>0&&(
+                      <div style={{padding:"12px 16px"}}>
+                        <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.06em",marginBottom:8}}>{user.name}の公開祈念</div>
+                        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                          {userKinen.map(k=>(
+                            <div key={k.id} style={{padding:"10px 12px",borderRadius:12,background:T.colors.bg,border:`1px solid ${T.colors.borderLight}`}}>
+                              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}><CategoryTag categoryId={k.category} size="sm"/></div>
+                              <p style={{fontFamily:T.fonts.body,fontSize:13,color:T.colors.text,lineHeight:1.5,marginBottom:8}}>{k.text}</p>
+                              <ReactionBadges reactions={k.reactions}/>
+                              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8,paddingTop:8,borderTop:`1px solid ${T.colors.borderLight}`}}>
+                                <MiniReactionBar size="sm" onReact={(emoji)=>onReactKinen(k.id,emoji)}/>
+                                <button onClick={()=>handleAddToMine(k)} style={{padding:"4px 10px",borderRadius:8,fontSize:10,fontFamily:T.fonts.body,border:`1px solid ${addedToast===k.id?T.colors.success:T.colors.border}`,background:addedToast===k.id?T.colors.successSoft:"transparent",color:addedToast===k.id?T.colors.success:T.colors.textMuted,cursor:"pointer",transition:"all 0.3s ease",whiteSpace:"nowrap"}}>
+                                  {addedToast===k.id?"✓ 追加済":"+ 一緒に祈る"}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Kinen Tab (from v7) ───
+const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMine}) => {
+  const [viewMode,setViewMode]=useState("mine");
+  const [filter,setFilter]=useState("open");
+  const [categoryFilter,setCategoryFilter]=useState("all");
+  const [showAddForm,setShowAddForm]=useState(false);
+  const [newText,setNewText]=useState("");const [newCategory,setNewCategory]=useState("personal");
+  const [newDeadline,setNewDeadline]=useState("");const [newIsPublic,setNewIsPublic]=useState(false);
+  const [newPhoto,setNewPhoto]=useState(null);
+  const [addedToast,setAddedToast]=useState(null);
+  const photoInputRef=useRef(null);
+
+  const filtered=useMemo(()=>{let list=[...kinenList];if(filter==="open")list=list.filter(k=>k.isOpen);if(filter==="closed")list=list.filter(k=>!k.isOpen);if(categoryFilter!=="all")list=list.filter(k=>k.category===categoryFilter);return list;},[kinenList,filter,categoryFilter]);
+  const filteredFollowing=useMemo(()=>{let list=[...followingKinen];if(filter==="open")list=list.filter(k=>k.isOpen);if(filter==="closed")list=list.filter(k=>!k.isOpen);if(categoryFilter!=="all")list=list.filter(k=>k.category===categoryFilter);return list;},[followingKinen,filter,categoryFilter]);
+
+  const openCount=kinenList.filter(k=>k.isOpen).length;
+  const closedCount=kinenList.filter(k=>!k.isOpen).length;
+  const toggleOpen=(id)=>setKinenList(p=>p.map(k=>k.id===id?{...k,isOpen:!k.isOpen}:k));
+  const togglePublic=(id)=>setKinenList(p=>p.map(k=>k.id===id?{...k,isPublic:!k.isPublic}:k));
+  const deleteKinen=(id)=>setKinenList(p=>p.filter(k=>k.id!==id));
+  const addKinen=()=>{if(!newText.trim())return;setKinenList(p=>[...p,{id:Date.now(),text:newText.trim(),category:newCategory,isOpen:true,isPublic:newIsPublic,deadline:newDeadline||null,createdAt:new Date().toISOString().split("T")[0],photo:newPhoto}]);setNewText("");setNewCategory("personal");setNewDeadline("");setNewIsPublic(false);setNewPhoto(null);setShowAddForm(false);};
+  const handlePhotoSelect=(e)=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=(ev)=>setNewPhoto(ev.target.result);reader.readAsDataURL(file);};
+  const handleAddToMine=(k)=>{onAddToMine(k.text,k.category);setAddedToast(k.id);setTimeout(()=>setAddedToast(null),2000);};
+
+  const groupedFollowing=useMemo(()=>{const map={};filteredFollowing.forEach(k=>{if(!map[k.userId])map[k.userId]={userName:k.userName,avatarColor:k.avatarColor,items:[]};map[k.userId].items.push(k);});return Object.entries(map);},[filteredFollowing]);
+
+  return(
+    <div style={{width:"100%",flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{padding:"0 24px 12px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div><h2 style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:800,color:T.colors.accent,letterSpacing:"-0.02em",textTransform:"uppercase"}}>{t("kinen_title")}</h2></div>
+          {viewMode==="mine"&&(<button onClick={()=>setShowAddForm(!showAddForm)} style={{width:40,height:40,borderRadius:20,border:`1px solid ${T.colors.border}`,background:showAddForm?T.colors.accentSoft:"transparent",color:T.colors.accent,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:T.fonts.body}}>{showAddForm?"×":"+"}</button>)}
+        </div>
+
+        {/* Mine / Following toggle */}
+        <div style={{display:"flex",gap:0,marginBottom:12,borderRadius:12,overflow:"hidden",border:`1px solid ${T.colors.border}`,...G.card}}>
+          {[{key:"mine",label:t("kinen_mine")},{key:"following",label:t("kinen_following")}].map(v=>(
+            <button key={v.key} onClick={()=>{setViewMode(v.key);setShowAddForm(false);}} style={{flex:1,padding:"10px 16px",fontSize:12,fontFamily:T.fonts.body,fontWeight:500,border:"none",background:viewMode===v.key?T.colors.accentSoft:"transparent",color:viewMode===v.key?T.colors.accent:T.colors.textMuted,cursor:"pointer",transition:"all 0.2s ease"}}>{v.label}</button>
+          ))}
+        </div>
+
+        {/* Add Form */}
+        {showAddForm&&viewMode==="mine"&&(
+          <div style={{padding:16,borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,marginBottom:16,animation:"slideUp 0.3s ease",...G.card}}>
+            <textarea value={newText} onChange={e=>setNewText(e.target.value)} placeholder={t("kinen_placeholder")} style={{width:"100%",padding:12,borderRadius:12,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,resize:"none",height:72,outline:"none"}}/>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:12}}>
+              {CATEGORIES.map(cat=>(<button key={cat.id} onClick={()=>setNewCategory(cat.id)} style={{padding:"4px 12px",borderRadius:12,fontSize:11,border:`1px solid ${newCategory===cat.id?cat.color:T.colors.border}`,background:newCategory===cat.id?`${cat.color}15`:"transparent",color:newCategory===cat.id?cat.color:T.colors.textMuted,cursor:"pointer",fontFamily:T.fonts.body}}>{cat.label}</button>))}
+            </div>
+            {/* Photo upload */}
+            <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} style={{display:"none"}}/>
+            {newPhoto&&(
+              <div style={{position:"relative",marginTop:12,borderRadius:12,overflow:"hidden",height:100}}>
+                <img src={newPhoto} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                <button onClick={()=>setNewPhoto(null)} style={{position:"absolute",top:6,right:6,width:24,height:24,borderRadius:12,background:"rgba(0,0,0,0.6)",border:"none",color:"#fff",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+              </div>
+            )}
+            <div style={{display:"flex",gap:8,marginTop:12,alignItems:"center"}}>
+              <button onClick={()=>photoInputRef.current?.click()} style={{padding:"8px 14px",borderRadius:10,fontSize:11,border:`1px solid ${T.colors.border}`,background:newPhoto?T.colors.accentSoft:"transparent",color:newPhoto?T.colors.accent:T.colors.textMuted,cursor:"pointer",fontFamily:T.fonts.body}}>📷 {newPhoto?"Change":"Photo"}</button>
+              <input type="date" value={newDeadline} onChange={e=>setNewDeadline(e.target.value)} style={{flex:1,padding:"8px 12px",borderRadius:10,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.mono,fontSize:12,outline:"none"}}/>
+              <button onClick={()=>setNewIsPublic(!newIsPublic)} style={{padding:"8px 14px",borderRadius:10,fontSize:11,border:`1px solid ${newIsPublic?T.colors.accent:T.colors.border}`,background:newIsPublic?T.colors.accentSoft:"transparent",color:newIsPublic?T.colors.accent:T.colors.textMuted,cursor:"pointer",fontFamily:T.fonts.body}}>{newIsPublic?"🔓":"🔒"}</button>
+            </div>
+            <button onClick={addKinen} disabled={!newText.trim()} style={{width:"100%",marginTop:12,padding:"12px 20px",borderRadius:12,border:"none",background:newText.trim()?T.colors.accent:T.colors.ring,color:newText.trim()?T.colors.bg:T.colors.textDim,fontFamily:T.fonts.body,fontSize:14,fontWeight:600,cursor:newText.trim()?"pointer":"default"}}>{t("kinen_add")}</button>
+          </div>
+        )}
+
+        {/* Filters */}
+        <div style={{display:"flex",gap:6,marginBottom:8}}>
+          {[{key:"open",label:`Open${viewMode==="mine"?` (${openCount})`:""}`},{key:"closed",label:viewMode==="mine"?`達成 (${closedCount})`:"達成"},{key:"all",label:"すべて"}].map(f=>(
+            <button key={f.key} onClick={()=>setFilter(f.key)} style={{padding:"6px 14px",borderRadius:16,fontSize:11,fontFamily:T.fonts.body,border:`1px solid ${filter===f.key?T.colors.accent:T.colors.border}`,background:filter===f.key?T.colors.accentSoft:"transparent",color:filter===f.key?T.colors.accent:T.colors.textMuted,cursor:"pointer"}}>{f.label}</button>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:4}}>
+          <button onClick={()=>setCategoryFilter("all")} style={{padding:"4px 10px",borderRadius:10,fontSize:10,fontFamily:T.fonts.body,border:`1px solid ${categoryFilter==="all"?T.colors.accent:T.colors.borderLight}`,background:categoryFilter==="all"?T.colors.accentSoft:"transparent",color:categoryFilter==="all"?T.colors.accent:T.colors.textDim,cursor:"pointer",whiteSpace:"nowrap"}}>全て</button>
+          {CATEGORIES.map(cat=>(<button key={cat.id} onClick={()=>setCategoryFilter(cat.id)} style={{padding:"4px 10px",borderRadius:10,fontSize:10,fontFamily:T.fonts.body,border:`1px solid ${categoryFilter===cat.id?cat.color+"60":T.colors.borderLight}`,background:categoryFilter===cat.id?`${cat.color}15`:"transparent",color:categoryFilter===cat.id?cat.color:T.colors.textDim,cursor:"pointer",whiteSpace:"nowrap"}}>{cat.label}</button>))}
+        </div>
+      </div>
+
+      {/* List */}
+      <div style={{flex:1,overflowY:"auto",padding:"0 24px 24px"}}>
+        {viewMode==="mine"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {filtered.map((kinen,i)=>(
+              <div key={kinen.id} style={{borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,opacity:kinen.isOpen?1:0.6,animation:`slideUp ${0.15+i*0.05}s ease`,overflow:"hidden",...G.card}}>
+                {kinen.photo&&(<div style={{width:"100%",height:80,overflow:"hidden"}}><img src={kinen.photo} style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>)}
+                <div style={{padding:"14px 16px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                      <CategoryTag categoryId={kinen.category}/>
+                      {kinen.isPublic&&<span style={{fontSize:9,color:T.colors.textDim,padding:"1px 6px",borderRadius:6,background:T.colors.ring}}>公開</span>}
+                      {kinen.deadline&&<span style={{fontSize:9,fontFamily:T.fonts.mono,padding:"1px 6px",borderRadius:6,color:isOverdue(kinen.deadline)?T.colors.danger:T.colors.textDim,background:isOverdue(kinen.deadline)?T.colors.dangerSoft:T.colors.ring}}>{formatDate(kinen.deadline)}</span>}
+                    </div>
+                    <p style={{fontFamily:T.fonts.body,fontSize:14,color:T.colors.text,lineHeight:1.5,textDecoration:kinen.isOpen?"none":"line-through"}}>{kinen.text}</p>
+                  </div>
+                  <button onClick={()=>toggleOpen(kinen.id)} style={{width:28,height:28,borderRadius:14,flexShrink:0,border:`2px solid ${kinen.isOpen?T.colors.accent:T.colors.success}`,background:kinen.isOpen?"transparent":T.colors.successSoft,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",marginTop:4}}>
+                    {!kinen.isOpen&&<span style={{color:T.colors.success,fontSize:14,lineHeight:1}}>✓</span>}
+                  </button>
+                </div>
+                <div style={{display:"flex",gap:12,marginTop:10,paddingTop:8,borderTop:`1px solid ${T.colors.borderLight}`}}>
+                  <button onClick={()=>togglePublic(kinen.id)} style={{fontSize:10,color:T.colors.textDim,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body,padding:0}}>{kinen.isPublic?"🔓 公開中":"🔒 非公開"}</button>
+                  <button onClick={()=>deleteKinen(kinen.id)} style={{fontSize:10,color:T.colors.danger,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body,padding:0,marginLeft:"auto"}}>{t("kinen_delete")}</button>
+                </div>
+                </div>{/* close padding div */}
+              </div>
+            ))}
+            {filtered.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:T.colors.textDim,fontSize:13}}>{filter==="closed"?t("kinen_no_achieved"):t("kinen_try_add")}</div>}
+          </div>
+        )}
+
+        {viewMode==="following"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:16}}>
+            {groupedFollowing.length>0?groupedFollowing.map(([userId,group],gi)=>(
+              <div key={userId} style={{animation:`slideUp ${0.15+gi*0.1}s ease`}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+                  <UserAvatar name={group.userName} color={group.avatarColor} size={28}/>
+                  <span style={{fontFamily:T.fonts.body,fontSize:13,fontWeight:500,color:T.colors.text}}>{group.userName}</span>
+                  <span style={{fontSize:10,color:T.colors.textDim}}>{group.items.length}件の公開祈念</span>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {group.items.map((k)=>(
+                    <div key={k.id} style={{padding:"12px 14px",borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,opacity:k.isOpen?1:0.5,...G.card}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                        <CategoryTag categoryId={k.category}/>
+                        {!k.isOpen&&<span style={{fontSize:9,color:T.colors.success,padding:"1px 6px",borderRadius:6,background:T.colors.successSoft}}>達成!</span>}
+                      </div>
+                      <p style={{fontFamily:T.fonts.body,fontSize:14,color:T.colors.text,lineHeight:1.5,textDecoration:k.isOpen?"none":"line-through",marginBottom:8}}>{k.text}</p>
+                      <ReactionBadges reactions={k.reactions}/>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:10,paddingTop:8,borderTop:`1px solid ${T.colors.borderLight}`}}>
+                        <MiniReactionBar size="sm" onReact={(emoji)=>onReactKinen(k.id,emoji)}/>
+                        {k.isOpen&&(
+                          <button onClick={()=>handleAddToMine(k)} style={{padding:"4px 10px",borderRadius:8,fontSize:10,fontFamily:T.fonts.body,border:`1px solid ${addedToast===k.id?T.colors.success:T.colors.border}`,background:addedToast===k.id?T.colors.successSoft:"transparent",color:addedToast===k.id?T.colors.success:T.colors.textMuted,cursor:"pointer",transition:"all 0.3s ease",whiteSpace:"nowrap"}}>
+                            {addedToast===k.id?t("kinen_added"):t("kinen_pray_together")}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )):(
+              <div style={{textAlign:"center",padding:"40px 0",color:T.colors.textDim,fontSize:13}}>フォロー中の公開祈念はありません</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ─── Journal Entry Form (from v8) ───
+const JournalForm = ({onSave,onCancel,sessionDuration,isPostChanting=false}) => {
+  const [text,setText]=useState("");
+  const [mood,setMood]=useState(null);
+  const [isPublic,setIsPublic]=useState(false);
+  const [hasPhoto,setHasPhoto]=useState(false);
+  const [prompt]=useState(JOURNAL_PROMPTS[Math.floor(Math.random()*JOURNAL_PROMPTS.length)]);
+
+  const handleSave=()=>{if(!text.trim()&&!mood)return;onSave({id:`j${Date.now()}`,date:new Date().toISOString().split("T")[0],time:new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"}),mood,text:text.trim(),duration:sessionDuration||0,isPublic,photo:hasPhoto?"demo":null});};
+
+  return(
+    <div style={{animation:"slideUp 0.4s ease"}}>
+      {isPostChanting&&sessionDuration>0&&(
+        <div style={{textAlign:"center",marginBottom:16}}>
+          <div style={{fontFamily:T.fonts.display,fontSize:20,fontWeight:800,color:T.colors.accent,marginBottom:4,textTransform:"uppercase"}}>お疲れさまでした</div>
+          <div style={{fontFamily:T.fonts.mono,fontSize:12,color:T.colors.textMuted}}>{formatTimeCompact(sessionDuration)} · 約{formatHen(secondsToHen(sessionDuration))}遍</div>
+        </div>
+      )}
+      <div style={{padding:16,borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
+        <div style={{fontSize:12,color:T.colors.journal,fontFamily:T.fonts.display,fontStyle:"italic",marginBottom:12,padding:"8px 12px",borderRadius:10,background:T.colors.journalSoft,border:`1px solid ${T.colors.journal}20`}}>"{prompt}"</div>
+        <div style={{marginBottom:12}}>
+          <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:8}}>今の気持ち</div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {MOODS.map((m)=>(
+              <button key={m.label} onClick={()=>setMood(mood?.label===m.label?null:m)} style={{padding:"6px 12px",borderRadius:14,display:"flex",alignItems:"center",gap:4,border:`1px solid ${mood?.label===m.label?m.color:T.colors.border}`,background:mood?.label===m.label?`${m.color}15`:"transparent",color:mood?.label===m.label?m.color:T.colors.textMuted,fontSize:12,fontFamily:T.fonts.body,cursor:"pointer",transition:"all 0.2s ease"}}>
+                <span style={{fontSize:14}}>{m.emoji}</span><span>{m.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <textarea value={text} onChange={(e)=>setText(e.target.value)} placeholder="唱題で感じたこと、気づき、決意..." style={{width:"100%",padding:14,borderRadius:14,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,resize:"none",height:120,outline:"none",lineHeight:1.7}}/>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:12}}>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>setHasPhoto(!hasPhoto)} style={{padding:"6px 12px",borderRadius:10,fontSize:11,border:`1px solid ${hasPhoto?T.colors.accent:T.colors.border}`,background:hasPhoto?T.colors.accentSoft:"transparent",color:hasPhoto?T.colors.accent:T.colors.textMuted,cursor:"pointer",fontFamily:T.fonts.body}}>📷 {hasPhoto?"写真あり":"写真"}</button>
+            <button onClick={()=>setIsPublic(!isPublic)} style={{padding:"6px 12px",borderRadius:10,fontSize:11,border:`1px solid ${isPublic?T.colors.accent:T.colors.border}`,background:isPublic?T.colors.accentSoft:"transparent",color:isPublic?T.colors.accent:T.colors.textMuted,cursor:"pointer",fontFamily:T.fonts.body}}>{isPublic?"🔓 公開":"🔒 非公開"}</button>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:10,marginTop:14}}>
+          {onCancel&&(<button onClick={onCancel} style={{flex:1,padding:"12px 20px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:13,cursor:"pointer"}}>{isPostChanting?"スキップ":"キャンセル"}</button>)}
+          <button onClick={handleSave} disabled={!text.trim()&&!mood} style={{flex:1,padding:"12px 20px",borderRadius:12,border:"none",background:(text.trim()||mood)?T.colors.accent:T.colors.ring,color:(text.trim()||mood)?T.colors.bg:T.colors.textDim,fontFamily:T.fonts.body,fontSize:13,fontWeight:600,cursor:(text.trim()||mood)?"pointer":"default"}}>記録する</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Chart Components ───
+const WeeklyBarChart = ({history}) => {
+  const data=useMemo(()=>{
+    const last7=history.slice(-7);
+    const max=Math.max(...last7.map(d=>d.totalDuration),1);
+    const avg=last7.reduce((s,d)=>s+d.totalDuration,0)/7;
+    const total=last7.reduce((s,d)=>s+d.totalDuration,0);
+    const dayLabels=["日","月","火","水","木","金","土"];
+    return{last7,max,avg,total,dayLabels};
+  },[history]);
+  const W=320,H=130,barW=32,gap=(W-barW*7)/8;
+  const avgY=H-((data.avg/data.max)*H*0.85);
+  return(
+    <div style={{padding:16,borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,marginBottom:12,...G.card}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:12}}>
+        <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>{t("chart_weekly")}</div>
+        <div><span style={{fontFamily:T.fonts.mono,fontSize:24,fontWeight:800,color:T.colors.accent}}>{formatTimeCompact(data.total)}</span></div>
+      </div>
+      <svg width="100%" viewBox={`0 0 ${W} ${H+24}`} style={{display:"block"}}>
+        <defs>
+          <linearGradient id="barGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stopColor="#3D6600"/><stop offset="100%" stopColor="#CEFF00"/></linearGradient>
+        </defs>
+        {data.avg>0&&<line x1={0} y1={avgY} x2={W} y2={avgY} stroke={T.colors.textDim} strokeDasharray="4 3" strokeWidth={0.5} opacity={0.5}/>}
+        {data.last7.map((d,i)=>{
+          const barH=d.totalDuration>0?Math.max(4,(d.totalDuration/data.max)*H*0.85):0;
+          const x=gap+(barW+gap)*i;
+          const y=H-barH;
+          const isToday=i===6;
+          const dayDate=new Date(d.date);
+          const label=data.dayLabels[dayDate.getDay()];
+          return(
+            <g key={i}>
+              {barH>0&&<rect x={x} y={y} width={barW} height={barH} rx={6} fill="url(#barGrad)" opacity={isToday?1:0.6}/>}
+              {isToday&&barH>0&&<rect x={x} y={y} width={barW} height={barH} rx={6} fill="none" stroke={T.colors.accent} strokeWidth={1.5} opacity={0.4}/>}
+              <text x={x+barW/2} y={H+16} textAnchor="middle" fill={isToday?T.colors.accent:T.colors.textDim} fontSize={10} fontFamily={T.fonts.mono}>{label}</text>
+              {barH>0&&isToday&&<text x={x+barW/2} y={y-6} textAnchor="middle" fill={T.colors.accent} fontSize={9} fontFamily={T.fonts.mono}>{Math.round(d.totalDuration/60)}分</text>}
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+};
+
+const StreakHeatmap = ({history,streak,bestStreak}) => {
+  const data=useMemo(()=>{
+    const last35=history.slice(-35);
+    const max=Math.max(...last35.map(d=>d.totalDuration),1);
+    return{last35,max};
+  },[history]);
+  const dayLabels=["月","火","水","木","金","土","日"];
+  return(
+    <div style={{padding:16,borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,marginBottom:12,...G.card}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+        <div style={{display:"flex",alignItems:"baseline",gap:8}}>
+          <span style={{fontSize:18}}>🔥</span>
+          <span style={{fontFamily:T.fonts.mono,fontSize:28,fontWeight:800,color:T.colors.accent}}>{streak}</span>
+          <span style={{fontSize:11,color:T.colors.textDim}}>{t("chart_streak_days")}</span>
+        </div>
+        <div style={{fontSize:11,color:T.colors.textDim}}>最長 <span style={{fontFamily:T.fonts.mono,fontWeight:700,color:T.colors.textMuted}}>{bestStreak}</span>日</div>
+      </div>
+      <div style={{display:"flex",gap:2,marginBottom:6}}>
+        {dayLabels.map(d=><div key={d} style={{flex:1,textAlign:"center",fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.mono}}>{d}</div>)}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(7, 1fr)",gap:3}}>
+        {data.last35.map((d,i)=>{
+          const isToday=i===data.last35.length-1;
+          return(
+            <div key={i} style={{aspectRatio:"1",borderRadius:5,background:intensityColor(d.totalDuration,data.max),border:isToday?`2px solid ${T.colors.accent}`:"2px solid transparent",boxShadow:isToday?`0 0 8px ${T.colors.accentGlow}`:"none",transition:"all 0.3s ease"}}/>
+          );
+        })}
+      </div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end",gap:4,marginTop:8}}>
+        <span style={{fontSize:9,color:T.colors.textDim}}>{t("chart_less")}</span>
+        {[T.colors.ring,"#1A3300","#3D6600","#6B9900",T.colors.accent].map((c,i)=><div key={i} style={{width:10,height:10,borderRadius:2,background:c}}/>)}
+        <span style={{fontSize:9,color:T.colors.textDim}}>{t("chart_more")}</span>
+      </div>
+    </div>
+  );
+};
+
+const MonthlyTrendChart = ({history}) => {
+  const data=useMemo(()=>{
+    const last30=history.slice(-30);
+    const max=Math.max(...last30.map(d=>d.totalDuration),1);
+    const W=320,H=110;
+    const pts=last30.map((d,i)=>({x:(i/(last30.length-1))*W,y:H-(d.totalDuration/max)*H*0.85-5}));
+    const linePath=smoothPath(pts);
+    const lastPt=pts[pts.length-1];
+    const areaPath=linePath+`L${W},${H}L0,${H}Z`;
+    // trend: compare last 7 vs previous 7
+    const recent7=last30.slice(-7).reduce((s,d)=>s+d.totalDuration,0);
+    const prev7=last30.slice(-14,-7).reduce((s,d)=>s+d.totalDuration,0);
+    const trendPct=prev7>0?Math.round(((recent7-prev7)/prev7)*100):0;
+    return{pts,linePath,areaPath,lastPt,W,H,trendPct};
+  },[history]);
+  return(
+    <div style={{padding:16,borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,marginBottom:12,...G.card}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:12}}>
+        <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>{t("chart_trend_30d")}</div>
+        <div style={{display:"flex",alignItems:"center",gap:4}}>
+          <span style={{fontSize:14,color:data.trendPct>=0?"#00E676":"#FF5252"}}>{data.trendPct>=0?"↑":"↓"}</span>
+          <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:700,color:data.trendPct>=0?"#00E676":"#FF5252"}}>{Math.abs(data.trendPct)}%</span>
+          <span style={{fontSize:10,color:T.colors.textDim}}>{t("chart_vs_prev")}</span>
+        </div>
+      </div>
+      <svg width="100%" viewBox={`0 0 ${data.W} ${data.H+20}`} style={{display:"block"}}>
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="rgba(206,255,0,0.25)"/><stop offset="100%" stopColor="rgba(206,255,0,0)"/></linearGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        {[0.25,0.5,0.75].map((r,i)=><line key={i} x1={0} y1={data.H*(1-r)} x2={data.W} y2={data.H*(1-r)} stroke={T.colors.border} strokeWidth={0.5}/>)}
+        <path d={data.areaPath} fill="url(#areaGrad)"/>
+        <path d={data.linePath} fill="none" stroke={T.colors.accent} strokeWidth={2} strokeLinecap="round"/>
+        {data.lastPt&&<circle cx={data.lastPt.x} cy={data.lastPt.y} r={4} fill={T.colors.accent} filter="url(#glow)"/>}
+        <text x={0} y={data.H+14} fill={T.colors.textDim} fontSize={9} fontFamily={T.fonts.mono}>{t("chart_30d_ago")}</text>
+        <text x={data.W} y={data.H+14} textAnchor="end" fill={T.colors.accent} fontSize={9} fontFamily={T.fonts.mono}>{t("chart_today")}</text>
+      </svg>
+    </div>
+  );
+};
+
+const MoodRingChart = ({journals}) => {
+  const data=useMemo(()=>{
+    const counts={};
+    journals.forEach(j=>{if(j.mood)counts[j.mood.label]=(counts[j.mood.label]||0)+1;});
+    const total=Object.values(counts).reduce((s,v)=>s+v,0);
+    const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    const circumference=2*Math.PI*50;
+    let offset=0;
+    const segments=entries.map(([label,count])=>{
+      const mood=MOODS.find(m=>m.label===label);
+      const pct=count/total;
+      const arc=pct*circumference;
+      const seg={label,count,pct,color:mood?.color||T.colors.textDim,emoji:mood?.emoji||"?",arc,offset,circumference};
+      offset+=arc;
+      return seg;
+    });
+    return{segments,total,circumference};
+  },[journals]);
+  if(data.total===0) return null;
+  return(
+    <div style={{padding:16,borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,marginBottom:12,...G.card}}>
+      <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:12}}>{t("chart_mood_dist")}</div>
+      <div style={{display:"flex",alignItems:"center",gap:20}}>
+        <svg width={120} height={120} viewBox="0 0 120 120">
+          {data.segments.map((seg,i)=>(
+            <circle key={i} cx={60} cy={60} r={50} fill="none" stroke={seg.color} strokeWidth={10}
+              strokeDasharray={`${seg.arc} ${seg.circumference-seg.arc}`}
+              strokeDashoffset={-seg.offset} strokeLinecap="round"
+              transform="rotate(-90 60 60)" opacity={0.85}/>
+          ))}
+          <text x={60} y={55} textAnchor="middle" fill={T.colors.text} fontSize={22} fontWeight={800} fontFamily={T.fonts.mono}>{data.total}</text>
+          <text x={60} y={72} textAnchor="middle" fill={T.colors.textDim} fontSize={9} fontFamily={T.fonts.mono}>entries</text>
+        </svg>
+        <div style={{display:"flex",flexDirection:"column",gap:6,flex:1}}>
+          {data.segments.slice(0,5).map((seg,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:14}}>{seg.emoji}</span>
+              <div style={{flex:1}}>
+                <div style={{height:4,borderRadius:2,background:T.colors.ring,overflow:"hidden"}}>
+                  <div style={{width:`${seg.pct*100}%`,height:"100%",borderRadius:2,background:seg.color,transition:"width 0.8s ease"}}/>
+                </div>
+              </div>
+              <span style={{fontFamily:T.fonts.mono,fontSize:10,color:T.colors.textMuted,minWidth:30,textAlign:"right"}}>{Math.round(seg.pct*100)}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Journal Tab (from v8) ───
+const JournalTab = ({journals,setJournals}) => {
+  const [showForm,setShowForm]=useState(false);
+  const [expandedId,setExpandedId]=useState(null);
+
+  const handleSave=(entry)=>{setJournals(p=>[entry,...p]);setShowForm(false);};
+
+  const grouped=useMemo(()=>{const map={};journals.forEach(j=>{if(!map[j.date])map[j.date]=[];map[j.date].push(j);});return Object.entries(map).sort((a,b)=>b[0].localeCompare(a[0]));},[journals]);
+
+  const dateLabel=(d)=>{const today=new Date().toISOString().split("T")[0];const yesterday=new Date(Date.now()-86400000).toISOString().split("T")[0];if(d===today)return"今日";if(d===yesterday)return"昨日";const date=new Date(d);return`${date.getMonth()+1}月${date.getDate()}日`;};
+
+  const totalEntries=journals.length;
+  const thisWeek=journals.filter(j=>{const d=new Date(j.date);const now=new Date();const diff=(now-d)/86400000;return diff<7;}).length;
+  const moodCounts={};journals.forEach(j=>{if(j.mood)moodCounts[j.mood.emoji]=(moodCounts[j.mood.emoji]||0)+1;});
+  const topMoods=Object.entries(moodCounts).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+  return(
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{padding:"0 24px 12px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div>
+            <h2 style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:800,color:T.colors.journal,letterSpacing:"-0.02em",textTransform:"uppercase"}}>{t("journal_title")}</h2>
+            <p style={{fontSize:11,color:T.colors.textDim,marginTop:2}}>{t("journal_subtitle")}</p>
+          </div>
+          <button onClick={()=>setShowForm(!showForm)} style={{width:40,height:40,borderRadius:20,border:`1px solid ${T.colors.border}`,background:showForm?T.colors.journalSoft:"transparent",color:T.colors.journal,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:T.fonts.body}}>{showForm?"×":"✎"}</button>
+        </div>
+        <div style={{display:"flex",gap:8,marginBottom:12}}>
+          <div style={{flex:1,padding:"10px 14px",borderRadius:12,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
+            <div style={{fontSize:9,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>{t("journal_this_week")}</div>
+            <div style={{fontFamily:T.fonts.mono,fontSize:20,fontWeight:700,marginTop:2}}>{thisWeek}<span style={{fontSize:10,color:T.colors.textDim,marginLeft:2}}>{t("journal_count")}</span></div>
+          </div>
+          <div style={{flex:1,padding:"10px 14px",borderRadius:12,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
+            <div style={{fontSize:9,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>{t("journal_total")}</div>
+            <div style={{fontFamily:T.fonts.mono,fontSize:20,fontWeight:700,marginTop:2}}>{totalEntries}<span style={{fontSize:10,color:T.colors.textDim,marginLeft:2}}>{t("journal_count")}</span></div>
+          </div>
+          <div style={{flex:1,padding:"10px 14px",borderRadius:12,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
+            <div style={{fontSize:9,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>{t("journal_top_mood")}</div>
+            <div style={{fontSize:16,marginTop:2}}>{topMoods.map(([e])=>e).join(" ")||"—"}</div>
+          </div>
+        </div>
+      </div>
+
+      {showForm&&(<div style={{padding:"0 24px 16px"}}><JournalForm onSave={handleSave} onCancel={()=>setShowForm(false)} sessionDuration={0}/></div>)}
+
+      <div style={{flex:1,overflowY:"auto",padding:"0 24px 24px"}}>
+        {grouped.map(([date,entries],gi)=>(
+          <div key={date} style={{marginBottom:20,animation:`slideUp ${0.15+gi*0.08}s ease`}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+              <span style={{fontFamily:T.fonts.body,fontSize:13,fontWeight:600,color:T.colors.text}}>{dateLabel(date)}</span>
+              <div style={{flex:1,height:1,background:T.colors.borderLight}}/>
+              <span style={{fontFamily:T.fonts.mono,fontSize:10,color:T.colors.textDim}}>{date}</span>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:10,paddingLeft:12,borderLeft:`2px solid ${T.colors.borderLight}`}}>
+              {entries.map((entry)=>{
+                const isExp=expandedId===entry.id;
+                const preview=entry.text.length>80?entry.text.slice(0,80)+"…":entry.text;
+                return(
+                  <div key={entry.id} onClick={()=>setExpandedId(isExp?null:entry.id)} style={{padding:"14px 16px",borderRadius:14,background:T.colors.surface,border:`1px solid ${isExp?T.colors.journal+"30":T.colors.border}`,cursor:"pointer",transition:"all 0.3s ease",position:"relative",...G.card}}>
+                    <div style={{position:"absolute",left:-19,top:18,width:8,height:8,borderRadius:4,background:entry.mood?entry.mood.color:T.colors.textDim,border:`2px solid ${T.colors.bg}`}}/>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <span style={{fontFamily:T.fonts.mono,fontSize:11,color:T.colors.textDim}}>{entry.time}</span>
+                        {entry.mood&&(<span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:10,background:`${entry.mood.color}15`,border:`1px solid ${entry.mood.color}30`,fontSize:11,color:entry.mood.color}}><span style={{fontSize:12}}>{entry.mood.emoji}</span>{entry.mood.label}</span>)}
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        {entry.photo&&<span style={{fontSize:10,color:T.colors.textDim}}>📷</span>}
+                        {entry.isPublic&&<span style={{fontSize:9,color:T.colors.textDim,padding:"1px 6px",borderRadius:6,background:T.colors.ring}}>公開</span>}
+                      </div>
+                    </div>
+                    <p style={{fontFamily:T.fonts.body,fontSize:13,color:T.colors.text,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{isExp?entry.text:preview}</p>
+                    {entry.duration>0&&(<div style={{marginTop:8,display:"flex",alignItems:"center",gap:8}}><span style={{fontFamily:T.fonts.mono,fontSize:10,color:T.colors.textDim,padding:"2px 8px",borderRadius:8,background:T.colors.ring}}>{formatTimeCompact(entry.duration)} · {formatHen(secondsToHen(entry.duration))}遍</span></div>)}
+                    {isExp&&entry.photo&&(<div style={{marginTop:10,height:120,borderRadius:12,background:`linear-gradient(135deg, ${T.colors.ring}, ${T.colors.borderLight})`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${T.colors.border}`}}><span style={{fontSize:11,color:T.colors.textDim}}>📷 写真プレビュー</span></div>)}
+                    {isExp&&(
+                      <div style={{marginTop:10,paddingTop:8,borderTop:`1px solid ${T.colors.borderLight}`,display:"flex",gap:12}}>
+                        <button onClick={(e)=>{e.stopPropagation();setJournals(p=>p.map(j=>j.id===entry.id?{...j,isPublic:!j.isPublic}:j));}} style={{fontSize:10,color:T.colors.textDim,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body}}>{entry.isPublic?"🔓 公開中":"🔒 非公開"}</button>
+                        <button onClick={(e)=>{e.stopPropagation();setJournals(p=>p.filter(j=>j.id!==entry.id));setExpandedId(null);}} style={{fontSize:10,color:T.colors.danger,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body,marginLeft:"auto"}}>削除</button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+        {journals.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:T.colors.textDim,fontSize:13}}>{t("journal_empty")}</div>}
+      </div>
+    </div>
+  );
+};
+
+// ─── Add Friend Modal ───
+const AddFriendModal = ({isOpen,onClose,following,onFollow,myUserId}) => {
+  const [mode,setMode]=useState("id");
+  const [searchText,setSearchText]=useState("");
+  const [toast,setToast]=useState(null);
+  const [scanning,setScanning]=useState(false);
+  const [scanResult,setScanResult]=useState(null);
+  const [copied,setCopied]=useState(false);
+  const qrRef=useRef(null);
+
+  // QRコード生成
+  useEffect(()=>{
+    if(!isOpen||mode!=="qr"||!qrRef.current)return;
+    qrRef.current.innerHTML="";
+    try{
+      const qr=qrcode(0,"M");
+      qr.addData(myUserId||"shodai_user");
+      qr.make();
+      const size=180;const modules=qr.getModuleCount();const cellSize=size/modules;
+      let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`;
+      svg+=`<rect width="${size}" height="${size}" fill="#fff" rx="8"/>`;
+      for(let r=0;r<modules;r++)for(let c=0;c<modules;c++)if(qr.isDark(r,c))svg+=`<rect x="${c*cellSize}" y="${r*cellSize}" width="${cellSize+0.5}" height="${cellSize+0.5}" fill="#000"/>`;
+      svg+=`</svg>`;
+      qrRef.current.innerHTML=svg;
+    }catch(e){qrRef.current.innerHTML=`<div style="color:#999;font-size:11px">QR生成エラー</div>`;}
+  },[isOpen,mode,myUserId]);
+
+  const searchResults=useMemo(()=>{
+    if(!searchText.trim())return[];
+    const q=searchText.toLowerCase();
+    return DEMO_USERS_DB.filter(u=>u.userId.toLowerCase().includes(q)||u.name.includes(q));
+  },[searchText]);
+
+  const isFollowing=(userId)=>following.some(f=>f.name===DEMO_USERS_DB.find(u=>u.userId===userId)?.name);
+
+  const handleFollow=(user)=>{
+    onFollow({id:`fl_${Date.now()}`,name:user.name,avatarColor:user.avatarColor,since:new Date().toISOString().split("T")[0]});
+    setToast(user.name);
+    setTimeout(()=>setToast(null),2000);
+  };
+
+  const handleScan=()=>{
+    setScanning(true);setScanResult(null);
+    setTimeout(()=>{
+      const notFollowed=DEMO_USERS_DB.filter(u=>!isFollowing(u.userId));
+      const found=notFollowed.length>0?notFollowed[Math.floor(Math.random()*notFollowed.length)]:DEMO_USERS_DB[0];
+      setScanResult(found);setScanning(false);
+    },2500);
+  };
+
+  const handleCopyId=()=>{
+    if(navigator.clipboard){navigator.clipboard.writeText(myUserId).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),1500);});}
+    else{setCopied(true);setTimeout(()=>setCopied(false),1500);}
+  };
+
+  if(!isOpen)return null;
+
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:100,display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={onClose}>
+      <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.7)"}}/>
+      <div onClick={e=>e.stopPropagation()} style={{position:"relative",background:T.colors.surfaceSolid,borderRadius:"24px 24px 0 0",maxHeight:"80vh",display:"flex",flexDirection:"column",animation:"slideUp 0.3s ease",backdropFilter:T.glass.blur,WebkitBackdropFilter:T.glass.blur,boxShadow:"0 -8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.08)",borderBottom:"none"}}>
+        {/* Header */}
+        <div style={{padding:"20px 24px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <h3 style={{fontFamily:T.fonts.display,fontSize:18,fontWeight:800,color:T.colors.text}}>{t("friend_add_title")}</h3>
+          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+        </div>
+
+        {/* Tab toggle */}
+        <div style={{display:"flex",gap:6,padding:"0 24px 16px"}}>
+          {[{key:"id",label:t("friend_id_search")},{key:"qr",label:t("friend_qr")}].map(v=>(
+            <button key={v.key} onClick={()=>{setMode(v.key);setScanResult(null);setScanning(false);}} style={{flex:1,padding:"10px 16px",borderRadius:14,fontSize:13,fontFamily:T.fonts.body,fontWeight:mode===v.key?700:400,border:`1px solid ${mode===v.key?T.colors.accent+"60":T.colors.border}`,background:mode===v.key?T.colors.accentSoft:"transparent",color:mode===v.key?T.colors.accent:T.colors.textMuted,cursor:"pointer"}}>{v.label}</button>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div style={{padding:"0 24px 32px",overflowY:"auto",flex:1}}>
+          {mode==="id"&&(
+            <>
+              <div style={{position:"relative",marginBottom:16}}>
+                <input value={searchText} onChange={e=>setSearchText(e.target.value)} placeholder={t("friend_search_placeholder")} style={{width:"100%",padding:"12px 16px 12px 40px",borderRadius:14,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,outline:"none"}}/>
+                <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:T.colors.textDim}}>🔍</span>
+              </div>
+              {searchText.trim()&&searchResults.length===0&&(
+                <div style={{textAlign:"center",padding:"24px 0",color:T.colors.textDim,fontSize:13}}>{t("friend_not_found")}</div>
+              )}
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {searchResults.map(user=>{
+                  const alreadyFollowing=isFollowing(user.userId);
+                  return(
+                    <div key={user.userId} style={{display:"flex",alignItems:"center",gap:12,padding:14,borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
+                      <UserAvatar name={user.name} color={user.avatarColor} size={44}/>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:14,fontWeight:600,color:T.colors.text}}>{user.name}</div>
+                        <div style={{fontSize:11,color:T.colors.textDim,fontFamily:T.fonts.mono}}>@{user.userId}</div>
+                        <div style={{fontSize:11,color:T.colors.textMuted,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user.bio}</div>
+                      </div>
+                      <button onClick={()=>!alreadyFollowing&&handleFollow(user)} style={{padding:"8px 16px",borderRadius:20,border:"none",background:alreadyFollowing?T.colors.ring:T.colors.accent,color:alreadyFollowing?T.colors.textDim:T.colors.bg,fontSize:12,fontWeight:700,fontFamily:T.fonts.body,cursor:alreadyFollowing?"default":"pointer",whiteSpace:"nowrap"}}>{alreadyFollowing?"フォロー中":"フォロー"}</button>
+                    </div>
+                  );
+                })}
+              </div>
+              {!searchText.trim()&&(
+                <div style={{textAlign:"center",padding:"24px 0",color:T.colors.textDim,fontSize:12}}>{t("friend_search_hint")}</div>
+              )}
+            </>
+          )}
+
+          {mode==="qr"&&(
+            <>
+              {/* My QR Code */}
+              <div style={{textAlign:"center",padding:24,borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,marginBottom:16,...G.card}}>
+                <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:12}}>{t("friend_my_qr")}</div>
+                <div ref={qrRef} style={{display:"inline-block",padding:12,background:"#fff",borderRadius:12,marginBottom:12}}/>
+                <div style={{fontFamily:T.fonts.mono,fontSize:13,color:T.colors.textMuted,marginBottom:8}}>@{myUserId}</div>
+                <button onClick={handleCopyId} style={{padding:"8px 20px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:copied?T.colors.accentSoft:"transparent",color:copied?T.colors.accent:T.colors.textMuted,fontSize:12,fontFamily:T.fonts.body,cursor:"pointer",transition:"all 0.2s ease"}}>{copied?t("friend_copied"):t("friend_copy_id")}</button>
+              </div>
+
+              {/* Scan button */}
+              <button onClick={handleScan} disabled={scanning} style={{width:"100%",padding:"14px 20px",borderRadius:16,border:"none",background:T.colors.accent,color:T.colors.bg,fontSize:14,fontWeight:700,fontFamily:T.fonts.body,cursor:scanning?"default":"pointer",opacity:scanning?0.6:1,marginBottom:16}}>
+                {scanning?"📷 スキャン中...":"📷 QRコードを読み取る"}
+              </button>
+
+              {/* Scan animation */}
+              {scanning&&(
+                <div style={{borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,height:120,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+                  <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:T.colors.accent,animation:"scanLine 1.5s ease-in-out infinite"}}/>
+                  <span style={{fontSize:13,color:T.colors.textDim}}>スキャン中...</span>
+                </div>
+              )}
+
+              {/* Scan result */}
+              {scanResult&&!scanning&&(
+                <div style={{display:"flex",alignItems:"center",gap:12,padding:14,borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.accent}40`,animation:"slideUp 0.3s ease"}}>
+                  <UserAvatar name={scanResult.name} color={scanResult.avatarColor} size={44}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:14,fontWeight:600,color:T.colors.text}}>{scanResult.name}</div>
+                    <div style={{fontSize:11,color:T.colors.textDim,fontFamily:T.fonts.mono}}>@{scanResult.userId}</div>
+                  </div>
+                  <button onClick={()=>{if(!isFollowing(scanResult.userId))handleFollow(scanResult);}} style={{padding:"8px 16px",borderRadius:20,border:"none",background:isFollowing(scanResult.userId)?T.colors.ring:T.colors.accent,color:isFollowing(scanResult.userId)?T.colors.textDim:T.colors.bg,fontSize:12,fontWeight:700,fontFamily:T.fonts.body,cursor:"pointer"}}>{isFollowing(scanResult.userId)?"フォロー中":"フォロー"}</button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Toast */}
+        {toast&&(
+          <div style={{position:"absolute",top:80,left:"50%",transform:"translateX(-50%)",padding:"10px 20px",borderRadius:20,background:T.colors.accent,color:T.colors.bg,fontSize:12,fontWeight:700,fontFamily:T.fonts.body,animation:"slideUp 0.3s ease",whiteSpace:"nowrap"}}>{toast}{t("friend_followed_toast")}</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ─── MyPage Tab ───
+const MyPageTab = ({profile,setProfile,todayTotal,journals,kinenList,followers,following,onFollow,demoHistory,lang,setLang}) => {
+  const [isEditing,setIsEditing]=useState(false);
+  const [editName,setEditName]=useState(profile.name);
+  const [editBio,setEditBio]=useState(profile.bio);
+  const [editColor,setEditColor]=useState(profile.avatarColor);
+  const [showFollowers,setShowFollowers]=useState(false);
+  const [showFollowing,setShowFollowing]=useState(false);
+  const [showAddFriend,setShowAddFriend]=useState(false);
+  const [stats]=useState(DEMO_STATS);
+
+  const AVATAR_COLORS=["#C8A96E","#7B9FD4","#D4A07B","#7BD4A0","#D47BA0","#A07BD4","#E8C547","#6ECF8E"];
+
+  const handleSaveProfile=()=>{setProfile(p=>({...p,name:editName,bio:editBio,avatarColor:editColor}));setIsEditing(false);};
+  const handleCancelEdit=()=>{setEditName(profile.name);setEditBio(profile.bio);setEditColor(profile.avatarColor);setIsEditing(false);};
+
+  const memberDays=Math.floor((new Date()-new Date(stats.memberSince))/86400000);
+
+  return(
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{flex:1,overflowY:"auto",padding:"0 24px 24px"}}>
+
+        {/* ── Profile Header ── */}
+        <div style={{textAlign:"center",marginBottom:20,animation:"slideUp 0.3s ease"}}>
+          {!isEditing?(
+            <>
+              <div style={{display:"inline-flex",position:"relative"}}>
+                <UserAvatar name={profile.name} color={profile.avatarColor} size={72}/>
+                {profile.isPublic&&<div style={{position:"absolute",bottom:0,right:-4,padding:"2px 6px",borderRadius:8,background:T.colors.successSoft,border:`1px solid ${T.colors.success}40`,fontSize:9,color:T.colors.success}}>公開</div>}
+              </div>
+              <h2 style={{fontFamily:T.fonts.display,fontSize:24,fontWeight:800,color:T.colors.text,marginTop:12}}>{profile.name}</h2>
+              <p style={{fontSize:11,color:T.colors.textDim,marginTop:4,fontFamily:T.fonts.mono}}>@{profile.userId}</p>
+              <p style={{fontSize:12,color:T.colors.textMuted,marginTop:4}}>{profile.bio}</p>
+              <p style={{fontSize:10,color:T.colors.textDim,marginTop:4,fontFamily:T.fonts.mono}}>参加 {memberDays}日目</p>
+              <button onClick={()=>setIsEditing(true)} style={{marginTop:10,padding:"6px 16px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontSize:11,fontFamily:T.fonts.body,cursor:"pointer"}}>{t("mypage_edit")}</button>
+            </>
+          ):(
+            <div style={{padding:16,borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,textAlign:"left",animation:"slideUp 0.3s ease",...G.card}}>
+              <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>{t("mypage_edit")}</div>
+
+              {/* Avatar color picker */}
+              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+                <UserAvatar name={editName||"?"} color={editColor} size={52}/>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {AVATAR_COLORS.map(c=>(
+                    <button key={c} onClick={()=>setEditColor(c)} style={{width:24,height:24,borderRadius:12,background:c,border:editColor===c?`2px solid ${T.colors.text}`:`2px solid transparent`,cursor:"pointer",transition:"all 0.2s ease"}}/>
+                  ))}
+                </div>
+              </div>
+
+              <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="名前" style={{width:"100%",padding:"10px 14px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,outline:"none",marginBottom:10}}/>
+              <textarea value={editBio} onChange={e=>setEditBio(e.target.value)} placeholder="自己紹介..." style={{width:"100%",padding:"10px 14px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.body,fontSize:13,resize:"none",height:60,outline:"none",lineHeight:1.6}}/>
+              <div style={{display:"flex",gap:10,marginTop:12}}>
+                <button onClick={handleCancelEdit} style={{flex:1,padding:"10px 16px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:12,cursor:"pointer"}}>キャンセル</button>
+                <button onClick={handleSaveProfile} style={{flex:1,padding:"10px 16px",borderRadius:12,border:"none",background:T.colors.accent,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:12,fontWeight:600,cursor:"pointer"}}>保存</button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Stats Cards ── */}
+        <div style={{display:"flex",gap:8,marginBottom:16,animation:"slideUp 0.35s ease"}}>
+          <div style={{flex:1,padding:"12px 14px",borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,textAlign:"center",...G.card}}>
+            <div style={{fontSize:9,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>{t("mypage_stat_total")}</div>
+            <div style={{fontFamily:T.fonts.mono,fontSize:24,fontWeight:700,marginTop:4,color:T.colors.accent}}>{formatHen(stats.totalHen)}</div>
+            <div style={{fontSize:10,color:T.colors.textDim}}>{t("mypage_stat_hen")}</div>
+          </div>
+          <div style={{flex:1,padding:"12px 14px",borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,textAlign:"center",...G.card}}>
+            <div style={{fontSize:9,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>{t("mypage_stat_streak")}</div>
+            <div style={{fontFamily:T.fonts.mono,fontSize:24,fontWeight:700,marginTop:4,color:T.colors.live}}>{stats.streak}</div>
+            <div style={{fontSize:10,color:T.colors.textDim}}>日</div>
+          </div>
+          <div style={{flex:1,padding:"12px 14px",borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,textAlign:"center",...G.card}}>
+            <div style={{fontSize:9,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>{t("mypage_stat_best")}</div>
+            <div style={{fontFamily:T.fonts.mono,fontSize:24,fontWeight:700,marginTop:4,color:T.colors.success}}>{stats.bestStreak}</div>
+            <div style={{fontSize:10,color:T.colors.textDim}}>日</div>
+          </div>
+        </div>
+
+        {/* ── More Stats ── */}
+        <div style={{display:"flex",gap:8,marginBottom:20,animation:"slideUp 0.4s ease"}}>
+          <div style={{flex:1,padding:"10px 14px",borderRadius:12,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
+            <div style={{fontSize:9,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>{t("mypage_stat_total_time")}</div>
+            <div style={{fontFamily:T.fonts.mono,fontSize:16,fontWeight:600,marginTop:4}}>{formatTimeCompact(stats.totalTime)}</div>
+          </div>
+          <div style={{flex:1,padding:"10px 14px",borderRadius:12,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
+            <div style={{fontSize:9,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>{t("mypage_stat_sessions")}</div>
+            <div style={{fontFamily:T.fonts.mono,fontSize:16,fontWeight:600,marginTop:4}}>{stats.totalSessions}回</div>
+          </div>
+          <div style={{flex:1,padding:"10px 14px",borderRadius:12,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
+            <div style={{fontSize:9,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>{t("mypage_stat_journals")}</div>
+            <div style={{fontFamily:T.fonts.mono,fontSize:16,fontWeight:600,marginTop:4}}>{journals.length}件</div>
+          </div>
+        </div>
+
+        {/* ── Activity Charts ── */}
+        {demoHistory&&demoHistory.length>0&&(
+          <div style={{marginBottom:20,animation:"slideUp 0.42s ease"}}>
+            <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>{t("chart_activity")}</div>
+            <WeeklyBarChart history={demoHistory}/>
+            <StreakHeatmap history={demoHistory} streak={stats.streak} bestStreak={stats.bestStreak}/>
+            <MonthlyTrendChart history={demoHistory}/>
+            <MoodRingChart journals={journals}/>
+          </div>
+        )}
+
+
+        {/* ── Follow / Followers ── */}
+        <div style={{marginBottom:20,animation:"slideUp 0.5s ease"}}>
+          <div style={{display:"flex",gap:8,marginBottom:10}}>
+            <button onClick={()=>{setShowFollowing(!showFollowing);setShowFollowers(false);}} style={{flex:1,padding:"12px 14px",borderRadius:14,background:T.colors.surface,border:`1px solid ${showFollowing?T.colors.accent+"40":T.colors.border}`,cursor:"pointer",textAlign:"center"}}>
+              <div style={{fontFamily:T.fonts.mono,fontSize:20,fontWeight:700,color:T.colors.text}}>{following.length}</div>
+              <div style={{fontSize:10,color:T.colors.textDim,marginTop:2}}>{t("mypage_following")}</div>
+            </button>
+            <button onClick={()=>{setShowFollowers(!showFollowers);setShowFollowing(false);}} style={{flex:1,padding:"12px 14px",borderRadius:14,background:T.colors.surface,border:`1px solid ${showFollowers?T.colors.accent+"40":T.colors.border}`,cursor:"pointer",textAlign:"center"}}>
+              <div style={{fontFamily:T.fonts.mono,fontSize:20,fontWeight:700,color:T.colors.text}}>{followers.length}</div>
+              <div style={{fontSize:10,color:T.colors.textDim,marginTop:2}}>{t("mypage_followers")}</div>
+            </button>
+            <button onClick={()=>setShowAddFriend(true)} style={{width:52,borderRadius:14,background:T.colors.accent,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:2}}>
+              <span style={{fontSize:20,color:T.colors.bg,fontWeight:700}}>+</span>
+              <span style={{fontSize:8,color:T.colors.bg,fontWeight:600}}>{t("mypage_add")}</span>
+            </button>
+          </div>
+
+          <AddFriendModal isOpen={showAddFriend} onClose={()=>setShowAddFriend(false)} following={following} onFollow={onFollow} myUserId={profile.userId}/>
+
+          {/* Following list */}
+          {showFollowing&&(
+            <div style={{borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,overflow:"hidden",animation:"slideUp 0.2s ease",...G.card}}>
+              {following.map((u,i)=>(
+                <div key={u.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderBottom:i<following.length-1?`1px solid ${T.colors.borderLight}`:"none"}}>
+                  <UserAvatar name={u.name} color={u.avatarColor} size={32}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,color:T.colors.text}}>{u.name}</div>
+                    <div style={{fontSize:10,color:T.colors.textDim,fontFamily:T.fonts.mono}}>{u.since}~</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Followers list */}
+          {showFollowers&&(
+            <div style={{borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,overflow:"hidden",animation:"slideUp 0.2s ease",...G.card}}>
+              {followers.map((u,i)=>(
+                <div key={u.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderBottom:i<followers.length-1?`1px solid ${T.colors.borderLight}`:"none"}}>
+                  <UserAvatar name={u.name} color={u.avatarColor} size={32}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,color:T.colors.text}}>{u.name}</div>
+                    <div style={{fontSize:10,color:T.colors.textDim,fontFamily:T.fonts.mono}}>{u.since}~</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── Language Toggle ── */}
+        <div style={{marginBottom:20,animation:"slideUp 0.52s ease"}}>
+          <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>{t("mypage_language")}</div>
+          <div style={{display:"flex",gap:8}}>
+            {[{key:"ja",label:"🇯🇵 日本語"},{key:"en",label:"🇺🇸 English"}].map(v=>(
+              <button key={v.key} onClick={()=>setLang(v.key)} style={{flex:1,padding:"12px 16px",borderRadius:14,fontSize:13,fontFamily:T.fonts.body,fontWeight:lang===v.key?700:400,border:`1px solid ${lang===v.key?T.colors.accent+"60":T.colors.border}`,background:lang===v.key?T.colors.accentSoft:"transparent",color:lang===v.key?T.colors.accent:T.colors.textMuted,cursor:"pointer",transition:"all 0.2s ease"}}>{v.label}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Privacy Settings ── */}
+        <div style={{animation:"slideUp 0.55s ease"}}>
+          <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>公開設定</div>
+          <div style={{borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,overflow:"hidden",...G.card}}>
+            {/* Profile public */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px",borderBottom:`1px solid ${T.colors.borderLight}`}}>
+              <div>
+                <div style={{fontSize:13,color:T.colors.text}}>{t("mypage_profile_public")}</div>
+                <div style={{fontSize:10,color:T.colors.textDim,marginTop:2}}>{t("mypage_profile_public_desc")}</div>
+              </div>
+              <button onClick={()=>setProfile(p=>({...p,isPublic:!p.isPublic}))} style={{width:44,height:24,borderRadius:12,border:"none",background:profile.isPublic?T.colors.success:T.colors.ring,cursor:"pointer",position:"relative",transition:"background 0.3s ease"}}>
+                <div style={{width:20,height:20,borderRadius:10,background:"#fff",position:"absolute",top:2,left:profile.isPublic?22:2,transition:"left 0.3s ease",boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}/>
+              </button>
+            </div>
+
+            {/* Live public */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px",borderBottom:`1px solid ${T.colors.borderLight}`}}>
+              <div>
+                <div style={{fontSize:13,color:T.colors.text}}>{t("mypage_live_display")}</div>
+                <div style={{fontSize:10,color:T.colors.textDim,marginTop:2}}>{t("mypage_live_display_desc")}</div>
+              </div>
+              <button onClick={()=>setProfile(p=>({...p,livePublic:!p.livePublic}))} style={{width:44,height:24,borderRadius:12,border:"none",background:profile.livePublic?T.colors.success:T.colors.ring,cursor:"pointer",position:"relative",transition:"background 0.3s ease"}}>
+                <div style={{width:20,height:20,borderRadius:10,background:"#fff",position:"absolute",top:2,left:profile.livePublic?22:2,transition:"left 0.3s ease",boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}/>
+              </button>
+            </div>
+
+            {/* Journal default */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px"}}>
+              <div>
+                <div style={{fontSize:13,color:T.colors.text}}>ジャーナル初期公開</div>
+                <div style={{fontSize:10,color:T.colors.textDim,marginTop:2}}>{t("mypage_journal_default_desc")}</div>
+              </div>
+              <button onClick={()=>setProfile(p=>({...p,journalDefaultPublic:!p.journalDefaultPublic}))} style={{width:44,height:24,borderRadius:12,border:"none",background:profile.journalDefaultPublic?T.colors.success:T.colors.ring,cursor:"pointer",position:"relative",transition:"background 0.3s ease"}}>
+                <div style={{width:20,height:20,borderRadius:10,background:"#fff",position:"absolute",top:2,left:profile.journalDefaultPublic?22:2,transition:"left 0.3s ease",boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}/>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+// ─── Main App (Merged v5+v7+v8) ───
+function ShodaiApp() {
+  const [lang,setLang]=useState("en");
+  currentLang=lang;
+  const [activeTab,setActiveTab]=useState("chanting");
+  const [phase,setPhase]=useState("idle");
+  const [elapsed,setElapsed]=useState(0);
+  const [timerMode,setTimerMode]=useState("countdown");
+  const [targetSeconds,setTargetSeconds]=useState(900);
+  const [showPresets,setShowPresets]=useState(false);
+  const [todayTotal,setTodayTotal]=useState(2340);
+  const [sessionHistory,setSessionHistory]=useState([{duration:1440,timestamp:"06:30"},{duration:900,timestamp:"12:15"}]);
+  const [kinenList,setKinenList]=useState(DEMO_KINEN);
+  const [followingKinen,setFollowingKinen]=useState(DEMO_FOLLOWING_KINEN);
+  const [journals,setJournals]=useState(DEMO_JOURNALS);
+  const [showPostJournal,setShowPostJournal]=useState(false);
+  const [profile,setProfile]=useState(DEMO_PROFILE);
+  const [myFollowing,setMyFollowing]=useState(DEMO_MY_FOLLOWING);
+  const [demoHistory]=useState(()=>generateDemoHistory());
+  const [lastSessionDuration,setLastSessionDuration]=useState(0);
+  const [chantView,setChantView]=useState("timer"); // "timer" | "cards"
+  const intervalRef=useRef(null);
+
+  useEffect(()=>{if(phase==="chanting"){intervalRef.current=setInterval(()=>{setElapsed(p=>{const n=p+1;if(timerMode==="countdown"&&targetSeconds>0&&n>=targetSeconds){setPhase("completed");clearInterval(intervalRef.current);return targetSeconds;}return n;});},1000);}else clearInterval(intervalRef.current);return()=>clearInterval(intervalRef.current);},[phase,timerMode,targetSeconds]);
+  useEffect(()=>{if(phase==="chanting"||phase==="paused"||phase==="completed")setActiveTab("chanting");},[phase]);
+
+  const handleStart=useCallback(()=>{if(phase==="idle"||phase==="completed"){setElapsed(0);setShowPostJournal(false);}setPhase("chanting");},[phase]);
+  const handlePause=useCallback(()=>setPhase("paused"),[]);
+  const handleStop=useCallback(()=>{if(elapsed>0){setSessionHistory(p=>[{duration:elapsed,timestamp:new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})},...p]);setTodayTotal(p=>p+elapsed);setLastSessionDuration(elapsed);setShowPostJournal(true);}setPhase("idle");setElapsed(0);},[elapsed]);
+  const handlePresetSelect=(p)=>{if(p.seconds===0){setTimerMode("stopwatch");setTargetSeconds(0);}else{setTimerMode("countdown");setTargetSeconds(p.seconds);}setShowPresets(false);};
+
+  const handleSavePostJournal=(entry)=>{setJournals(p=>[{...entry,duration:lastSessionDuration},...p]);setShowPostJournal(false);};
+  const handleReactKinen=(kinenId,emoji)=>{setFollowingKinen(p=>p.map(k=>k.id===kinenId?{...k,reactions:{...k.reactions,[emoji]:(k.reactions[emoji]||0)+1}}:k));};
+  const handleAddToMine=(text,category)=>{setKinenList(p=>[...p,{id:Date.now(),text,category,isOpen:true,isPublic:false,deadline:null,createdAt:new Date().toISOString().split("T")[0]}]);};
+  const handleFollowUser=(user)=>{setMyFollowing(p=>[...p,user]);};
+
+  const displayTime=timerMode==="countdown"&&targetSeconds>0?formatTime(Math.max(0,targetSeconds-elapsed)):formatTime(elapsed);
+  const progress=timerMode==="countdown"&&targetSeconds>0?Math.min(1,elapsed/targetSeconds):0;
+  const isActive=phase==="chanting"||phase==="paused";
+  const liveTodayTotal=todayTotal+(isActive||phase==="completed"?elapsed:0);
+  const todayHen=secondsToHen(liveTodayTotal);
+  const sessionHen=secondsToHen(elapsed);
+  const cs=220;const r=(cs-4)/2-8;const circ=2*Math.PI*r;
+
+  const NAV=[{id:"chanting",icon:"◉",label:t("nav_chanting")},{id:"live",icon:"◎",label:t("nav_live")},{id:"kinen",icon:"✦",label:t("nav_kinen")},{id:"journal",icon:"⊡",label:t("nav_journal")},{id:"mypage",icon:"●",label:t("nav_mypage")}];
+
+  return(
+    <div style={{height:"100vh",background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.body,display:"flex",flexDirection:"column",maxWidth:430,margin:"0 auto",overflow:"hidden"}}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap');
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+        @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+        @keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes gentleGlow{0%,100%{box-shadow:0 0 30px rgba(206,255,0,0.05)}50%{box-shadow:0 0 60px rgba(206,255,0,0.15)}}
+        @keyframes neonPulse{0%,100%{text-shadow:0 0 10px rgba(206,255,0,0.3)}50%{text-shadow:0 0 20px rgba(206,255,0,0.6)}}
+        @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
+        ::-webkit-scrollbar{width:0}
+        textarea::placeholder{color:${T.colors.textDim}}
+        input::placeholder{color:${T.colors.textDim}}
+        input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.6)}
+        button{transition:transform 0.15s ease,opacity 0.15s ease}
+        button:active{transform:scale(0.97)}
+      `}</style>
+      <div style={{position:"fixed",inset:0,background:"radial-gradient(ellipse at 50% 0%, rgba(206,255,0,0.025) 0%, transparent 50%), radial-gradient(ellipse at 80% 100%, rgba(130,177,255,0.015) 0%, transparent 40%), radial-gradient(ellipse at 0% 50%, rgba(255,107,107,0.01) 0%, transparent 40%)",pointerEvents:"none"}}/>
+
+      {/* ── CHANTING TAB ── */}
+      {activeTab==="chanting"&&(
+        <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"auto",position:"relative",zIndex:1}}>
+          <header style={{padding:"56px 24px 12px",display:"flex",flexDirection:"column",alignItems:"center",position:"relative"}}>
+            <ShodaiLogo size="lg" animate={phase==="chanting"}/>
+            <div style={{position:"absolute",right:24,top:56}}>
+              <PhaseIndicator phase={phase}/>
+            </div>
+          </header>
+          <div style={{padding:"8px 24px 0"}}>
+            <div style={{padding:"14px 18px",borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",...G.card}}>
+              <div>
+                <span style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>本日</span>
+                <div style={{display:"flex",alignItems:"baseline",gap:6,marginTop:3}}><span style={{fontFamily:T.fonts.mono,fontSize:28,fontWeight:700}}>{formatHen(todayHen)}</span><span style={{fontSize:11,color:T.colors.textDim,fontWeight:600}}>遍</span></div>
+                <span style={{fontSize:11,fontFamily:T.fonts.mono,color:T.colors.textMuted}}>{formatTimeCompact(liveTodayTotal)}</span>
+              </div>
+              {isActive&&<span style={{fontSize:10,color:T.colors.success,animation:"pulse 2s infinite",fontFamily:T.fonts.mono}}>+{formatHen(sessionHen)}遍</span>}
+            </div>
+          </div>
+
+          {/* Post-chanting journal prompt */}
+          {showPostJournal&&phase==="idle"&&(
+            <div style={{padding:"16px 24px 0"}}>
+              <JournalForm onSave={handleSavePostJournal} onCancel={()=>setShowPostJournal(false)} sessionDuration={lastSessionDuration} isPostChanting={true}/>
+            </div>
+          )}
+
+          {!showPostJournal&&(
+            <>
+              {/* ── View toggle (timer ↔ cards) ── */}
+              {isActive&&kinenList.filter(k=>k.isOpen).length>0&&(
+                <div style={{display:"flex",justifyContent:"center",padding:"8px 24px 0"}}>
+                  <div style={{display:"flex",gap:0,borderRadius:12,overflow:"hidden",border:`1px solid ${T.colors.border}`,...G.card}}>
+                    {[{key:"timer",label:t("chant_timer_label")||"Timer"},{key:"cards",label:t("chant_cards_label")||"Kinen"}].map(v=>(
+                      <button key={v.key} onClick={()=>setChantView(v.key)} style={{padding:"7px 18px",fontSize:11,fontFamily:T.fonts.body,fontWeight:chantView===v.key?600:400,border:"none",background:chantView===v.key?T.colors.accentSoft:"transparent",color:chantView===v.key?T.colors.accent:T.colors.textMuted,cursor:"pointer"}}>{v.label}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:"8px 0",minHeight:300}}>
+
+                {/* ── Timer View ── */}
+                {(chantView==="timer"||!isActive)&&(
+                  <>
+                    <div style={{position:"relative",width:cs,height:cs,display:"flex",alignItems:"center",justifyContent:"center",animation:phase==="chanting"?"breathe 6s ease-in-out infinite, gentleGlow 6s ease-in-out infinite":"none",borderRadius:"50%",background:"radial-gradient(circle at 50% 40%, rgba(255,255,255,0.02) 0%, transparent 70%)"}}>
+                      <svg width={cs} height={cs} style={{position:"absolute",transform:"rotate(-90deg)"}}>
+                        <circle cx={cs/2} cy={cs/2} r={r} fill="none" stroke={T.colors.ring} strokeWidth="3"/>
+                        {timerMode==="countdown"&&targetSeconds>0&&<circle cx={cs/2} cy={cs/2} r={r} fill="none" stroke={phase==="completed"?T.colors.accent:T.colors.accentGlow} strokeWidth={phase==="completed"?4:3} strokeDasharray={circ} strokeDashoffset={circ*(1-progress)} strokeLinecap="round" style={{transition:"stroke-dashoffset 1s linear",filter:phase==="completed"?"drop-shadow(0 0 8px rgba(206,255,0,0.5))":"none"}}/>}
+                        {(timerMode==="stopwatch"||targetSeconds===0)&&phase==="chanting"&&<circle cx={cs/2} cy={cs/2} r={r} fill="none" stroke={T.colors.accentGlow} strokeWidth="3" strokeDasharray={`${circ*0.08} ${circ*0.92}`} strokeDashoffset={-((elapsed*3)%circ)} strokeLinecap="round" style={{transition:"stroke-dashoffset 1s linear"}}/>}
+                      </svg>
+                      <div style={{display:"flex",flexDirection:"column",alignItems:"center",position:"relative",zIndex:2}}>
+                        <div style={{fontFamily:T.fonts.mono,fontSize:52,fontWeight:700,letterSpacing:"-0.02em",color:phase==="completed"?T.colors.accent:T.colors.text,lineHeight:1}}>{displayTime}</div>
+                        {(isActive||phase==="completed")&&<div style={{marginTop:10,fontFamily:T.fonts.mono,fontSize:18,fontWeight:700,color:T.colors.accent}}>{formatHen(sessionHen)}<span style={{fontSize:11,color:T.colors.textDim,marginLeft:3,fontWeight:600}}>遍</span></div>}
+                        {phase==="idle"&&<div style={{marginTop:6,fontSize:11,color:T.colors.textDim}}>{timerMode==="countdown"&&targetSeconds>0?`${formatTimeCompact(targetSeconds)} ≈ ${formatHen(secondsToHen(targetSeconds))}遍`:"自由モード"}</div>}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* ── Card View (replaces timer) ── */}
+                {chantView==="cards"&&isActive&&(
+                  <div style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:12,animation:"fadeIn 0.3s ease"}}>
+                    {/* Compact time display */}
+                    <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
+                      <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.textMuted}}>{displayTime}</span>
+                      <div style={{width:1,height:14,background:T.colors.border}}/>
+                      <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.accent}}>{formatHen(sessionHen)}<span style={{fontSize:9,color:T.colors.textDim,marginLeft:2}}>遍</span></span>
+                    </div>
+                    {/* Card stack */}
+                    <KinenSlideshow kinenList={kinenList}/>
+                  </div>
+                )}
+
+                {phase==="idle"&&(<div style={{animation:"fadeIn 0.4s ease"}}><button onClick={()=>setShowPresets(!showPresets)} style={{padding:"8px 20px",borderRadius:20,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:12,cursor:"pointer"}}>時間を変更 {showPresets?"▴":"▾"}</button>
+                  {showPresets&&(<div style={{display:"flex",flexWrap:"wrap",justifyContent:"center",gap:8,marginTop:12,animation:"slideUp 0.3s ease"}}>{TIMER_PRESETS.map(p=>{const sel=(timerMode==="countdown"&&targetSeconds===p.seconds)||(timerMode==="stopwatch"&&p.seconds===0);return<button key={p.label} onClick={()=>handlePresetSelect(p)} style={{padding:"10px 16px",borderRadius:16,display:"flex",flexDirection:"column",alignItems:"center",gap:2,border:`1px solid ${sel?T.colors.accent:T.colors.border}`,background:sel?T.colors.accentSoft:"transparent",color:sel?T.colors.accent:T.colors.text,fontFamily:T.fonts.body,fontSize:12,cursor:"pointer"}}><span>{p.label}</span>{p.seconds>0&&<span style={{fontSize:9,color:T.colors.textDim}}>≈{formatHen(secondsToHen(p.seconds))}遍</span>}</button>})}</div>)}
+                </div>)}
+              </div>
+
+              <div style={{padding:"0 32px 16px",display:"flex",gap:12,justifyContent:"center"}}>
+                {phase==="idle"&&<button onClick={handleStart} style={{flex:1,maxWidth:300,padding:"18px 32px",borderRadius:30,border:"none",background:`linear-gradient(180deg, ${T.colors.accent} 0%, #A8D400 100%)`,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:16,fontWeight:800,cursor:"pointer",animation:"slideUp 0.5s ease",letterSpacing:"-0.01em",textTransform:"uppercase",boxShadow:`0 4px 20px rgba(206,255,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3)`}}>唱題を始める</button>}
+                {phase==="chanting"&&(<><button onClick={handlePause} style={{flex:1,padding:"16px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer",textTransform:"uppercase"}}>一時停止</button><button onClick={handleStop} style={{padding:"16px 24px",borderRadius:30,border:"none",background:T.colors.dangerSoft,color:T.colors.danger,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer",textTransform:"uppercase"}}>終了</button></>)}
+                {phase==="paused"&&(<><button onClick={handleStart} style={{flex:1,padding:"16px 24px",borderRadius:30,border:"none",background:T.colors.accent,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:14,fontWeight:800,cursor:"pointer",textTransform:"uppercase"}}>再開する</button><button onClick={handleStop} style={{padding:"16px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer"}}>終了</button></>)}
+                {phase==="completed"&&(<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14,width:"100%",animation:"slideUp 0.5s ease"}}><div style={{textAlign:"center"}}><div style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:800,color:T.colors.accent,textTransform:"uppercase"}}>お疲れさまでした</div><div style={{fontFamily:T.fonts.mono,fontSize:14,fontWeight:500,color:T.colors.textMuted,marginTop:6}}>{formatTimeCompact(elapsed)}<span style={{margin:"0 6px",color:T.colors.textDim}}>·</span>約{formatHen(sessionHen)}遍</div></div><div style={{display:"flex",gap:12,width:"100%",maxWidth:300}}><button onClick={handleStop} style={{flex:1,padding:"14px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer"}}>記録する</button><button onClick={()=>{handleStop();setTimeout(handleStart,100)}} style={{flex:1,padding:"14px 24px",borderRadius:30,border:"none",background:T.colors.accent,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:14,fontWeight:800,cursor:"pointer",textTransform:"uppercase"}}>もう一回</button></div></div>)}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── LIVE TAB ── */}
+      {activeTab==="live"&&<div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",zIndex:1,paddingTop:56}}><LiveTab followingKinen={followingKinen} onReactKinen={handleReactKinen} onAddToMine={handleAddToMine}/></div>}
+
+      {/* ── KINEN TAB ── */}
+      {activeTab==="kinen"&&<div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",zIndex:1,paddingTop:56}}><KinenTab kinenList={kinenList} setKinenList={setKinenList} followingKinen={followingKinen} onReactKinen={handleReactKinen} onAddToMine={handleAddToMine}/></div>}
+
+      {/* ── JOURNAL TAB ── */}
+      {activeTab==="journal"&&<div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",zIndex:1,paddingTop:56}}><JournalTab journals={journals} setJournals={setJournals}/></div>}
+
+      {/* ── MYPAGE TAB ── */}
+      {activeTab==="mypage"&&(
+        <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",zIndex:1,paddingTop:56}}>
+          <div style={{padding:"0 24px 12px"}}>
+            <h2 style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:800,color:T.colors.accent,letterSpacing:"-0.02em",textTransform:"uppercase"}}>{t("mypage_title")}</h2>
+            <p style={{fontSize:11,color:T.colors.textDim,marginTop:2}}>{t("mypage_subtitle")}</p>
+          </div>
+          <MyPageTab profile={profile} setProfile={setProfile} todayTotal={todayTotal} journals={journals} kinenList={kinenList} followers={DEMO_MY_FOLLOWERS} following={myFollowing} onFollow={handleFollowUser} demoHistory={demoHistory} lang={lang} setLang={setLang}/>
+        </div>
+      )}
+
+      {/* ── NAV ── */}
+      <nav style={{width:"100%",padding:"12px 24px 28px",display:"flex",justifyContent:"space-around",borderTop:`1px solid ${T.colors.border}`,background:"rgba(5,5,8,0.88)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",position:"relative",zIndex:10,boxShadow:"0 -4px 20px rgba(0,0,0,0.3)"}}>
+        {NAV.map(item=>{const cur=activeTab===item.id;const dis=(phase==="chanting"||phase==="paused"||phase==="completed")&&item.id!=="chanting";return(
+          <button key={item.id} onClick={()=>!dis&&setActiveTab(item.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:dis?"default":"pointer",opacity:dis?0.2:cur?1:0.4,background:"none",border:"none",padding:0}}>
+            {item.id==="chanting"?<ShodaiLogo size="sm" showText={false}/>:<span style={{fontSize:18,color:T.colors.text}}>{item.icon}</span>}
+            <span style={{fontSize:10,fontFamily:T.fonts.body,color:cur?(item.id==="live"?T.colors.live:item.id==="journal"?T.colors.journal:T.colors.accent):T.colors.textDim}}>{item.label}</span>
+          </button>
+        );})}
+      </nav>
+    </div>
+  );
+}
+
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(<ShodaiApp />);
+  </script>
+</body>
+</html>
