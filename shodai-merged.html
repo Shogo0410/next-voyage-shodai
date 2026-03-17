@@ -322,14 +322,14 @@ const generateDemoHistory = () => {
 
 // ─── Demo Data ───
 const DEMO_KINEN = [
-  {id:1,text:"広宣流布の大願成就",category:"study",isOpen:true,isPublic:true,deadline:null,createdAt:"2025-01-01",photo:"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop"},
-  {id:2,text:"家族全員の健康と幸福",category:"family",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-15",photo:"https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&h=400&fit=crop"},
-  {id:3,text:"仕事のプロジェクト成功",category:"work",isOpen:true,isPublic:false,deadline:"2025-03-31",createdAt:"2025-02-01",photo:"https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop"},
-  {id:4,text:"後輩の成長と勝利",category:"study",isOpen:true,isPublic:true,deadline:"2025-04-15",createdAt:"2025-02-10",photo:null},
-  {id:5,text:"自分自身の人間革命",category:"personal",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-01",photo:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop"},
-  {id:6,text:"地区の折伏目標達成",category:"study",isOpen:true,isPublic:true,deadline:"2025-06-30",createdAt:"2025-01-20",photo:null},
-  {id:7,text:"簿記2級合格",category:"personal",isOpen:false,isPublic:false,deadline:"2025-02-01",createdAt:"2024-11-01",photo:null},
-  {id:8,text:"母の膝の回復",category:"health",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-10",photo:"https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=600&h=400&fit=crop"},
+  {id:1,text:"広宣流布の大願成就",category:"study",isOpen:true,isPublic:true,deadline:null,createdAt:"2025-01-01",photo:"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop",subtasks:[{id:"s1a",text:"毎朝の勤行を欠かさない",done:true},{id:"s1b",text:"御書を週3回学ぶ",done:false},{id:"s1c",text:"地区座談会に毎月参加",done:true}]},
+  {id:2,text:"家族全員の健康と幸福",category:"family",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-15",photo:"https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&h=400&fit=crop",subtasks:[{id:"s2a",text:"週末に家族で食事する",done:true},{id:"s2b",text:"両親に月1回電話する",done:false}]},
+  {id:3,text:"仕事のプロジェクト成功",category:"work",isOpen:true,isPublic:false,deadline:"2025-03-31",createdAt:"2025-02-01",photo:"https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop",subtasks:[{id:"s3a",text:"企画書を提出する",done:true},{id:"s3b",text:"チームミーティングを週1で実施",done:true},{id:"s3c",text:"クライアントにプレゼン",done:false},{id:"s3d",text:"最終納品",done:false}]},
+  {id:4,text:"後輩の成長と勝利",category:"study",isOpen:true,isPublic:true,deadline:"2025-04-15",createdAt:"2025-02-10",photo:null,subtasks:[]},
+  {id:5,text:"自分自身の人間革命",category:"personal",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-01",photo:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop",subtasks:[{id:"s5a",text:"毎日30分読書する",done:false},{id:"s5b",text:"怒りを感じたら一呼吸置く",done:false},{id:"s5c",text:"感謝日記をつける",done:true}]},
+  {id:6,text:"地区の折伏目標達成",category:"study",isOpen:true,isPublic:true,deadline:"2025-06-30",createdAt:"2025-01-20",photo:null,subtasks:[{id:"s6a",text:"友人3人に声をかける",done:true},{id:"s6b",text:"座談会に友人を誘う",done:false}]},
+  {id:7,text:"簿記2級合格",category:"personal",isOpen:false,isPublic:false,deadline:"2025-02-01",createdAt:"2024-11-01",photo:null,subtasks:[{id:"s7a",text:"テキスト1周",done:true},{id:"s7b",text:"過去問5年分",done:true},{id:"s7c",text:"模試を受ける",done:true}]},
+  {id:8,text:"母の膝の回復",category:"health",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-10",photo:"https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=600&h=400&fit=crop",subtasks:[{id:"s8a",text:"病院の予約を取る",done:true},{id:"s8b",text:"リハビリに付き添う",done:false}]},
 ];
 
 const DEMO_FOLLOWING_KINEN = [
@@ -817,6 +817,11 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
   const addKinen=()=>{if(!newText.trim())return;setKinenList(p=>[...p,{id:Date.now(),text:newText.trim(),category:newCategory,isOpen:true,isPublic:newIsPublic,deadline:newDeadline||null,createdAt:new Date().toISOString().split("T")[0],photo:newPhoto,subtasks:[]}]);cancelEdit();};
   const handlePhotoSelect=(e)=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=(ev)=>setNewPhoto(ev.target.result);reader.readAsDataURL(file);};
   const handleAddToMine=(k)=>{onAddToMine(k.text,k.category);setAddedToast(k.id);setTimeout(()=>setAddedToast(null),2000);};
+  const [expandedKinen,setExpandedKinen]=useState(null);
+  const [newSubtaskText,setNewSubtaskText]=useState("");
+  const addSubtask=(kinenId)=>{if(!newSubtaskText.trim())return;setKinenList(p=>p.map(k=>k.id===kinenId?{...k,subtasks:[...(k.subtasks||[]),{id:"st"+Date.now(),text:newSubtaskText.trim(),done:false}]}:k));setNewSubtaskText("");};
+  const toggleSubtask=(kinenId,stId)=>setKinenList(p=>p.map(k=>k.id===kinenId?{...k,subtasks:(k.subtasks||[]).map(s=>s.id===stId?{...s,done:!s.done}:s)}:k));
+  const deleteSubtask=(kinenId,stId)=>setKinenList(p=>p.map(k=>k.id===kinenId?{...k,subtasks:(k.subtasks||[]).filter(s=>s.id!==stId)}:k));
 
   const groupedFollowing=useMemo(()=>{const map={};filteredFollowing.forEach(k=>{if(!map[k.userId])map[k.userId]={userName:k.userName,avatarColor:k.avatarColor,items:[]};map[k.userId].items.push(k);});return Object.entries(map);},[filteredFollowing]);
 
@@ -890,11 +895,39 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
                       {kinen.deadline&&<span style={{fontSize:9,fontFamily:T.fonts.mono,padding:"1px 6px",borderRadius:6,color:isOverdue(kinen.deadline)?T.colors.danger:T.colors.textDim,background:isOverdue(kinen.deadline)?T.colors.dangerSoft:T.colors.ring}}>{formatDate(kinen.deadline)}</span>}
                     </div>
                     <p style={{fontFamily:T.fonts.body,fontSize:14,color:T.colors.text,lineHeight:1.5,textDecoration:kinen.isOpen?"none":"line-through"}}>{kinen.text}</p>
+                    {/* サブタスク進捗 */}
+                    {(kinen.subtasks||[]).length>0&&(()=>{const total=kinen.subtasks.length;const done=kinen.subtasks.filter(s=>s.done).length;const pct=total>0?done/total:0;return(
+                      <button onClick={()=>setExpandedKinen(expandedKinen===kinen.id?null:kinen.id)} style={{display:"flex",alignItems:"center",gap:8,marginTop:8,background:"none",border:"none",cursor:"pointer",padding:0,width:"100%"}}>
+                        <div style={{flex:1,height:4,borderRadius:2,background:T.colors.ring,overflow:"hidden"}}>
+                          <div style={{height:"100%",borderRadius:2,background:pct===1?T.colors.success:T.colors.accent,width:`${pct*100}%`,transition:"width 0.3s ease"}}/>
+                        </div>
+                        <span style={{fontSize:10,fontFamily:T.fonts.mono,color:pct===1?T.colors.success:T.colors.textMuted,whiteSpace:"nowrap"}}>{done}/{total}</span>
+                        <span style={{fontSize:9,color:T.colors.textDim}}>{expandedKinen===kinen.id?"▴":"▾"}</span>
+                      </button>
+                    );})()}
                   </div>
                   <button onClick={()=>toggleOpen(kinen.id)} style={{width:28,height:28,borderRadius:14,flexShrink:0,border:`2px solid ${kinen.isOpen?T.colors.accent:T.colors.success}`,background:kinen.isOpen?"transparent":T.colors.successSoft,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",marginTop:4}}>
                     {!kinen.isOpen&&<span style={{color:T.colors.success,fontSize:14,lineHeight:1}}>✓</span>}
                   </button>
                 </div>
+                {/* サブタスク展開 */}
+                {expandedKinen===kinen.id&&(
+                  <div style={{marginTop:8,padding:"10px 12px",borderRadius:10,background:T.colors.bg,border:`1px solid ${T.colors.borderLight}`,animation:"fadeIn 0.2s ease"}}>
+                    {(kinen.subtasks||[]).map(st=>(
+                      <div key={st.id} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:`1px solid ${T.colors.borderLight}`}}>
+                        <button onClick={()=>toggleSubtask(kinen.id,st.id)} style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${st.done?T.colors.success:T.colors.border}`,background:st.done?T.colors.successSoft:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:0}}>
+                          {st.done&&<span style={{color:T.colors.success,fontSize:11,lineHeight:1}}>✓</span>}
+                        </button>
+                        <span style={{flex:1,fontSize:12,fontFamily:T.fonts.body,color:st.done?T.colors.textDim:T.colors.text,textDecoration:st.done?"line-through":"none"}}>{st.text}</span>
+                        <button onClick={()=>deleteSubtask(kinen.id,st.id)} style={{fontSize:10,color:T.colors.textDim,background:"none",border:"none",cursor:"pointer",padding:0,opacity:0.5}}>×</button>
+                      </div>
+                    ))}
+                    <div style={{display:"flex",gap:6,marginTop:8}}>
+                      <input value={newSubtaskText} onChange={e=>setNewSubtaskText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addSubtask(kinen.id)} placeholder="やることを追加..." style={{flex:1,padding:"6px 10px",borderRadius:8,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.body,fontSize:11,outline:"none"}}/>
+                      <button onClick={()=>addSubtask(kinen.id)} style={{padding:"6px 12px",borderRadius:8,border:"none",background:T.colors.accentSoft,color:T.colors.accent,fontSize:11,fontFamily:T.fonts.body,fontWeight:600,cursor:"pointer"}}>追加</button>
+                    </div>
+                  </div>
+                )}
                 <div style={{display:"flex",gap:12,marginTop:10,paddingTop:8,borderTop:`1px solid ${T.colors.borderLight}`}}>
                   <button onClick={()=>startEdit(kinen)} style={{fontSize:10,color:T.colors.accent,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body,padding:0}}>✏️ 編集</button>
                   <button onClick={()=>togglePublic(kinen.id)} style={{fontSize:10,color:T.colors.textDim,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body,padding:0}}>{kinen.isPublic?"🔓 公開中":"🔒 非公開"}</button>
