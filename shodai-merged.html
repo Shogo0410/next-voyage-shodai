@@ -46,11 +46,11 @@ mapboxgl.accessToken = "pk.eyJ1Ijoic2hvZ28wNDEwIiwiYSI6ImNtbTdzNnlmODB4dWYycW4wd
 // ─── Design Tokens (Glossy Dark UI) ───
 const T = {
   colors: {
-    bg: "#050508", surface: "rgba(255,255,255,0.045)", surfaceAlt: "rgba(255,255,255,0.065)",
+    bg: "#050508", surface: "rgba(255,255,255,0.035)", surfaceAlt: "rgba(255,255,255,0.055)",
     surfaceSolid: "#141418",
     accent: "#CEFF00", accentSoft: "rgba(206,255,0,0.08)", accentGlow: "rgba(206,255,0,0.30)",
     text: "#FFFFFF", textMuted: "#AAAAAA", textDim: "#777777",
-    border: "rgba(255,255,255,0.08)", borderLight: "rgba(255,255,255,0.05)",
+    border: "rgba(255,255,255,0.12)", borderLight: "rgba(255,255,255,0.07)",
     success: "#00E676", successSoft: "rgba(0,230,118,0.1)",
     ring: "rgba(255,255,255,0.06)", ringActive: "rgba(206,255,0,0.15)",
     danger: "#FF5252", dangerSoft: "rgba(255,82,82,0.08)",
@@ -64,9 +64,9 @@ const T = {
     mono: "'JetBrains Mono', monospace",
   },
   glass: {
-    shadow: "0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)",
-    shadowLg: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
-    blur: "blur(20px)",
+    shadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.04)",
+    shadowLg: "0 8px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(255,255,255,0.05)",
+    blur: "blur(30px)",
   },
 };
 
@@ -89,7 +89,7 @@ const LANG = {
     phase_idle:"準備", phase_chanting:"唱題中", phase_paused:"一時停止", phase_completed:"完了",
     post_chanting_done:"お疲れさまでした", skip:"スキップ", cancel:"キャンセル", save:"記録する",
     today_total:"今日の唱題", sessions:"セッション",
-    chant_timer_label:"タイマー", chant_cards_label:"祈念",
+    chant_timer_label:"タイマー", chant_cards_label:"祈念", chant_sounds_label:"サウンド",
     // LIVE
     live_title:"LIVE", live_subtitle:"世界中の同志とつながる", live_people_chanting:"人が唱題中",
     live_japan:"日本", live_world:"世界", live_following_chanting:"フォロー中 · 唱題中",
@@ -165,7 +165,7 @@ const LANG = {
     phase_idle:"Ready", phase_chanting:"Chanting", phase_paused:"Paused", phase_completed:"Done",
     post_chanting_done:"Well done!", skip:"Skip", cancel:"Cancel", save:"Save",
     today_total:"Today's Chanting", sessions:"Sessions",
-    chant_timer_label:"Timer", chant_cards_label:"Kinen",
+    chant_timer_label:"Timer", chant_cards_label:"Kinen", chant_sounds_label:"Sounds",
     // LIVE
     live_title:"LIVE", live_subtitle:"Connect with fellow practitioners", live_people_chanting:"chanting now",
     live_japan:"Japan", live_world:"World", live_following_chanting:"Following · Chanting",
@@ -1644,11 +1644,14 @@ function ShodaiApp() {
   const [myFollowing,setMyFollowing]=useState(DEMO_MY_FOLLOWING);
   const [demoHistory]=useState(()=>generateDemoHistory());
   const [lastSessionDuration,setLastSessionDuration]=useState(0);
-  const [chantView,setChantView]=useState("timer"); // "timer" | "cards"
+  const [chantView,setChantView]=useState("timer"); // "timer" | "cards" | "sounds"
+  const [activeSound,setActiveSound]=useState(null);
+  const SOUND_LIST=[{id:"rain",label:"🌧",name:"Rain"},{id:"ocean",label:"🌊",name:"Ocean"},{id:"fire",label:"🔥",name:"Fire"},{id:"wind",label:"🍃",name:"Wind"},{id:"birds",label:"🐦",name:"Birds"},{id:"bowl",label:"🔔",name:"Bowl"},{id:"stream",label:"💧",name:"Stream"},{id:"night",label:"🌙",name:"Night"}];
   const intervalRef=useRef(null);
 
   useEffect(()=>{if(phase==="chanting"){intervalRef.current=setInterval(()=>{setElapsed(p=>{const n=p+1;if(timerMode==="countdown"&&targetSeconds>0&&n>=targetSeconds){setPhase("completed");clearInterval(intervalRef.current);return targetSeconds;}return n;});},1000);}else clearInterval(intervalRef.current);return()=>clearInterval(intervalRef.current);},[phase,timerMode,targetSeconds]);
   useEffect(()=>{if(phase==="chanting"||phase==="paused"||phase==="completed")setActiveTab("chanting");},[phase]);
+  useEffect(()=>{let c=0;const tag=()=>{document.querySelectorAll('div,button').forEach(el=>{if(el.style.backdropFilter&&!el.hasAttribute('data-glass')&&!el.classList.contains('glass-timer-ring')){el.setAttribute('data-glass','');el.style.setProperty('--glass-offset',Math.floor(Math.random()*360)+'deg');el.style.animationDelay=-(c++*1.3)+'s';}});};tag();const ob=new MutationObserver(tag);ob.observe(document.body,{childList:true,subtree:true});return()=>ob.disconnect();},[]);
 
   const handleStart=useCallback(()=>{if(phase==="idle"||phase==="completed"){setElapsed(0);setShowPostJournal(false);}setPhase("chanting");},[phase]);
   const handlePause=useCallback(()=>setPhase("paused"),[]);
@@ -1681,6 +1684,12 @@ function ShodaiApp() {
         @keyframes gentleGlow{0%,100%{box-shadow:0 0 30px rgba(206,255,0,0.05)}50%{box-shadow:0 0 60px rgba(206,255,0,0.15)}}
         @keyframes neonPulse{0%,100%{text-shadow:0 0 10px rgba(206,255,0,0.3)}50%{text-shadow:0 0 20px rgba(206,255,0,0.6)}}
         @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        @keyframes glassEdgeRotate{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+        .glass-timer-ring{position:absolute;inset:-1px;border-radius:50%;overflow:hidden;pointer-events:none}
+        .glass-timer-ring::before{content:"";position:absolute;inset:-2px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0%,transparent 30%,rgba(255,255,255,0.5) 38%,rgba(255,255,255,0.8) 40%,rgba(255,255,255,0.5) 42%,transparent 50%,transparent 75%,rgba(255,255,255,0.25) 82%,rgba(255,255,255,0.4) 84%,rgba(255,255,255,0.25) 86%,transparent 94%,transparent 100%);animation:glassEdgeRotate 6s linear infinite}
+        .glass-timer-ring::after{content:"";position:absolute;inset:1px;border-radius:50%;background:#050508}
+        [data-glass]{position:relative}
+        [data-glass]::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(135deg,rgba(255,255,255,0.25) 0%,rgba(255,255,255,0.05) 40%,transparent 50%,rgba(255,255,255,0.05) 80%,rgba(255,255,255,0.15) 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:1}
         *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
         ::-webkit-scrollbar{width:0}
         textarea::placeholder{color:${T.colors.textDim}}
@@ -1720,27 +1729,49 @@ function ShodaiApp() {
 
           {!showPostJournal&&(
             <>
-              {/* ── View toggle (timer ↔ cards) ── */}
-              {isActive&&kinenList.filter(k=>k.isOpen).length>0&&(
-                <div style={{display:"flex",justifyContent:"center",padding:"8px 24px 0"}}>
-                  <div style={{display:"flex",gap:0,borderRadius:12,overflow:"hidden",border:`1px solid ${T.colors.border}`,...G.card}}>
-                    {[{key:"timer",label:t("chant_timer_label")||"Timer"},{key:"cards",label:t("chant_cards_label")||"Kinen"}].map(v=>(
-                      <button key={v.key} onClick={()=>setChantView(v.key)} style={{padding:"7px 18px",fontSize:11,fontFamily:T.fonts.body,fontWeight:chantView===v.key?600:400,border:"none",background:chantView===v.key?T.colors.accentSoft:"transparent",color:chantView===v.key?T.colors.accent:T.colors.textMuted,cursor:"pointer"}}>{v.label}</button>
-                    ))}
-                  </div>
+              {/* ── View toggle (timer ↔ cards ↔ sounds) ── */}
+              <div style={{display:"flex",justifyContent:"center",padding:"8px 24px 0"}}>
+                <div style={{display:"flex",gap:0,borderRadius:12,overflow:"hidden",border:`1px solid ${T.colors.border}`,...G.card}}>
+                  {[{key:"timer",label:t("chant_timer_label")||"Timer"},{key:"cards",label:t("chant_cards_label")||"Kinen"},{key:"sounds",label:t("chant_sounds_label")||"Sounds"}].map(v=>(
+                    <button key={v.key} onClick={()=>setChantView(v.key)} style={{padding:"7px 18px",fontSize:11,fontFamily:T.fonts.body,fontWeight:chantView===v.key?600:400,border:"none",background:chantView===v.key?T.colors.accentSoft:"transparent",color:chantView===v.key?T.colors.accent:T.colors.textMuted,cursor:"pointer"}}>{v.label}</button>
+                  ))}
                 </div>
-              )}
+              </div>
 
               <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:"8px 0",minHeight:300}}>
 
                 {/* ── Timer View ── */}
-                {(chantView==="timer"||!isActive)&&(
+                {(chantView==="timer"||(!isActive&&chantView!=="sounds"&&chantView!=="cards"))&&(
                   <>
-                    <div style={{position:"relative",width:cs,height:cs,display:"flex",alignItems:"center",justifyContent:"center",animation:phase==="chanting"?"breathe 6s ease-in-out infinite, gentleGlow 6s ease-in-out infinite":"none",borderRadius:"50%",background:"radial-gradient(circle at 50% 40%, rgba(255,255,255,0.02) 0%, transparent 70%)"}}>
-                      <svg width={cs} height={cs} style={{position:"absolute",transform:"rotate(-90deg)"}}>
-                        <circle cx={cs/2} cy={cs/2} r={r} fill="none" stroke={T.colors.ring} strokeWidth="3"/>
-                        {timerMode==="countdown"&&targetSeconds>0&&<circle cx={cs/2} cy={cs/2} r={r} fill="none" stroke={phase==="completed"?T.colors.accent:T.colors.accentGlow} strokeWidth={phase==="completed"?4:3} strokeDasharray={circ} strokeDashoffset={circ*(1-progress)} strokeLinecap="round" style={{transition:"stroke-dashoffset 1s linear",filter:phase==="completed"?"drop-shadow(0 0 8px rgba(206,255,0,0.5))":"none"}}/>}
-                        {(timerMode==="stopwatch"||targetSeconds===0)&&phase==="chanting"&&<circle cx={cs/2} cy={cs/2} r={r} fill="none" stroke={T.colors.accentGlow} strokeWidth="3" strokeDasharray={`${circ*0.08} ${circ*0.92}`} strokeDashoffset={-((elapsed*3)%circ)} strokeLinecap="round" style={{transition:"stroke-dashoffset 1s linear"}}/>}
+                    <div style={{position:"relative",width:cs,height:cs,display:"flex",alignItems:"center",justifyContent:"center",animation:phase==="chanting"?"breathe 6s ease-in-out infinite, gentleGlow 6s ease-in-out infinite":"none",borderRadius:"50%",background:"rgba(255,255,255,0.03)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)",border:"none",boxShadow:"0 8px 40px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(255,255,255,0.05)"}}>
+                      <div className="glass-timer-ring"/>
+                      <svg width={cs} height={cs} style={{position:"absolute"}} viewBox={`0 0 ${cs} ${cs}`}>
+                        {/* 軌道リング */}
+                        <circle cx={cs/2} cy={cs/2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="2"/>
+                        {/* 軌跡プログレス（カウントダウン） */}
+                        {timerMode==="countdown"&&targetSeconds>0&&progress>0&&<circle cx={cs/2} cy={cs/2} r={r} fill="none" stroke={phase==="completed"?T.colors.accent:T.colors.accentGlow} strokeWidth={phase==="completed"?4:2.5} strokeDasharray={circ} strokeDashoffset={circ*(1-progress)} strokeLinecap="round" transform={`rotate(-90 ${cs/2} ${cs/2})`} style={{transition:"stroke-dashoffset 1s linear",filter:`drop-shadow(0 0 ${phase==="completed"?8:4}px ${phase==="completed"?"rgba(206,255,0,0.5)":"rgba(206,255,0,0.3)"})`}}/>}
+                        {/* 軌跡プログレス（ストップウォッチ） */}
+                        {(timerMode==="stopwatch"||targetSeconds===0)&&phase==="chanting"&&<circle cx={cs/2} cy={cs/2} r={r} fill="none" stroke={T.colors.accentGlow} strokeWidth="2.5" strokeDasharray={`${circ*0.08} ${circ*0.92}`} strokeDashoffset={-((elapsed*3)%circ)} strokeLinecap="round" transform={`rotate(-90 ${cs/2} ${cs/2})`} style={{transition:"stroke-dashoffset 1s linear"}}/>}
+                        {/* 惑星 */}
+                        {(()=>{
+                          const isCountdown=timerMode==="countdown"&&targetSeconds>0;
+                          const isStopwatch=timerMode==="stopwatch"||targetSeconds===0;
+                          const showPlanet=phase==="chanting"||phase==="paused"||(phase==="completed"&&isCountdown);
+                          if(!showPlanet) return null;
+                          const angle=isCountdown
+                            ? -Math.PI/2 + (2*Math.PI*progress)
+                            : -Math.PI/2 + ((elapsed*3)%360)*Math.PI/180*2;
+                          const px=cs/2+r*Math.cos(angle);
+                          const py=cs/2+r*Math.sin(angle);
+                          const planetR=phase==="completed"?7:5;
+                          const glowColor=phase==="completed"?"rgba(206,255,0,0.8)":"rgba(206,255,0,0.6)";
+                          return <>
+                            <circle cx={px} cy={py} r={planetR+8} fill="none" stroke="rgba(206,255,0,0.08)" strokeWidth="1"/>
+                            <circle cx={px} cy={py} r={planetR+4} fill="rgba(206,255,0,0.06)"/>
+                            <circle cx={px} cy={py} r={planetR} fill={T.colors.accent} style={{filter:`drop-shadow(0 0 10px ${glowColor}) drop-shadow(0 0 20px rgba(206,255,0,0.3))`,transition:"cx 1s linear, cy 1s linear"}}/>
+                            <circle cx={px-1.5} cy={py-1.5} r={planetR*0.35} fill="rgba(255,255,255,0.5)"/>
+                          </>;
+                        })()}
                       </svg>
                       <div style={{display:"flex",flexDirection:"column",alignItems:"center",position:"relative",zIndex:2}}>
                         <div style={{fontFamily:T.fonts.mono,fontSize:52,fontWeight:700,letterSpacing:"-0.02em",color:phase==="completed"?T.colors.accent:T.colors.text,lineHeight:1}}>{displayTime}</div>
@@ -1752,7 +1783,7 @@ function ShodaiApp() {
                 )}
 
                 {/* ── Card View (replaces timer) ── */}
-                {chantView==="cards"&&isActive&&(
+                {chantView==="cards"&&(
                   <div style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:12,animation:"fadeIn 0.3s ease"}}>
                     {/* Compact time display */}
                     <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
@@ -1762,6 +1793,34 @@ function ShodaiApp() {
                     </div>
                     {/* Card stack */}
                     <KinenSlideshow kinenList={kinenList}/>
+                  </div>
+                )}
+
+                {/* ── Sounds View ── */}
+                {chantView==="sounds"&&(
+                  <div style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:12,animation:"fadeIn 0.3s ease",padding:"0 16px"}}>
+                    {isActive&&(
+                      <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
+                        <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.textMuted}}>{displayTime}</span>
+                        <div style={{width:1,height:14,background:T.colors.border}}/>
+                        <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.accent}}>{formatHen(sessionHen)}<span style={{fontSize:9,color:T.colors.textDim,marginLeft:2}}>遍</span></span>
+                      </div>
+                    )}
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:10,width:"100%",maxWidth:300}}>
+                      {SOUND_LIST.map(s=>{const sel=activeSound===s.id;return(
+                        <button key={s.id} onClick={()=>setActiveSound(sel?null:s.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:"14px 8px",borderRadius:16,border:`1px solid ${sel?T.colors.accent:T.colors.border}`,background:sel?T.colors.accentSoft:T.colors.surface,cursor:"pointer",transition:"all 0.2s ease",...G.card}}>
+                          <span style={{fontSize:24}}>{s.label}</span>
+                          <span style={{fontSize:10,fontFamily:T.fonts.body,fontWeight:sel?600:400,color:sel?T.colors.accent:T.colors.textMuted}}>{s.name}</span>
+                        </button>
+                      )})}
+                    </div>
+                    {activeSound&&(
+                      <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 20px",borderRadius:20,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
+                        <span style={{fontSize:16}}>{SOUND_LIST.find(s=>s.id===activeSound)?.label}</span>
+                        <span style={{fontSize:12,fontFamily:T.fonts.body,color:T.colors.textMuted}}>Playing</span>
+                        <div style={{display:"flex",gap:2,alignItems:"center"}}>{[...Array(5)].map((_,i)=><div key={i} style={{width:3,height:8+Math.random()*10,borderRadius:2,background:T.colors.accent,opacity:0.6+Math.random()*0.4,animation:`pulse ${1+Math.random()}s ease-in-out infinite`,animationDelay:`${i*0.15}s`}}/>)}</div>
+                      </div>
+                    )}
                   </div>
                 )}
 
