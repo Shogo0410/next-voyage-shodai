@@ -322,14 +322,14 @@ const generateDemoHistory = () => {
 
 // ─── Demo Data ───
 const DEMO_KINEN = [
-  {id:1,text:"広宣流布の大願成就",category:"study",isOpen:true,isPublic:true,deadline:null,createdAt:"2025-01-01",photo:"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop"},
-  {id:2,text:"家族全員の健康と幸福",category:"family",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-15",photo:"https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&h=400&fit=crop"},
-  {id:3,text:"仕事のプロジェクト成功",category:"work",isOpen:true,isPublic:false,deadline:"2025-03-31",createdAt:"2025-02-01",photo:"https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop"},
-  {id:4,text:"後輩の成長と勝利",category:"study",isOpen:true,isPublic:true,deadline:"2025-04-15",createdAt:"2025-02-10",photo:null},
+  {id:1,text:"広宣流布の大願成就",category:"study",isOpen:true,isPublic:true,deadline:null,createdAt:"2025-01-01",photo:"https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=600&h=400&fit=crop"},
+  {id:2,text:"家族全員の健康と幸福",category:"family",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-15",photo:"https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&h=400&fit=crop"},
+  {id:3,text:"仕事のプロジェクト成功",category:"work",isOpen:true,isPublic:false,deadline:"2025-03-31",createdAt:"2025-02-01",photo:"https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&h=400&fit=crop"},
+  {id:4,text:"後輩の成長と勝利",category:"study",isOpen:true,isPublic:true,deadline:"2025-04-15",createdAt:"2025-02-10",photo:"https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=600&h=400&fit=crop"},
   {id:5,text:"自分自身の人間革命",category:"personal",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-01",photo:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop"},
-  {id:6,text:"地区の折伏目標達成",category:"study",isOpen:true,isPublic:true,deadline:"2025-06-30",createdAt:"2025-01-20",photo:null},
+  {id:6,text:"地区の折伏目標達成",category:"study",isOpen:true,isPublic:true,deadline:"2025-06-30",createdAt:"2025-01-20",photo:"https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=600&h=400&fit=crop"},
   {id:7,text:"簿記2級合格",category:"personal",isOpen:false,isPublic:false,deadline:"2025-02-01",createdAt:"2024-11-01",photo:null},
-  {id:8,text:"母の膝の回復",category:"health",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-10",photo:"https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=600&h=400&fit=crop"},
+  {id:8,text:"母の膝の回復",category:"health",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-10",photo:"https://images.unsplash.com/photo-1510797215324-95aa89f43c33?w=600&h=400&fit=crop"},
 ];
 
 const DEMO_FOLLOWING_KINEN = [
@@ -570,29 +570,40 @@ const KinenSlideshow = ({kinenList}) => {
 
   const renderCard=(card,style,isfront)=>{
     const hasPhoto=!!card.photo;
-    const bg=hasPhoto
-      ?{backgroundImage:`url(${card.photo})`,backgroundSize:"cover",backgroundPosition:"center"}
-      :{background:catGradients[card.category]||catGradients.other};
     return(
-      <div style={{position:"absolute",left:0,right:0,top:0,height:CARD_H,borderRadius:22,overflow:"hidden",cursor:isfront?"pointer":"default",border:`1px solid rgba(255,255,255,0.1)`,...bg,...style,transition:"all 0.4s cubic-bezier(0.4,0,0.2,1)"}}>
-        {/* Dark gradient overlay for readability */}
-        <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.75) 100%)",borderRadius:22}}/>
+      <div style={{position:"absolute",left:0,right:0,top:0,height:CARD_H,borderRadius:22,overflow:"hidden",cursor:isfront?"pointer":"default",...style,transition:"all 0.4s cubic-bezier(0.4,0,0.2,1)"}}>
+        {/* Background layer: blurred photo or gradient */}
+        {hasPhoto?(
+          <div style={{position:"absolute",inset:-20,backgroundImage:`url(${card.photo})`,backgroundSize:"cover",backgroundPosition:"center",filter:"blur(12px) brightness(0.4) saturate(1.3)",transform:"scale(1.15)"}}/>
+        ):(
+          <div style={{position:"absolute",inset:0,background:catGradients[card.category]||catGradients.other,opacity:0.6}}/>
+        )}
+        {/* Glass layer */}
+        <div style={{position:"absolute",inset:0,background:"rgba(255,255,255,0.06)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",borderRadius:22,border:"1px solid rgba(255,255,255,0.12)",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(255,255,255,0.02), 0 8px 32px rgba(0,0,0,0.3)"}}/>
+        {/* Photo thumbnail (small, positioned) */}
+        {isfront&&hasPhoto&&(
+          <div style={{position:"absolute",top:14,right:16,width:56,height:56,borderRadius:14,overflow:"hidden",border:"1px solid rgba(255,255,255,0.15)",boxShadow:"0 4px 12px rgba(0,0,0,0.3)",zIndex:3}}>
+            <img src={card.photo} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+          </div>
+        )}
+        {/* Light refraction line */}
+        <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 30%, rgba(255,255,255,0.08) 70%, transparent 100%)"}}/>
         {isfront&&(
           <div style={{position:"relative",zIndex:2,height:"100%",display:"flex",flexDirection:"column",padding:"16px 20px"}}>
             {/* Top row: category + counter */}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <CategoryTag categoryId={card.category}/>
-              <span style={{fontSize:10,color:"rgba(255,255,255,0.6)",fontFamily:T.fonts.mono,backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",padding:"2px 8px",borderRadius:8,background:"rgba(0,0,0,0.3)"}}>{idx%n+1}/{n}</span>
+              <span style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontFamily:T.fonts.mono,padding:"2px 8px",borderRadius:8,background:"rgba(255,255,255,0.06)"}}>{idx%n+1}/{n}</span>
             </div>
             {/* Center: prayer text */}
-            <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"8px 0"}}>
-              <p style={{fontFamily:T.fonts.display,fontSize:18,fontWeight:700,color:"#fff",lineHeight:1.6,textAlign:"center",textShadow:"0 2px 8px rgba(0,0,0,0.5)",maxHeight:80,overflow:"hidden"}}>{card.text}</p>
+            <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"8px 0",paddingRight:hasPhoto?48:0}}>
+              <p style={{fontFamily:T.fonts.display,fontSize:18,fontWeight:700,color:"rgba(255,255,255,0.95)",lineHeight:1.6,textAlign:"center",maxHeight:80,overflow:"hidden"}}>{card.text}</p>
             </div>
             {/* Bottom: deadline + dots */}
             <div>
-              {card.deadline&&<div style={{textAlign:"center",marginBottom:6}}><span style={{fontSize:9,fontFamily:T.fonts.mono,color:"rgba(255,255,255,0.5)",padding:"2px 8px",borderRadius:6,background:"rgba(0,0,0,0.3)"}}>〆 {card.deadline}</span></div>}
+              {card.deadline&&<div style={{textAlign:"center",marginBottom:6}}><span style={{fontSize:9,fontFamily:T.fonts.mono,color:"rgba(255,255,255,0.4)",padding:"2px 8px",borderRadius:6,background:"rgba(255,255,255,0.05)"}}>〆 {card.deadline}</span></div>}
               <div style={{display:"flex",justifyContent:"center",gap:4}}>
-                {openKinen.map((_,i)=><div key={i} style={{width:i===idx%n?16:5,height:5,borderRadius:3,background:i===idx%n?T.colors.accent:"rgba(255,255,255,0.25)",transition:"all 0.4s ease"}}/>)}
+                {openKinen.map((_,i)=><div key={i} style={{width:i===idx%n?16:5,height:5,borderRadius:3,background:i===idx%n?T.colors.accent:"rgba(255,255,255,0.15)",transition:"all 0.4s ease"}}/>)}
               </div>
             </div>
           </div>
