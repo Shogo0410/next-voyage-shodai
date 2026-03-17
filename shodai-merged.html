@@ -1772,7 +1772,7 @@ function ShodaiApp() {
                 )}
 
                 {/* ── Card View (replaces timer) ── */}
-                {chantView==="cards"&&isActive&&(
+                {chantView==="cards"&&(
                   <div style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:12,animation:"fadeIn 0.3s ease"}}>
                     {/* Compact time display */}
                     <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
