@@ -46,11 +46,11 @@ mapboxgl.accessToken = "pk.eyJ1Ijoic2hvZ28wNDEwIiwiYSI6ImNtbTdzNnlmODB4dWYycW4wd
 // ─── Design Tokens (Glossy Dark UI) ───
 const T = {
   colors: {
-    bg: "#050508", surface: "rgba(255,255,255,0.045)", surfaceAlt: "rgba(255,255,255,0.065)",
+    bg: "#050508", surface: "rgba(255,255,255,0.035)", surfaceAlt: "rgba(255,255,255,0.055)",
     surfaceSolid: "#141418",
     accent: "#CEFF00", accentSoft: "rgba(206,255,0,0.08)", accentGlow: "rgba(206,255,0,0.30)",
     text: "#FFFFFF", textMuted: "#AAAAAA", textDim: "#777777",
-    border: "rgba(255,255,255,0.08)", borderLight: "rgba(255,255,255,0.05)",
+    border: "rgba(255,255,255,0.12)", borderLight: "rgba(255,255,255,0.07)",
     success: "#00E676", successSoft: "rgba(0,230,118,0.1)",
     ring: "rgba(255,255,255,0.06)", ringActive: "rgba(206,255,0,0.15)",
     danger: "#FF5252", dangerSoft: "rgba(255,82,82,0.08)",
@@ -64,9 +64,9 @@ const T = {
     mono: "'JetBrains Mono', monospace",
   },
   glass: {
-    shadow: "0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)",
-    shadowLg: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
-    blur: "blur(20px)",
+    shadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.04)",
+    shadowLg: "0 8px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(255,255,255,0.05)",
+    blur: "blur(30px)",
   },
 };
 
@@ -1638,6 +1638,7 @@ function ShodaiApp() {
 
   useEffect(()=>{if(phase==="chanting"){intervalRef.current=setInterval(()=>{setElapsed(p=>{const n=p+1;if(timerMode==="countdown"&&targetSeconds>0&&n>=targetSeconds){setPhase("completed");clearInterval(intervalRef.current);return targetSeconds;}return n;});},1000);}else clearInterval(intervalRef.current);return()=>clearInterval(intervalRef.current);},[phase,timerMode,targetSeconds]);
   useEffect(()=>{if(phase==="chanting"||phase==="paused"||phase==="completed")setActiveTab("chanting");},[phase]);
+  useEffect(()=>{let c=0;const tag=()=>{document.querySelectorAll('div,button').forEach(el=>{if(el.style.backdropFilter&&!el.hasAttribute('data-glass')&&!el.classList.contains('glass-timer-ring')){el.setAttribute('data-glass','');el.style.setProperty('--glass-offset',Math.floor(Math.random()*360)+'deg');el.style.animationDelay=-(c++*1.3)+'s';}});};tag();const ob=new MutationObserver(tag);ob.observe(document.body,{childList:true,subtree:true});return()=>ob.disconnect();},[]);
 
   const handleStart=useCallback(()=>{if(phase==="idle"||phase==="completed"){setElapsed(0);setShowPostJournal(false);}setPhase("chanting");},[phase]);
   const handlePause=useCallback(()=>setPhase("paused"),[]);
@@ -1670,6 +1671,12 @@ function ShodaiApp() {
         @keyframes gentleGlow{0%,100%{box-shadow:0 0 30px rgba(206,255,0,0.05)}50%{box-shadow:0 0 60px rgba(206,255,0,0.15)}}
         @keyframes neonPulse{0%,100%{text-shadow:0 0 10px rgba(206,255,0,0.3)}50%{text-shadow:0 0 20px rgba(206,255,0,0.6)}}
         @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        @keyframes glassEdgeRotate{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+        .glass-timer-ring{position:absolute;inset:-1px;border-radius:50%;overflow:hidden;pointer-events:none}
+        .glass-timer-ring::before{content:"";position:absolute;inset:-2px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0%,transparent 30%,rgba(255,255,255,0.5) 38%,rgba(255,255,255,0.8) 40%,rgba(255,255,255,0.5) 42%,transparent 50%,transparent 75%,rgba(255,255,255,0.25) 82%,rgba(255,255,255,0.4) 84%,rgba(255,255,255,0.25) 86%,transparent 94%,transparent 100%);animation:glassEdgeRotate 6s linear infinite}
+        .glass-timer-ring::after{content:"";position:absolute;inset:1px;border-radius:50%;background:#050508}
+        [data-glass]{position:relative}
+        [data-glass]::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(135deg,rgba(255,255,255,0.25) 0%,rgba(255,255,255,0.05) 40%,transparent 50%,rgba(255,255,255,0.05) 80%,rgba(255,255,255,0.15) 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:1}
         *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
         ::-webkit-scrollbar{width:0}
         textarea::placeholder{color:${T.colors.textDim}}
@@ -1725,9 +1732,10 @@ function ShodaiApp() {
                 {/* ── Timer View ── */}
                 {(chantView==="timer"||!isActive)&&(
                   <>
-                    <div style={{position:"relative",width:cs,height:cs,display:"flex",alignItems:"center",justifyContent:"center",animation:phase==="chanting"?"breathe 6s ease-in-out infinite, gentleGlow 6s ease-in-out infinite":"none",borderRadius:"50%",background:"radial-gradient(circle at 50% 40%, rgba(255,255,255,0.02) 0%, transparent 70%)"}}>
+                    <div style={{position:"relative",width:cs,height:cs,display:"flex",alignItems:"center",justifyContent:"center",animation:phase==="chanting"?"breathe 6s ease-in-out infinite, gentleGlow 6s ease-in-out infinite":"none",borderRadius:"50%",background:"rgba(255,255,255,0.03)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)",border:"none",boxShadow:"0 8px 40px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(255,255,255,0.05)"}}>
+                      <div className="glass-timer-ring"/>
                       <svg width={cs} height={cs} style={{position:"absolute",transform:"rotate(-90deg)"}}>
-                        <circle cx={cs/2} cy={cs/2} r={r} fill="none" stroke={T.colors.ring} strokeWidth="3"/>
+                        <circle cx={cs/2} cy={cs/2} r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="2"/>
                         {timerMode==="countdown"&&targetSeconds>0&&<circle cx={cs/2} cy={cs/2} r={r} fill="none" stroke={phase==="completed"?T.colors.accent:T.colors.accentGlow} strokeWidth={phase==="completed"?4:3} strokeDasharray={circ} strokeDashoffset={circ*(1-progress)} strokeLinecap="round" style={{transition:"stroke-dashoffset 1s linear",filter:phase==="completed"?"drop-shadow(0 0 8px rgba(206,255,0,0.5))":"none"}}/>}
                         {(timerMode==="stopwatch"||targetSeconds===0)&&phase==="chanting"&&<circle cx={cs/2} cy={cs/2} r={r} fill="none" stroke={T.colors.accentGlow} strokeWidth="3" strokeDasharray={`${circ*0.08} ${circ*0.92}`} strokeDashoffset={-((elapsed*3)%circ)} strokeLinecap="round" style={{transition:"stroke-dashoffset 1s linear"}}/>}
                       </svg>
