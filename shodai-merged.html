@@ -89,7 +89,7 @@ const LANG = {
     phase_idle:"準備", phase_chanting:"唱題中", phase_paused:"一時停止", phase_completed:"完了",
     post_chanting_done:"お疲れさまでした", skip:"スキップ", cancel:"キャンセル", save:"記録する",
     today_total:"今日の唱題", sessions:"セッション",
-    chant_timer_label:"タイマー", chant_cards_label:"祈念",
+    chant_timer_label:"タイマー", chant_cards_label:"祈念", chant_sounds_label:"サウンド",
     // LIVE
     live_title:"LIVE", live_subtitle:"世界中の同志とつながる", live_people_chanting:"人が唱題中",
     live_japan:"日本", live_world:"世界", live_following_chanting:"フォロー中 · 唱題中",
@@ -165,7 +165,7 @@ const LANG = {
     phase_idle:"Ready", phase_chanting:"Chanting", phase_paused:"Paused", phase_completed:"Done",
     post_chanting_done:"Well done!", skip:"Skip", cancel:"Cancel", save:"Save",
     today_total:"Today's Chanting", sessions:"Sessions",
-    chant_timer_label:"Timer", chant_cards_label:"Kinen",
+    chant_timer_label:"Timer", chant_cards_label:"Kinen", chant_sounds_label:"Sounds",
     // LIVE
     live_title:"LIVE", live_subtitle:"Connect with fellow practitioners", live_people_chanting:"chanting now",
     live_japan:"Japan", live_world:"World", live_following_chanting:"Following · Chanting",
@@ -1633,7 +1633,9 @@ function ShodaiApp() {
   const [myFollowing,setMyFollowing]=useState(DEMO_MY_FOLLOWING);
   const [demoHistory]=useState(()=>generateDemoHistory());
   const [lastSessionDuration,setLastSessionDuration]=useState(0);
-  const [chantView,setChantView]=useState("timer"); // "timer" | "cards"
+  const [chantView,setChantView]=useState("timer"); // "timer" | "cards" | "sounds"
+  const [activeSound,setActiveSound]=useState(null);
+  const SOUND_LIST=[{id:"rain",label:"🌧",name:"Rain"},{id:"ocean",label:"🌊",name:"Ocean"},{id:"fire",label:"🔥",name:"Fire"},{id:"wind",label:"🍃",name:"Wind"},{id:"birds",label:"🐦",name:"Birds"},{id:"bowl",label:"🔔",name:"Bowl"},{id:"stream",label:"💧",name:"Stream"},{id:"night",label:"🌙",name:"Night"}];
   const intervalRef=useRef(null);
 
   useEffect(()=>{if(phase==="chanting"){intervalRef.current=setInterval(()=>{setElapsed(p=>{const n=p+1;if(timerMode==="countdown"&&targetSeconds>0&&n>=targetSeconds){setPhase("completed");clearInterval(intervalRef.current);return targetSeconds;}return n;});},1000);}else clearInterval(intervalRef.current);return()=>clearInterval(intervalRef.current);},[phase,timerMode,targetSeconds]);
@@ -1716,21 +1718,19 @@ function ShodaiApp() {
 
           {!showPostJournal&&(
             <>
-              {/* ── View toggle (timer ↔ cards) ── */}
-              {isActive&&kinenList.filter(k=>k.isOpen).length>0&&(
-                <div style={{display:"flex",justifyContent:"center",padding:"8px 24px 0"}}>
-                  <div style={{display:"flex",gap:0,borderRadius:12,overflow:"hidden",border:`1px solid ${T.colors.border}`,...G.card}}>
-                    {[{key:"timer",label:t("chant_timer_label")||"Timer"},{key:"cards",label:t("chant_cards_label")||"Kinen"}].map(v=>(
-                      <button key={v.key} onClick={()=>setChantView(v.key)} style={{padding:"7px 18px",fontSize:11,fontFamily:T.fonts.body,fontWeight:chantView===v.key?600:400,border:"none",background:chantView===v.key?T.colors.accentSoft:"transparent",color:chantView===v.key?T.colors.accent:T.colors.textMuted,cursor:"pointer"}}>{v.label}</button>
-                    ))}
-                  </div>
+              {/* ── View toggle (timer ↔ cards ↔ sounds) ── */}
+              <div style={{display:"flex",justifyContent:"center",padding:"8px 24px 0"}}>
+                <div style={{display:"flex",gap:0,borderRadius:12,overflow:"hidden",border:`1px solid ${T.colors.border}`,...G.card}}>
+                  {[{key:"timer",label:t("chant_timer_label")||"Timer"},{key:"cards",label:t("chant_cards_label")||"Kinen"},{key:"sounds",label:t("chant_sounds_label")||"Sounds"}].map(v=>(
+                    <button key={v.key} onClick={()=>setChantView(v.key)} style={{padding:"7px 18px",fontSize:11,fontFamily:T.fonts.body,fontWeight:chantView===v.key?600:400,border:"none",background:chantView===v.key?T.colors.accentSoft:"transparent",color:chantView===v.key?T.colors.accent:T.colors.textMuted,cursor:"pointer"}}>{v.label}</button>
+                  ))}
                 </div>
-              )}
+              </div>
 
               <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:"8px 0",minHeight:300}}>
 
                 {/* ── Timer View ── */}
-                {(chantView==="timer"||!isActive)&&(
+                {(chantView==="timer"||(!isActive&&chantView!=="sounds"&&chantView!=="cards"))&&(
                   <>
                     <div style={{position:"relative",width:cs,height:cs,display:"flex",alignItems:"center",justifyContent:"center",animation:phase==="chanting"?"breathe 6s ease-in-out infinite, gentleGlow 6s ease-in-out infinite":"none",borderRadius:"50%",background:"rgba(255,255,255,0.03)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)",border:"none",boxShadow:"0 8px 40px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(255,255,255,0.05)"}}>
                       <div className="glass-timer-ring"/>
@@ -1782,6 +1782,34 @@ function ShodaiApp() {
                     </div>
                     {/* Card stack */}
                     <KinenSlideshow kinenList={kinenList}/>
+                  </div>
+                )}
+
+                {/* ── Sounds View ── */}
+                {chantView==="sounds"&&(
+                  <div style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:12,animation:"fadeIn 0.3s ease",padding:"0 16px"}}>
+                    {isActive&&(
+                      <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
+                        <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.textMuted}}>{displayTime}</span>
+                        <div style={{width:1,height:14,background:T.colors.border}}/>
+                        <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.accent}}>{formatHen(sessionHen)}<span style={{fontSize:9,color:T.colors.textDim,marginLeft:2}}>遍</span></span>
+                      </div>
+                    )}
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:10,width:"100%",maxWidth:300}}>
+                      {SOUND_LIST.map(s=>{const sel=activeSound===s.id;return(
+                        <button key={s.id} onClick={()=>setActiveSound(sel?null:s.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:"14px 8px",borderRadius:16,border:`1px solid ${sel?T.colors.accent:T.colors.border}`,background:sel?T.colors.accentSoft:T.colors.surface,cursor:"pointer",transition:"all 0.2s ease",...G.card}}>
+                          <span style={{fontSize:24}}>{s.label}</span>
+                          <span style={{fontSize:10,fontFamily:T.fonts.body,fontWeight:sel?600:400,color:sel?T.colors.accent:T.colors.textMuted}}>{s.name}</span>
+                        </button>
+                      )})}
+                    </div>
+                    {activeSound&&(
+                      <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 20px",borderRadius:20,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
+                        <span style={{fontSize:16}}>{SOUND_LIST.find(s=>s.id===activeSound)?.label}</span>
+                        <span style={{fontSize:12,fontFamily:T.fonts.body,color:T.colors.textMuted}}>Playing</span>
+                        <div style={{display:"flex",gap:2,alignItems:"center"}}>{[...Array(5)].map((_,i)=><div key={i} style={{width:3,height:8+Math.random()*10,borderRadius:2,background:T.colors.accent,opacity:0.6+Math.random()*0.4,animation:`pulse ${1+Math.random()}s ease-in-out infinite`,animationDelay:`${i*0.15}s`}}/>)}</div>
+                      </div>
+                    )}
                   </div>
                 )}
 
