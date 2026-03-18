@@ -49,7 +49,7 @@ const T = {
     bg: "#050508", surface: "rgba(255,255,255,0.035)", surfaceAlt: "rgba(255,255,255,0.055)",
     surfaceSolid: "#141418",
     accent: "#CEFF00", accentSoft: "rgba(206,255,0,0.08)", accentGlow: "rgba(206,255,0,0.30)",
-    text: "#FFFFFF", textMuted: "#AAAAAA", textDim: "#777777",
+    text: "#FFFFFF", textMuted: "#CCCCCC", textDim: "#999999",
     border: "rgba(255,255,255,0.12)", borderLight: "rgba(255,255,255,0.07)",
     success: "#00E676", successSoft: "rgba(0,230,118,0.1)",
     ring: "rgba(255,255,255,0.06)", ringActive: "rgba(206,255,0,0.15)",
@@ -110,7 +110,7 @@ const LANG = {
     journal_feeling:"今の気持ち", journal_placeholder:"唱題で感じたこと、気づき、決意...",
     journal_photo:"写真", journal_photo_added:"写真あり",
     journal_public:"公開", journal_private:"非公開",
-    journal_public_label:"🔓 公開中", journal_private_label:"🔒 非公開",
+    journal_public_label:"公開中", journal_private_label:"非公開",
     journal_delete:"削除", journal_empty:"まだジャーナルがありません",
     journal_photo_preview:"📷 写真プレビュー",
     // MyPage
@@ -186,7 +186,7 @@ const LANG = {
     journal_feeling:"How do you feel?", journal_placeholder:"Thoughts, insights, determinations from chanting...",
     journal_photo:"Photo", journal_photo_added:"Photo added",
     journal_public:"Public", journal_private:"Private",
-    journal_public_label:"🔓 Public", journal_private_label:"🔒 Private",
+    journal_public_label:"Public", journal_private_label:"Private",
     journal_delete:"Delete", journal_empty:"No journal entries yet",
     journal_photo_preview:"📷 Photo preview",
     // MyPage
@@ -322,14 +322,14 @@ const generateDemoHistory = () => {
 
 // ─── Demo Data ───
 const DEMO_KINEN = [
-  {id:1,text:"広宣流布の大願成就",category:"study",isOpen:true,isPublic:true,deadline:null,createdAt:"2025-01-01",photo:null},
-  {id:2,text:"家族全員の健康と幸福",category:"family",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-15",photo:null},
-  {id:3,text:"仕事のプロジェクト成功",category:"work",isOpen:true,isPublic:false,deadline:"2025-03-31",createdAt:"2025-02-01",photo:null},
-  {id:4,text:"後輩の成長と勝利",category:"study",isOpen:true,isPublic:true,deadline:"2025-04-15",createdAt:"2025-02-10",photo:null},
-  {id:5,text:"自分自身の人間革命",category:"personal",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-01",photo:null},
-  {id:6,text:"地区の折伏目標達成",category:"study",isOpen:true,isPublic:true,deadline:"2025-06-30",createdAt:"2025-01-20",photo:null},
-  {id:7,text:"簿記2級合格",category:"personal",isOpen:false,isPublic:false,deadline:"2025-02-01",createdAt:"2024-11-01",photo:null},
-  {id:8,text:"母の膝の回復",category:"health",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-10",photo:null},
+  {id:1,text:"広宣流布の大願成就",category:"study",isOpen:true,isPublic:true,deadline:null,createdAt:"2025-01-01",photo:null,subtasks:[{id:"s1a",text:"毎朝の勤行を欠かさない",done:true},{id:"s1b",text:"御書を週3回学ぶ",done:false},{id:"s1c",text:"地区座談会に毎月参加",done:true}]},
+  {id:2,text:"家族全員の健康と幸福",category:"family",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-15",photo:null,subtasks:[{id:"s2a",text:"週末に家族で食事する",done:true},{id:"s2b",text:"両親に月1回電話する",done:false}]},
+  {id:3,text:"仕事のプロジェクト成功",category:"work",isOpen:true,isPublic:false,deadline:"2025-03-31",createdAt:"2025-02-01",photo:null,subtasks:[{id:"s3a",text:"企画書を提出する",done:true},{id:"s3b",text:"チームミーティングを週1で実施",done:true},{id:"s3c",text:"クライアントにプレゼン",done:false},{id:"s3d",text:"最終納品",done:false}]},
+  {id:4,text:"後輩の成長と勝利",category:"study",isOpen:true,isPublic:true,deadline:"2025-04-15",createdAt:"2025-02-10",photo:null,subtasks:[]},
+  {id:5,text:"自分自身の人間革命",category:"personal",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-01",photo:null,subtasks:[{id:"s5a",text:"毎日30分読書する",done:false},{id:"s5b",text:"怒りを感じたら一呼吸置く",done:false},{id:"s5c",text:"感謝日記をつける",done:true}]},
+  {id:6,text:"地区の折伏目標達成",category:"study",isOpen:true,isPublic:true,deadline:"2025-06-30",createdAt:"2025-01-20",photo:null,subtasks:[{id:"s6a",text:"友人3人に声をかける",done:true},{id:"s6b",text:"座談会に友人を誘う",done:false}]},
+  {id:7,text:"簿記2級合格",category:"personal",isOpen:false,isPublic:false,deadline:"2025-02-01",createdAt:"2024-11-01",photo:null,subtasks:[{id:"s7a",text:"テキスト1周",done:true},{id:"s7b",text:"過去問5年分",done:true},{id:"s7c",text:"模試を受ける",done:true}]},
+  {id:8,text:"母の膝の回復",category:"health",isOpen:true,isPublic:false,deadline:null,createdAt:"2025-01-10",photo:null,subtasks:[{id:"s8a",text:"病院の予約を取る",done:true},{id:"s8b",text:"リハビリに付き添う",done:false}]},
 ];
 
 const DEMO_FOLLOWING_KINEN = [
@@ -492,6 +492,7 @@ const PhaseIndicator = ({phase}) => (
   </div>
 );
 
+const Icon=({name,size=14,color="currentColor"})=>{const p={width:size,height:size,viewBox:"0 0 24 24",fill:"none",stroke:color,strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round",style:{display:"inline-block",verticalAlign:"middle"}};if(name==="edit")return(<svg {...p}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>);if(name==="lockOpen")return(<svg {...p}><rect x={3} y={11} width={18} height={11} rx={2} ry={2}/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>);if(name==="lockClosed")return(<svg {...p}><rect x={3} y={11} width={18} height={11} rx={2} ry={2}/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>);return null;};
 const CategoryTag = ({categoryId,size="sm"}) => {
   const cat=CATEGORIES.find(c=>c.id===categoryId)||CATEGORIES[5];
   return <span style={{display:"inline-flex",padding:size==="sm"?"2px 8px":"4px 12px",borderRadius:10,background:`${cat.color}15`,border:`1px solid ${cat.color}30`,fontFamily:T.fonts.body,fontSize:size==="sm"?10:12,color:cat.color}}>{cat.label}</span>;
@@ -517,16 +518,17 @@ const KinenSlideshow = ({kinenList}) => {
   useEffect(()=>{const demos=[{delay:3000,emoji:"🙏",from:"田中さん"},{delay:7000,emoji:"🔥",from:"山本さん"},{delay:12000,emoji:"✨",from:"佐藤さん"},{delay:18000,emoji:"💪",from:"田中さん"},{delay:25000,emoji:"🌸",from:"鈴木さん"}];const timers=demos.map(r=>setTimeout(()=>setFloats(p=>[...p,{id:Date.now()+Math.random(),emoji:r.emoji,from:r.from}]),r.delay));return()=>timers.forEach(clearTimeout);},[]);
   const removeFloat=(id)=>setFloats(p=>p.filter(r=>r.id!==id));
 
+  const [slideDir,setSlideDir]=useState(0);
   const n=openKinen.length;
   const go=(dir)=>{
     if(isAnimating||n<2)return;
     setIsAnimating(true);
-    setExitDir(dir);
+    setSlideDir(dir);
     setTimeout(()=>{
       setIdx(p=>(p+(dir===-1?1:-1)+n)%n);
-      setExitDir(0);
+      setSlideDir(0);
       setIsAnimating(false);
-    },400);
+    },500);
   };
   const goNext=()=>go(-1);
   const goPrev=()=>go(1);
@@ -555,7 +557,7 @@ const KinenSlideshow = ({kinenList}) => {
 
   if(!n)return null;
 
-  const CARD_H=220;
+  const CARD_H=170;
   const stackCards=[0,1,2].map(offset=>openKinen[(idx+offset)%n]);
 
   // Background card for items without photo
@@ -568,54 +570,54 @@ const KinenSlideshow = ({kinenList}) => {
     other:"linear-gradient(135deg, #1a1a2e 0%, #2d1b1b 50%, #401515 100%)",
   };
 
-  const renderCard=(card,style,isfront)=>{
+  const renderCardFace=(card,cardIdx)=>{
     const hasPhoto=!!card.photo;
     return(
-      <div style={{position:"absolute",left:0,right:0,top:0,height:CARD_H,borderRadius:22,overflow:"hidden",cursor:isfront?"pointer":"default",...style,transition:"all 0.4s cubic-bezier(0.4,0,0.2,1)"}}>
-        {/* Background layer: blurred photo or gradient */}
+      <React.Fragment>
         {hasPhoto?(
           <div style={{position:"absolute",inset:-20,backgroundImage:`url(${card.photo})`,backgroundSize:"cover",backgroundPosition:"center",filter:"blur(12px) brightness(0.4) saturate(1.3)",transform:"scale(1.15)"}}/>
         ):(
           <div style={{position:"absolute",inset:0,background:catGradients[card.category]||catGradients.other,opacity:0.6}}/>
         )}
-        {/* Glass layer */}
         <div style={{position:"absolute",inset:0,background:"rgba(255,255,255,0.06)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",borderRadius:22,border:"1px solid rgba(255,255,255,0.12)",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(255,255,255,0.02), 0 8px 32px rgba(0,0,0,0.3)"}}/>
-        {/* Photo thumbnail (small, positioned) */}
-        {isfront&&hasPhoto&&(
+        {hasPhoto&&(
           <div style={{position:"absolute",top:14,right:16,width:56,height:56,borderRadius:14,overflow:"hidden",border:"1px solid rgba(255,255,255,0.15)",boxShadow:"0 4px 12px rgba(0,0,0,0.3)",zIndex:3}}>
             <img src={card.photo} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
           </div>
         )}
-        {/* Light refraction line */}
         <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 30%, rgba(255,255,255,0.08) 70%, transparent 100%)"}}/>
-        {isfront&&(
-          <div style={{position:"relative",zIndex:2,height:"100%",display:"flex",flexDirection:"column",padding:"16px 20px"}}>
-            {/* Top row: category + counter */}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <CategoryTag categoryId={card.category}/>
-              <span style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontFamily:T.fonts.mono,padding:"2px 8px",borderRadius:8,background:"rgba(255,255,255,0.06)"}}>{idx%n+1}/{n}</span>
-            </div>
-            {/* Center: prayer text */}
-            <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"8px 0",paddingRight:hasPhoto?48:0}}>
-              <p style={{fontFamily:T.fonts.display,fontSize:18,fontWeight:700,color:"rgba(255,255,255,0.95)",lineHeight:1.6,textAlign:"center",maxHeight:80,overflow:"hidden"}}>{card.text}</p>
-            </div>
-            {/* Bottom: deadline + dots */}
-            <div>
-              {card.deadline&&<div style={{textAlign:"center",marginBottom:6}}><span style={{fontSize:9,fontFamily:T.fonts.mono,color:"rgba(255,255,255,0.4)",padding:"2px 8px",borderRadius:6,background:"rgba(255,255,255,0.05)"}}>〆 {card.deadline}</span></div>}
-              <div style={{display:"flex",justifyContent:"center",gap:4}}>
-                {openKinen.map((_,i)=><div key={i} style={{width:i===idx%n?16:5,height:5,borderRadius:3,background:i===idx%n?T.colors.accent:"rgba(255,255,255,0.15)",transition:"all 0.4s ease"}}/>)}
+        <div style={{position:"relative",zIndex:2,height:"100%",display:"flex",flexDirection:"column",padding:"16px 20px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <CategoryTag categoryId={card.category}/>
+            <span style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontFamily:T.fonts.mono,padding:"2px 8px",borderRadius:8,background:"rgba(255,255,255,0.06)"}}>{cardIdx%n+1}/{n}</span>
+          </div>
+          <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"8px 0",paddingRight:hasPhoto?48:0}}>
+            <p style={{fontFamily:T.fonts.display,fontSize:18,fontWeight:700,color:"rgba(255,255,255,0.95)",lineHeight:1.6,textAlign:"center",maxHeight:80,overflow:"hidden"}}>{card.text}</p>
+          </div>
+          <div>
+            {(card.subtasks||[]).length>0&&(()=>{const total=card.subtasks.length;const done=card.subtasks.filter(s=>s.done).length;return(
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:6}}>
+                <div style={{width:60,height:3,borderRadius:2,background:"rgba(255,255,255,0.15)",overflow:"hidden"}}>
+                  <div style={{height:"100%",borderRadius:2,background:done===total?T.colors.success:T.colors.accent,width:`${(done/total)*100}%`}}/>
+                </div>
+                <span style={{fontSize:9,fontFamily:T.fonts.mono,color:"rgba(255,255,255,0.5)"}}>{done}/{total}</span>
               </div>
+            );})()}
+            {card.deadline&&<div style={{textAlign:"center",marginBottom:6}}><span style={{fontSize:9,fontFamily:T.fonts.mono,color:"rgba(255,255,255,0.4)",padding:"2px 8px",borderRadius:6,background:"rgba(255,255,255,0.05)"}}>〆 {card.deadline}</span></div>}
+            <div style={{display:"flex",justifyContent:"center",gap:4}}>
+              {openKinen.map((_,i)=><div key={i} style={{width:i===cardIdx%n?16:5,height:5,borderRadius:3,background:i===cardIdx%n?T.colors.accent:"rgba(255,255,255,0.15)",transition:"all 0.4s ease"}}/>)}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      </React.Fragment>
     );
   };
 
-  const exitStyle=exitDir!==0?{
-    transform:`translateX(${exitDir*110}%) scale(0.9) rotate(${exitDir*6}deg)`,
-    opacity:0,zIndex:4,
-  }:null;
+  const currentCard=openKinen[idx];
+  const nextCardIdx=(idx+1)%n;
+  const prevCardIdx=(idx-1+n)%n;
+  const nextCard=openKinen[nextCardIdx];
+  const prevCard=openKinen[prevCardIdx];
 
   return(
     <div style={{width:"100%",padding:"0 24px",position:"relative"}}>
@@ -623,17 +625,29 @@ const KinenSlideshow = ({kinenList}) => {
         {floats.map(r=><FloatingReaction key={r.id} emoji={r.emoji} id={r.id} onDone={removeFloat}/>)}
       </div>
 
-      <div style={{position:"relative",height:CARD_H+28,perspective:1000}}
+      <div style={{position:"relative",height:CARD_H,overflow:"hidden",borderRadius:22,cursor:"pointer"}}
         onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} onClick={onTap}>
 
-        {/* Back card (3rd) */}
-        {n>=3&&renderCard(stackCards[2],{zIndex:1,transform:"scale(0.91) translateY(20px) rotate(-1deg)",opacity:0.25,pointerEvents:"none",filter:"blur(1px)"},false)}
+        {/* Previous card (enters from left) */}
+        {slideDir===1&&(
+          <div style={{position:"absolute",inset:0,borderRadius:22,overflow:"hidden",transform:"translateX(-100%)",animation:"slideFromLeft 0.5s cubic-bezier(0.4,0,0.2,1) forwards",boxShadow:"0 8px 40px rgba(0,0,0,0.4)"}}>
+            {renderCardFace(prevCard,prevCardIdx)}
+          </div>
+        )}
 
-        {/* Middle card (2nd) */}
-        {n>=2&&renderCard(stackCards[1],{zIndex:2,transform:"scale(0.955) translateY(10px) rotate(0.5deg)",opacity:0.45,pointerEvents:"none"},false)}
+        {/* Next card (enters from right) */}
+        {slideDir===-1&&(
+          <div style={{position:"absolute",inset:0,borderRadius:22,overflow:"hidden",transform:"translateX(100%)",animation:"slideFromRight 0.5s cubic-bezier(0.4,0,0.2,1) forwards",boxShadow:"0 8px 40px rgba(0,0,0,0.4)"}}>
+            {renderCardFace(nextCard,nextCardIdx)}
+          </div>
+        )}
 
-        {/* Front card */}
-        {renderCard(stackCards[0],{zIndex:3,transform:"scale(1) translateY(0)",opacity:1,boxShadow:"0 8px 40px rgba(0,0,0,0.5), 0 2px 12px rgba(0,0,0,0.3)",...(exitStyle||{})},true)}
+        {/* Current card */}
+        <div style={{position:"absolute",inset:0,borderRadius:22,overflow:"hidden",boxShadow:"0 8px 40px rgba(0,0,0,0.4)",
+          ...(slideDir===-1?{animation:"slideOutLeft 0.5s cubic-bezier(0.4,0,0.2,1) forwards"}:
+              slideDir===1?{animation:"slideOutRight 0.5s cubic-bezier(0.4,0,0.2,1) forwards"}:{})}}>
+          {renderCardFace(currentCard,idx)}
+        </div>
       </div>
 
       {floats.length>0&&<div style={{marginTop:4,textAlign:"center",fontSize:11,color:T.colors.textMuted,animation:"fadeIn 0.5s ease"}}>{floats[floats.length-1]?.from}さんから {floats[floats.length-1]?.emoji}</div>}
@@ -856,11 +870,20 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
   const [filter,setFilter]=useState("open");
   const [categoryFilter,setCategoryFilter]=useState("all");
   const [showAddForm,setShowAddForm]=useState(false);
+  const [editingId,setEditingId]=useState(null);
   const [newText,setNewText]=useState("");const [newCategory,setNewCategory]=useState("personal");
   const [newDeadline,setNewDeadline]=useState("");const [newIsPublic,setNewIsPublic]=useState(false);
   const [newPhoto,setNewPhoto]=useState(null);
   const [addedToast,setAddedToast]=useState(null);
   const photoInputRef=useRef(null);
+  const [detailKinen,setDetailKinen]=useState(null);
+  const [isEditingDetail,setIsEditingDetail]=useState(false);
+  const openDetail=(k)=>{setDetailKinen(k);setIsEditingDetail(false);setNewText(k.text);setNewCategory(k.category);setNewDeadline(k.deadline||"");setNewIsPublic(k.isPublic);setNewPhoto(k.photo||null);};
+  const closeDetail=()=>{setDetailKinen(null);setIsEditingDetail(false);};
+  const saveDetail=()=>{if(!newText.trim()||!detailKinen)return;setKinenList(p=>p.map(k=>k.id===detailKinen.id?{...k,text:newText.trim(),category:newCategory,deadline:newDeadline||null,isPublic:newIsPublic,photo:newPhoto}:k));const updated={...detailKinen,text:newText.trim(),category:newCategory,deadline:newDeadline||null,isPublic:newIsPublic,photo:newPhoto};setDetailKinen(updated);setIsEditingDetail(false);};
+  const startEdit=(k)=>{setEditingId(k.id);setNewText(k.text);setNewCategory(k.category);setNewDeadline(k.deadline||"");setNewIsPublic(k.isPublic);setNewPhoto(k.photo||null);setShowAddForm(true);};
+  const cancelEdit=()=>{setEditingId(null);setNewText("");setNewCategory("personal");setNewDeadline("");setNewIsPublic(false);setNewPhoto(null);setShowAddForm(false);};
+  const saveEdit=()=>{if(!newText.trim())return;setKinenList(p=>p.map(k=>k.id===editingId?{...k,text:newText.trim(),category:newCategory,deadline:newDeadline||null,isPublic:newIsPublic,photo:newPhoto}:k));cancelEdit();};
 
   const filtered=useMemo(()=>{let list=[...kinenList];if(filter==="open")list=list.filter(k=>k.isOpen);if(filter==="closed")list=list.filter(k=>!k.isOpen);if(categoryFilter!=="all")list=list.filter(k=>k.category===categoryFilter);return list;},[kinenList,filter,categoryFilter]);
   const filteredFollowing=useMemo(()=>{let list=[...followingKinen];if(filter==="open")list=list.filter(k=>k.isOpen);if(filter==="closed")list=list.filter(k=>!k.isOpen);if(categoryFilter!=="all")list=list.filter(k=>k.category===categoryFilter);return list;},[followingKinen,filter,categoryFilter]);
@@ -870,9 +893,14 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
   const toggleOpen=(id)=>setKinenList(p=>p.map(k=>k.id===id?{...k,isOpen:!k.isOpen}:k));
   const togglePublic=(id)=>setKinenList(p=>p.map(k=>k.id===id?{...k,isPublic:!k.isPublic}:k));
   const deleteKinen=(id)=>setKinenList(p=>p.filter(k=>k.id!==id));
-  const addKinen=()=>{if(!newText.trim())return;setKinenList(p=>[...p,{id:Date.now(),text:newText.trim(),category:newCategory,isOpen:true,isPublic:newIsPublic,deadline:newDeadline||null,createdAt:new Date().toISOString().split("T")[0],photo:newPhoto}]);setNewText("");setNewCategory("personal");setNewDeadline("");setNewIsPublic(false);setNewPhoto(null);setShowAddForm(false);};
+  const addKinen=()=>{if(!newText.trim())return;setKinenList(p=>[...p,{id:Date.now(),text:newText.trim(),category:newCategory,isOpen:true,isPublic:newIsPublic,deadline:newDeadline||null,createdAt:new Date().toISOString().split("T")[0],photo:newPhoto,subtasks:[]}]);cancelEdit();};
   const handlePhotoSelect=(e)=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=(ev)=>setNewPhoto(ev.target.result);reader.readAsDataURL(file);};
   const handleAddToMine=(k)=>{onAddToMine(k.text,k.category);setAddedToast(k.id);setTimeout(()=>setAddedToast(null),2000);};
+  const [expandedKinen,setExpandedKinen]=useState(null);
+  const [newSubtaskText,setNewSubtaskText]=useState("");
+  const addSubtask=(kinenId)=>{if(!newSubtaskText.trim())return;setKinenList(p=>p.map(k=>k.id===kinenId?{...k,subtasks:[...(k.subtasks||[]),{id:"st"+Date.now(),text:newSubtaskText.trim(),done:false}]}:k));setNewSubtaskText("");};
+  const toggleSubtask=(kinenId,stId)=>setKinenList(p=>p.map(k=>k.id===kinenId?{...k,subtasks:(k.subtasks||[]).map(s=>s.id===stId?{...s,done:!s.done}:s)}:k));
+  const deleteSubtask=(kinenId,stId)=>setKinenList(p=>p.map(k=>k.id===kinenId?{...k,subtasks:(k.subtasks||[]).filter(s=>s.id!==stId)}:k));
 
   const groupedFollowing=useMemo(()=>{const map={};filteredFollowing.forEach(k=>{if(!map[k.userId])map[k.userId]={userName:k.userName,avatarColor:k.avatarColor,items:[]};map[k.userId].items.push(k);});return Object.entries(map);},[filteredFollowing]);
 
@@ -881,7 +909,7 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
       <div style={{padding:"0 24px 12px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
           <div><h2 style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:800,color:T.colors.accent,letterSpacing:"-0.02em",textTransform:"uppercase"}}>{t("kinen_title")}</h2></div>
-          {viewMode==="mine"&&(<button onClick={()=>setShowAddForm(!showAddForm)} style={{width:40,height:40,borderRadius:20,border:`1px solid ${T.colors.border}`,background:showAddForm?T.colors.accentSoft:"transparent",color:T.colors.accent,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:T.fonts.body}}>{showAddForm?"×":"+"}</button>)}
+          {viewMode==="mine"&&(<button onClick={()=>{if(showAddForm){cancelEdit();}else{setEditingId(null);setShowAddForm(true);}}} style={{width:40,height:40,borderRadius:20,border:`1px solid ${T.colors.border}`,background:showAddForm?T.colors.accentSoft:"transparent",color:T.colors.accent,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:T.fonts.body}}>{showAddForm?"×":"+"}</button>)}
         </div>
 
         {/* Mine / Following toggle */}
@@ -909,9 +937,12 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
             <div style={{display:"flex",gap:8,marginTop:12,alignItems:"center"}}>
               <button onClick={()=>photoInputRef.current?.click()} style={{padding:"8px 14px",borderRadius:10,fontSize:11,border:`1px solid ${T.colors.border}`,background:newPhoto?T.colors.accentSoft:"transparent",color:newPhoto?T.colors.accent:T.colors.textMuted,cursor:"pointer",fontFamily:T.fonts.body}}>📷 {newPhoto?"Change":"Photo"}</button>
               <input type="date" value={newDeadline} onChange={e=>setNewDeadline(e.target.value)} style={{flex:1,padding:"8px 12px",borderRadius:10,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.mono,fontSize:12,outline:"none"}}/>
-              <button onClick={()=>setNewIsPublic(!newIsPublic)} style={{padding:"8px 14px",borderRadius:10,fontSize:11,border:`1px solid ${newIsPublic?T.colors.accent:T.colors.border}`,background:newIsPublic?T.colors.accentSoft:"transparent",color:newIsPublic?T.colors.accent:T.colors.textMuted,cursor:"pointer",fontFamily:T.fonts.body}}>{newIsPublic?"🔓":"🔒"}</button>
+              <button onClick={()=>setNewIsPublic(!newIsPublic)} style={{padding:"8px 14px",borderRadius:10,fontSize:11,border:`1px solid ${newIsPublic?T.colors.accent:T.colors.border}`,background:newIsPublic?T.colors.accentSoft:"transparent",color:newIsPublic?T.colors.accent:T.colors.textMuted,cursor:"pointer",fontFamily:T.fonts.body}}><Icon name={newIsPublic?"lockOpen":"lockClosed"} size={13}/></button>
             </div>
-            <button onClick={addKinen} disabled={!newText.trim()} style={{width:"100%",marginTop:12,padding:"12px 20px",borderRadius:12,border:"none",background:newText.trim()?T.colors.accent:T.colors.ring,color:newText.trim()?T.colors.bg:T.colors.textDim,fontFamily:T.fonts.body,fontSize:14,fontWeight:600,cursor:newText.trim()?"pointer":"default"}}>{t("kinen_add")}</button>
+            <div style={{display:"flex",gap:8,marginTop:12}}>
+              {editingId&&<button onClick={cancelEdit} style={{flex:1,padding:"12px 20px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:14,fontWeight:600,cursor:"pointer"}}>{t("cancel")}</button>}
+              <button onClick={editingId?saveEdit:addKinen} disabled={!newText.trim()} style={{flex:1,padding:"12px 20px",borderRadius:12,border:"none",background:newText.trim()?T.colors.accent:T.colors.ring,color:newText.trim()?T.colors.bg:T.colors.textDim,fontFamily:T.fonts.body,fontSize:14,fontWeight:600,cursor:newText.trim()?"pointer":"default"}}>{editingId?"保存":t("kinen_add")}</button>
+            </div>
           </div>
         )}
 
@@ -931,30 +962,33 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
       <div style={{flex:1,overflowY:"auto",padding:"0 24px 24px"}}>
         {viewMode==="mine"&&(
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            {filtered.map((kinen,i)=>(
-              <div key={kinen.id} style={{borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,opacity:kinen.isOpen?1:0.6,animation:`slideUp ${0.15+i*0.05}s ease`,overflow:"hidden",...G.card}}>
-                {kinen.photo&&(<div style={{width:"100%",height:80,overflow:"hidden"}}><img src={kinen.photo} style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>)}
+            {filtered.map((kinen,i)=>{const subs=kinen.subtasks||[];const total=subs.length;const done=subs.filter(s=>s.done).length;const pct=total>0?done/total:0;return(
+              <div key={kinen.id} onClick={()=>openDetail(kinen)} style={{borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,opacity:kinen.isOpen?1:0.6,animation:`slideUp ${0.15+i*0.05}s ease`,overflow:"hidden",cursor:"pointer",...G.card}}>
                 <div style={{padding:"14px 16px"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
-                  <div style={{flex:1}}>
-                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
-                      <CategoryTag categoryId={kinen.category}/>
-                      {kinen.isPublic&&<span style={{fontSize:9,color:T.colors.textDim,padding:"1px 6px",borderRadius:6,background:T.colors.ring}}>公開</span>}
-                      {kinen.deadline&&<span style={{fontSize:9,fontFamily:T.fonts.mono,padding:"1px 6px",borderRadius:6,color:isOverdue(kinen.deadline)?T.colors.danger:T.colors.textDim,background:isOverdue(kinen.deadline)?T.colors.dangerSoft:T.colors.ring}}>{formatDate(kinen.deadline)}</span>}
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                        <CategoryTag categoryId={kinen.category}/>
+                        {kinen.isPublic&&<span style={{fontSize:9,color:T.colors.textDim,padding:"1px 6px",borderRadius:6,background:T.colors.ring}}>公開</span>}
+                        {kinen.deadline&&<span style={{fontSize:9,fontFamily:T.fonts.mono,padding:"1px 6px",borderRadius:6,color:isOverdue(kinen.deadline)?T.colors.danger:T.colors.textDim,background:isOverdue(kinen.deadline)?T.colors.dangerSoft:T.colors.ring}}>{formatDate(kinen.deadline)}</span>}
+                      </div>
+                      <p style={{fontFamily:T.fonts.body,fontSize:14,color:T.colors.text,lineHeight:1.5,textDecoration:kinen.isOpen?"none":"line-through"}}>{kinen.text}</p>
+                      {total>0&&(
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8}}>
+                          <div style={{flex:1,height:4,borderRadius:2,background:T.colors.ring,overflow:"hidden"}}>
+                            <div style={{height:"100%",borderRadius:2,background:pct===1?T.colors.success:T.colors.accent,width:`${pct*100}%`,transition:"width 0.3s ease"}}/>
+                          </div>
+                          <span style={{fontSize:10,fontFamily:T.fonts.mono,color:pct===1?T.colors.success:T.colors.textMuted,whiteSpace:"nowrap"}}>{done}/{total}</span>
+                        </div>
+                      )}
                     </div>
-                    <p style={{fontFamily:T.fonts.body,fontSize:14,color:T.colors.text,lineHeight:1.5,textDecoration:kinen.isOpen?"none":"line-through"}}>{kinen.text}</p>
+                    <button onClick={(ev)=>{ev.stopPropagation();toggleOpen(kinen.id);}} style={{width:28,height:28,borderRadius:14,flexShrink:0,border:`2px solid ${kinen.isOpen?T.colors.accent:T.colors.success}`,background:kinen.isOpen?"transparent":T.colors.successSoft,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",marginTop:4}}>
+                      {!kinen.isOpen&&<span style={{color:T.colors.success,fontSize:14,lineHeight:1}}>✓</span>}
+                    </button>
                   </div>
-                  <button onClick={()=>toggleOpen(kinen.id)} style={{width:28,height:28,borderRadius:14,flexShrink:0,border:`2px solid ${kinen.isOpen?T.colors.accent:T.colors.success}`,background:kinen.isOpen?"transparent":T.colors.successSoft,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",marginTop:4}}>
-                    {!kinen.isOpen&&<span style={{color:T.colors.success,fontSize:14,lineHeight:1}}>✓</span>}
-                  </button>
                 </div>
-                <div style={{display:"flex",gap:12,marginTop:10,paddingTop:8,borderTop:`1px solid ${T.colors.borderLight}`}}>
-                  <button onClick={()=>togglePublic(kinen.id)} style={{fontSize:10,color:T.colors.textDim,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body,padding:0}}>{kinen.isPublic?"🔓 公開中":"🔒 非公開"}</button>
-                  <button onClick={()=>deleteKinen(kinen.id)} style={{fontSize:10,color:T.colors.danger,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body,padding:0,marginLeft:"auto"}}>{t("kinen_delete")}</button>
-                </div>
-                </div>{/* close padding div */}
               </div>
-            ))}
+            )})}
             {filtered.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:T.colors.textDim,fontSize:13}}>{filter==="closed"?t("kinen_no_achieved"):t("kinen_try_add")}</div>}
           </div>
         )}
@@ -995,6 +1029,98 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
           </div>
         )}
       </div>
+
+      {/* ── Detail Modal ── */}
+      {detailKinen&&(()=>{const dk=kinenList.find(k=>k.id===detailKinen.id)||detailKinen;const subs=dk.subtasks||[];const total=subs.length;const done=subs.filter(s=>s.done).length;return(
+        <div onClick={closeDetail} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",zIndex:9999,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"0 16px 80px",animation:"fadeIn 0.2s ease"}}>
+          <div onClick={ev=>ev.stopPropagation()} style={{width:"100%",maxWidth:420,maxHeight:"75vh",overflowY:"auto",background:T.colors.surface,borderRadius:20,border:`1px solid ${T.colors.border}`,animation:"slideUp 0.3s ease"}}>
+            {/* Header */}
+            <div style={{padding:"16px 20px 12px",borderBottom:`1px solid ${T.colors.borderLight}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <button onClick={(ev)=>{ev.stopPropagation();toggleOpen(dk.id);setDetailKinen({...dk,isOpen:!dk.isOpen});}} style={{width:24,height:24,borderRadius:8,flexShrink:0,border:`2px solid ${dk.isOpen?T.colors.accent:T.colors.success}`,background:dk.isOpen?"transparent":T.colors.successSoft,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  {!dk.isOpen&&<span style={{color:T.colors.success,fontSize:12,lineHeight:1}}>✓</span>}
+                </button>
+                {isEditingDetail?(
+                  <input value={newText} onChange={ev=>setNewText(ev.target.value)} style={{flex:1,fontFamily:T.fonts.body,fontSize:16,fontWeight:700,color:T.colors.text,background:"transparent",border:"none",borderBottom:`1px solid ${T.colors.accent}`,outline:"none",padding:"2px 0"}}/>
+                ):(
+                  <span style={{fontFamily:T.fonts.body,fontSize:16,fontWeight:700,color:T.colors.text,textDecoration:dk.isOpen?"none":"line-through"}}>{dk.text}</span>
+                )}
+              </div>
+              <button onClick={closeDetail} style={{width:28,height:28,borderRadius:14,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textDim,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+            </div>
+
+            <div style={{padding:"16px 20px"}}>
+              {/* Meta row */}
+              <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>
+                <CategoryTag categoryId={isEditingDetail?newCategory:dk.category}/>
+                {isEditingDetail?(
+                  <select value={newCategory} onChange={ev=>setNewCategory(ev.target.value)} style={{padding:"2px 8px",borderRadius:8,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.body,fontSize:10}}>
+                    {CATEGORIES.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
+                  </select>
+                ):null}
+                <button onClick={()=>{togglePublic(dk.id);setDetailKinen({...dk,isPublic:!dk.isPublic});}} style={{fontSize:10,color:T.colors.textDim,background:"none",border:`1px solid ${T.colors.borderLight}`,borderRadius:8,padding:"2px 8px",cursor:"pointer",fontFamily:T.fonts.body,display:"flex",alignItems:"center",gap:4}}>
+                  {dk.isPublic?<><Icon name="lockOpen" size={10}/> 公開中</>:<><Icon name="lockClosed" size={10}/> 非公開</>}
+                </button>
+              </div>
+
+              {/* Deadline */}
+              <div style={{marginBottom:16}}>
+                <div style={{fontSize:10,color:T.colors.textDim,marginBottom:4,fontFamily:T.fonts.body}}>期限</div>
+                {isEditingDetail?(
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <input type="date" value={newDeadline} onChange={ev=>setNewDeadline(ev.target.value)} style={{padding:"6px 10px",borderRadius:8,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.mono,fontSize:12,outline:"none"}}/>
+                    {newDeadline&&<button onClick={()=>setNewDeadline("")} style={{fontSize:10,color:T.colors.textDim,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body}}>クリア</button>}
+                  </div>
+                ):(
+                  <span style={{fontSize:12,fontFamily:T.fonts.mono,color:dk.deadline?(isOverdue(dk.deadline)?T.colors.danger:T.colors.text):T.colors.textDim}}>{dk.deadline?formatDate(dk.deadline):"なし"}</span>
+                )}
+              </div>
+
+              {/* Edit / Save buttons */}
+              <div style={{display:"flex",gap:8,marginBottom:16}}>
+                {isEditingDetail?(
+                  <>
+                    <button onClick={()=>setIsEditingDetail(false)} style={{padding:"6px 14px",borderRadius:10,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:11,cursor:"pointer"}}>キャンセル</button>
+                    <button onClick={saveDetail} style={{padding:"6px 14px",borderRadius:10,border:"none",background:T.colors.accent,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:11,fontWeight:600,cursor:"pointer"}}>保存</button>
+                  </>
+                ):(
+                  <button onClick={()=>setIsEditingDetail(true)} style={{padding:"6px 14px",borderRadius:10,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.accent,fontFamily:T.fonts.body,fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}><Icon name="edit" size={11}/> 編集</button>
+                )}
+              </div>
+
+              {/* Subtasks */}
+              <div style={{marginBottom:16}}>
+                <div style={{fontSize:10,color:T.colors.textDim,marginBottom:8,fontFamily:T.fonts.body}}>サブタスク {total>0&&<span style={{color:T.colors.textMuted}}>({done}/{total})</span>}</div>
+                {total>0&&(
+                  <div style={{height:4,borderRadius:2,background:T.colors.ring,overflow:"hidden",marginBottom:10}}>
+                    <div style={{height:"100%",borderRadius:2,background:done===total?T.colors.success:T.colors.accent,width:`${(done/total)*100}%`,transition:"width 0.3s ease"}}/>
+                  </div>
+                )}
+                {subs.map(st=>(
+                  <div key={st.id} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0",borderBottom:`1px solid ${T.colors.borderLight}`}}>
+                    <button onClick={()=>toggleSubtask(dk.id,st.id)} style={{width:20,height:20,borderRadius:5,border:`1.5px solid ${st.done?T.colors.success:T.colors.border}`,background:st.done?T.colors.successSoft:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:0}}>
+                      {st.done&&<span style={{color:T.colors.success,fontSize:12,lineHeight:1}}>✓</span>}
+                    </button>
+                    <span style={{flex:1,fontSize:13,fontFamily:T.fonts.body,color:st.done?T.colors.textDim:T.colors.text,textDecoration:st.done?"line-through":"none"}}>{st.text}</span>
+                    <button onClick={()=>deleteSubtask(dk.id,st.id)} style={{fontSize:12,color:T.colors.textDim,background:"none",border:"none",cursor:"pointer",padding:"2px 6px",opacity:0.5}}>×</button>
+                  </div>
+                ))}
+                {total===0&&<div style={{fontSize:12,color:T.colors.textDim,fontFamily:T.fonts.body,marginBottom:8}}>サブタスクなし</div>}
+                <div style={{display:"flex",gap:6,marginTop:10}}>
+                  <input value={newSubtaskText} onChange={ev=>setNewSubtaskText(ev.target.value)} onKeyDown={ev=>ev.key==="Enter"&&addSubtask(dk.id)} placeholder="サブタスクを追加..." style={{flex:1,padding:"8px 12px",borderRadius:10,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.body,fontSize:12,outline:"none"}}/>
+                  <button onClick={()=>addSubtask(dk.id)} style={{padding:"8px 14px",borderRadius:10,border:"none",background:T.colors.accentSoft,color:T.colors.accent,fontSize:12,fontFamily:T.fonts.body,fontWeight:600,cursor:"pointer"}}>+ 追加</button>
+                </div>
+              </div>
+
+              {/* Footer meta */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:12,borderTop:`1px solid ${T.colors.borderLight}`}}>
+                <span style={{fontSize:10,fontFamily:T.fonts.mono,color:T.colors.textDim}}>作成日: {dk.createdAt}</span>
+                <button onClick={()=>{deleteKinen(dk.id);closeDetail();}} style={{padding:"6px 14px",borderRadius:10,border:`1px solid ${T.colors.danger}30`,background:T.colors.dangerSoft,color:T.colors.danger,fontSize:11,fontFamily:T.fonts.body,cursor:"pointer"}}>ゴミ箱に移動</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );})()}
     </div>
   );
 };
@@ -1033,7 +1159,7 @@ const JournalForm = ({onSave,onCancel,sessionDuration,isPostChanting=false}) => 
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:12}}>
           <div style={{display:"flex",gap:8}}>
             <button onClick={()=>setHasPhoto(!hasPhoto)} style={{padding:"6px 12px",borderRadius:10,fontSize:11,border:`1px solid ${hasPhoto?T.colors.accent:T.colors.border}`,background:hasPhoto?T.colors.accentSoft:"transparent",color:hasPhoto?T.colors.accent:T.colors.textMuted,cursor:"pointer",fontFamily:T.fonts.body}}>📷 {hasPhoto?"写真あり":"写真"}</button>
-            <button onClick={()=>setIsPublic(!isPublic)} style={{padding:"6px 12px",borderRadius:10,fontSize:11,border:`1px solid ${isPublic?T.colors.accent:T.colors.border}`,background:isPublic?T.colors.accentSoft:"transparent",color:isPublic?T.colors.accent:T.colors.textMuted,cursor:"pointer",fontFamily:T.fonts.body}}>{isPublic?"🔓 公開":"🔒 非公開"}</button>
+            <button onClick={()=>setIsPublic(!isPublic)} style={{padding:"6px 12px",borderRadius:10,fontSize:11,border:`1px solid ${isPublic?T.colors.accent:T.colors.border}`,background:isPublic?T.colors.accentSoft:"transparent",color:isPublic?T.colors.accent:T.colors.textMuted,cursor:"pointer",fontFamily:T.fonts.body}}>{isPublic?<><Icon name="lockOpen" size={11}/> 公開</>:<><Icon name="lockClosed" size={11}/> 非公開</>}</button>
           </div>
         </div>
         <div style={{display:"flex",gap:10,marginTop:14}}>
@@ -1292,7 +1418,7 @@ const JournalTab = ({journals,setJournals}) => {
                     {isExp&&entry.photo&&(<div style={{marginTop:10,height:120,borderRadius:12,background:`linear-gradient(135deg, ${T.colors.ring}, ${T.colors.borderLight})`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${T.colors.border}`}}><span style={{fontSize:11,color:T.colors.textDim}}>📷 写真プレビュー</span></div>)}
                     {isExp&&(
                       <div style={{marginTop:10,paddingTop:8,borderTop:`1px solid ${T.colors.borderLight}`,display:"flex",gap:12}}>
-                        <button onClick={(e)=>{e.stopPropagation();setJournals(p=>p.map(j=>j.id===entry.id?{...j,isPublic:!j.isPublic}:j));}} style={{fontSize:10,color:T.colors.textDim,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body}}>{entry.isPublic?"🔓 公開中":"🔒 非公開"}</button>
+                        <button onClick={(ev)=>{ev.stopPropagation();setJournals(p=>p.map(j=>j.id===entry.id?{...j,isPublic:!j.isPublic}:j));}} style={{fontSize:10,color:T.colors.textDim,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body}}>{entry.isPublic?<><Icon name="lockOpen" size={11}/> 公開中</>:<><Icon name="lockClosed" size={11}/> 非公開</>}</button>
                         <button onClick={(e)=>{e.stopPropagation();setJournals(p=>p.filter(j=>j.id!==entry.id));setExpandedId(null);}} style={{fontSize:10,color:T.colors.danger,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body,marginLeft:"auto"}}>削除</button>
                       </div>
                     )}
@@ -1730,6 +1856,10 @@ function ShodaiApp() {
         @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
         @keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes slideFromRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
+        @keyframes slideFromLeft{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+        @keyframes slideOutLeft{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+        @keyframes slideOutRight{from{transform:translateX(0)}to{transform:translateX(100%)}}
         @keyframes gentleGlow{0%,100%{box-shadow:0 0 30px rgba(206,255,0,0.05)}50%{box-shadow:0 0 60px rgba(206,255,0,0.15)}}
         @keyframes neonPulse{0%,100%{text-shadow:0 0 10px rgba(206,255,0,0.3)}50%{text-shadow:0 0 20px rgba(206,255,0,0.6)}}
         @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
@@ -1834,12 +1964,16 @@ function ShodaiApp() {
                 {/* ── Card View (replaces timer) ── */}
                 {chantView==="cards"&&(
                   <div style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:12,animation:"fadeIn 0.3s ease"}}>
-                    {/* Compact time display */}
-                    <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
-                      <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.textMuted}}>{displayTime}</span>
-                      <div style={{width:1,height:14,background:T.colors.border}}/>
-                      <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.accent}}>{formatHen(sessionHen)}<span style={{fontSize:9,color:T.colors.textDim,marginLeft:2}}>遍</span></span>
+                    {/* Compact time display + change button */}
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
+                        <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.textMuted}}>{displayTime}</span>
+                        <div style={{width:1,height:14,background:T.colors.border}}/>
+                        <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.accent}}>{formatHen(sessionHen)}<span style={{fontSize:9,color:T.colors.textDim,marginLeft:2}}>遍</span></span>
+                      </div>
+                      {phase==="idle"&&<button onClick={()=>setShowPresets(!showPresets)} style={{padding:"5px 10px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:showPresets?T.colors.accentSoft:"transparent",color:showPresets?T.colors.accent:T.colors.textDim,fontFamily:T.fonts.body,fontSize:10,cursor:"pointer"}}>変更</button>}
                     </div>
+                    {phase==="idle"&&showPresets&&(<div style={{display:"flex",flexWrap:"wrap",justifyContent:"center",gap:6,animation:"slideUp 0.3s ease"}}>{TIMER_PRESETS.map(p=>{const sel=(timerMode==="countdown"&&targetSeconds===p.seconds)||(timerMode==="stopwatch"&&p.seconds===0);return<button key={p.label} onClick={()=>handlePresetSelect(p)} style={{padding:"8px 12px",borderRadius:12,display:"flex",flexDirection:"column",alignItems:"center",gap:2,border:`1px solid ${sel?T.colors.accent:T.colors.border}`,background:sel?T.colors.accentSoft:"transparent",color:sel?T.colors.accent:T.colors.text,fontFamily:T.fonts.body,fontSize:11,cursor:"pointer"}}><span>{p.label}</span>{p.seconds>0&&<span style={{fontSize:8,color:T.colors.textDim}}>≈{formatHen(secondsToHen(p.seconds))}遍</span>}</button>})}</div>)}
                     {/* Card stack */}
                     <KinenSlideshow kinenList={kinenList}/>
                   </div>
@@ -1848,13 +1982,15 @@ function ShodaiApp() {
                 {/* ── Sounds View ── */}
                 {chantView==="sounds"&&(
                   <div style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:12,animation:"fadeIn 0.3s ease",padding:"0 16px"}}>
-                    {isActive&&(
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
                       <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
                         <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.textMuted}}>{displayTime}</span>
                         <div style={{width:1,height:14,background:T.colors.border}}/>
                         <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.accent}}>{formatHen(sessionHen)}<span style={{fontSize:9,color:T.colors.textDim,marginLeft:2}}>遍</span></span>
                       </div>
-                    )}
+                      {phase==="idle"&&<button onClick={()=>setShowPresets(!showPresets)} style={{padding:"5px 10px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:showPresets?T.colors.accentSoft:"transparent",color:showPresets?T.colors.accent:T.colors.textDim,fontFamily:T.fonts.body,fontSize:10,cursor:"pointer"}}>変更</button>}
+                    </div>
+                    {phase==="idle"&&showPresets&&(<div style={{display:"flex",flexWrap:"wrap",justifyContent:"center",gap:6,animation:"slideUp 0.3s ease"}}>{TIMER_PRESETS.map(p=>{const sel=(timerMode==="countdown"&&targetSeconds===p.seconds)||(timerMode==="stopwatch"&&p.seconds===0);return<button key={p.label} onClick={()=>handlePresetSelect(p)} style={{padding:"8px 12px",borderRadius:12,display:"flex",flexDirection:"column",alignItems:"center",gap:2,border:`1px solid ${sel?T.colors.accent:T.colors.border}`,background:sel?T.colors.accentSoft:"transparent",color:sel?T.colors.accent:T.colors.text,fontFamily:T.fonts.body,fontSize:11,cursor:"pointer"}}><span>{p.label}</span>{p.seconds>0&&<span style={{fontSize:8,color:T.colors.textDim}}>≈{formatHen(secondsToHen(p.seconds))}遍</span>}</button>})}</div>)}
                     <div style={{display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:10,width:"100%",maxWidth:300}}>
                       {SOUND_LIST.map(s=>{const sel=activeSound===s.id;return(
                         <button key={s.id} onClick={()=>setActiveSound(sel?null:s.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:"14px 8px",borderRadius:16,border:`1px solid ${sel?T.colors.accent:T.colors.border}`,background:sel?T.colors.accentSoft:T.colors.surface,cursor:"pointer",transition:"all 0.2s ease",...G.card}}>
@@ -1873,7 +2009,7 @@ function ShodaiApp() {
                   </div>
                 )}
 
-                {phase==="idle"&&(<div style={{animation:"fadeIn 0.4s ease"}}><button onClick={()=>setShowPresets(!showPresets)} style={{padding:"8px 20px",borderRadius:20,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:12,cursor:"pointer"}}>時間を変更 {showPresets?"▴":"▾"}</button>
+                {phase==="idle"&&chantView==="timer"&&(<div style={{animation:"fadeIn 0.4s ease"}}><button onClick={()=>setShowPresets(!showPresets)} style={{padding:"8px 20px",borderRadius:20,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:12,cursor:"pointer"}}>時間を変更 {showPresets?"▴":"▾"}</button>
                   {showPresets&&(<div style={{display:"flex",flexWrap:"wrap",justifyContent:"center",gap:8,marginTop:12,animation:"slideUp 0.3s ease"}}>{TIMER_PRESETS.map(p=>{const sel=(timerMode==="countdown"&&targetSeconds===p.seconds)||(timerMode==="stopwatch"&&p.seconds===0);return<button key={p.label} onClick={()=>handlePresetSelect(p)} style={{padding:"10px 16px",borderRadius:16,display:"flex",flexDirection:"column",alignItems:"center",gap:2,border:`1px solid ${sel?T.colors.accent:T.colors.border}`,background:sel?T.colors.accentSoft:"transparent",color:sel?T.colors.accent:T.colors.text,fontFamily:T.fonts.body,fontSize:12,cursor:"pointer"}}><span>{p.label}</span>{p.seconds>0&&<span style={{fontSize:9,color:T.colors.textDim}}>≈{formatHen(secondsToHen(p.seconds))}遍</span>}</button>})}</div>)}
                 </div>)}
               </div>
