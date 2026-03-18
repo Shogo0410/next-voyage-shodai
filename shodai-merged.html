@@ -570,23 +570,34 @@ const KinenSlideshow = ({kinenList}) => {
 
   const renderCard=(card,style,isfront)=>{
     const hasPhoto=!!card.photo;
-    const bg=hasPhoto
-      ?{backgroundImage:`url(${card.photo})`,backgroundSize:"cover",backgroundPosition:"center"}
-      :{background:catGradients[card.category]||catGradients.other};
     return(
-      <div style={{position:"absolute",left:0,right:0,top:0,height:CARD_H,borderRadius:22,overflow:"hidden",cursor:isfront?"pointer":"default",border:`1px solid rgba(255,255,255,0.1)`,...bg,...style,transition:"all 0.4s cubic-bezier(0.4,0,0.2,1)"}}>
-        {/* Dark gradient overlay for readability */}
-        <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.75) 100%)",borderRadius:22}}/>
+      <div style={{position:"absolute",left:0,right:0,top:0,height:CARD_H,borderRadius:22,overflow:"hidden",cursor:isfront?"pointer":"default",...style,transition:"all 0.4s cubic-bezier(0.4,0,0.2,1)"}}>
+        {/* Background layer: blurred photo or gradient */}
+        {hasPhoto?(
+          <div style={{position:"absolute",inset:-20,backgroundImage:`url(${card.photo})`,backgroundSize:"cover",backgroundPosition:"center",filter:"blur(12px) brightness(0.4) saturate(1.3)",transform:"scale(1.15)"}}/>
+        ):(
+          <div style={{position:"absolute",inset:0,background:catGradients[card.category]||catGradients.other,opacity:0.6}}/>
+        )}
+        {/* Glass layer */}
+        <div style={{position:"absolute",inset:0,background:"rgba(255,255,255,0.06)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",borderRadius:22,border:"1px solid rgba(255,255,255,0.12)",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(255,255,255,0.02), 0 8px 32px rgba(0,0,0,0.3)"}}/>
+        {/* Photo thumbnail (small, positioned) */}
+        {isfront&&hasPhoto&&(
+          <div style={{position:"absolute",top:14,right:16,width:56,height:56,borderRadius:14,overflow:"hidden",border:"1px solid rgba(255,255,255,0.15)",boxShadow:"0 4px 12px rgba(0,0,0,0.3)",zIndex:3}}>
+            <img src={card.photo} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+          </div>
+        )}
+        {/* Light refraction line */}
+        <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 30%, rgba(255,255,255,0.08) 70%, transparent 100%)"}}/>
         {isfront&&(
           <div style={{position:"relative",zIndex:2,height:"100%",display:"flex",flexDirection:"column",padding:"16px 20px"}}>
             {/* Top row: category + counter */}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <CategoryTag categoryId={card.category}/>
-              <span style={{fontSize:10,color:"rgba(255,255,255,0.6)",fontFamily:T.fonts.mono,backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",padding:"2px 8px",borderRadius:8,background:"rgba(0,0,0,0.3)"}}>{idx%n+1}/{n}</span>
+              <span style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontFamily:T.fonts.mono,padding:"2px 8px",borderRadius:8,background:"rgba(255,255,255,0.06)"}}>{idx%n+1}/{n}</span>
             </div>
             {/* Center: prayer text */}
-            <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"8px 0"}}>
-              <p style={{fontFamily:T.fonts.display,fontSize:18,fontWeight:700,color:"#fff",lineHeight:1.6,textAlign:"center",textShadow:"0 2px 8px rgba(0,0,0,0.5)",maxHeight:80,overflow:"hidden"}}>{card.text}</p>
+            <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"8px 0",paddingRight:hasPhoto?48:0}}>
+              <p style={{fontFamily:T.fonts.display,fontSize:18,fontWeight:700,color:"rgba(255,255,255,0.95)",lineHeight:1.6,textAlign:"center",maxHeight:80,overflow:"hidden"}}>{card.text}</p>
             </div>
             {/* Bottom: subtask progress + deadline + dots */}
             <div>
@@ -598,9 +609,9 @@ const KinenSlideshow = ({kinenList}) => {
                   <span style={{fontSize:9,fontFamily:T.fonts.mono,color:"rgba(255,255,255,0.5)"}}>{done}/{total}</span>
                 </div>
               );})()}
-              {card.deadline&&<div style={{textAlign:"center",marginBottom:6}}><span style={{fontSize:9,fontFamily:T.fonts.mono,color:"rgba(255,255,255,0.5)",padding:"2px 8px",borderRadius:6,background:"rgba(0,0,0,0.3)"}}>〆 {card.deadline}</span></div>}
+              {card.deadline&&<div style={{textAlign:"center",marginBottom:6}}><span style={{fontSize:9,fontFamily:T.fonts.mono,color:"rgba(255,255,255,0.4)",padding:"2px 8px",borderRadius:6,background:"rgba(255,255,255,0.05)"}}>〆 {card.deadline}</span></div>}
               <div style={{display:"flex",justifyContent:"center",gap:4}}>
-                {openKinen.map((_,i)=><div key={i} style={{width:i===idx%n?16:5,height:5,borderRadius:3,background:i===idx%n?T.colors.accent:"rgba(255,255,255,0.25)",transition:"all 0.4s ease"}}/>)}
+                {openKinen.map((_,i)=><div key={i} style={{width:i===idx%n?16:5,height:5,borderRadius:3,background:i===idx%n?T.colors.accent:"rgba(255,255,255,0.15)",transition:"all 0.4s ease"}}/>)}
               </div>
             </div>
           </div>
