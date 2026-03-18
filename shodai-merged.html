@@ -92,9 +92,9 @@ const LANG = {
     chant_timer_label:"タイマー", chant_cards_label:"祈念", chant_sounds_label:"サウンド",
     // LIVE
     live_title:"LIVE", live_subtitle:"世界中の同志とつながる", live_people_chanting:"人が唱題中",
-    live_japan:"日本", live_world:"世界", live_following_chanting:"フォロー中 · 唱題中",
+    live_japan:"日本", live_world:"世界", live_following:"フォロー中", live_following_chanting:"フォロー中 · 唱題中",
     live_min_ago:"分前から唱題中", live_kinen_count:"祈念", live_public_kinen:"の公開祈念",
-    live_active:"active",
+    live_active:"active", live_chanting_now:"唱題中", live_not_chanting:"オフライン", live_send_cheer:"エールを送る",
     // Kinen
     kinen_title:"ご祈念帳", kinen_subtitle:"祈りを込めて",
     kinen_mine:"自分の祈念", kinen_following:"フォロー中",
@@ -168,9 +168,9 @@ const LANG = {
     chant_timer_label:"Timer", chant_cards_label:"Kinen", chant_sounds_label:"Sounds",
     // LIVE
     live_title:"LIVE", live_subtitle:"Connect with fellow practitioners", live_people_chanting:"chanting now",
-    live_japan:"Japan", live_world:"World", live_following_chanting:"Following · Chanting",
+    live_japan:"Japan", live_world:"World", live_following:"Following", live_following_chanting:"Following · Chanting",
     live_min_ago:"min ago", live_kinen_count:"prayers", live_public_kinen:"'s public prayers",
-    live_active:"active",
+    live_active:"active", live_chanting_now:"Chanting", live_not_chanting:"Offline", live_send_cheer:"Send cheer",
     // Kinen
     kinen_title:"Prayer Book", kinen_subtitle:"With heartfelt prayers",
     kinen_mine:"My Prayers", kinen_following:"Following",
@@ -644,7 +644,7 @@ const KinenSlideshow = ({kinenList}) => {
 // ─── LIVE Tab (from v7) ───
 const LiveTab = ({followingKinen,onReactKinen,onAddToMine}) => {
   const [totalOnline,setTotalOnline]=useState(23);
-  const [mapView,setMapView]=useState("japan");
+  const [liveSubTab,setLiveSubTab]=useState("world"); // "world" | "japan" | "following"
   const [expandedUser,setExpandedUser]=useState(null);
   const [sentReactions,setSentReactions]=useState({});
   const [addedToast,setAddedToast]=useState(null);
@@ -657,7 +657,6 @@ const LiveTab = ({followingKinen,onReactKinen,onAddToMine}) => {
   // Mapbox初期化
   useEffect(()=>{
     if(!mapContainerRef.current)return;
-    // 既存のマップがあれば破棄
     if(mapRef.current){mapRef.current.remove();mapRef.current=null;}
     markersRef.current.forEach(m=>m.marker.remove());
     markersRef.current=[];
@@ -665,14 +664,13 @@ const LiveTab = ({followingKinen,onReactKinen,onAddToMine}) => {
     const map=new mapboxgl.Map({
       container:mapContainerRef.current,
       style:"mapbox://styles/mapbox/dark-v11",
-      center:[138.0,36.5],
-      zoom:4.5,
+      center:[139.0,20.0],
+      zoom:1.2,
       attributionControl:false,
     });
     map.addControl(new mapboxgl.NavigationControl({showCompass:false}),"top-right");
     map.on("load",()=>{
       map.resize();
-      // マーカーを追加
       DEMO_LIVE_DOTS.forEach(dot=>{
         const el=document.createElement("div");
         el.className="mapbox-pulse-dot";
@@ -683,7 +681,6 @@ const LiveTab = ({followingKinen,onReactKinen,onAddToMine}) => {
       });
     });
     mapRef.current=map;
-    // コンテナサイズ確定後にリサイズ
     setTimeout(()=>{if(mapRef.current)mapRef.current.resize();},100);
     return()=>{
       markersRef.current.forEach(m=>m.marker.remove());
@@ -695,25 +692,31 @@ const LiveTab = ({followingKinen,onReactKinen,onAddToMine}) => {
   // 日本/世界切替
   useEffect(()=>{
     if(!mapRef.current)return;
-    const japanDots=DEMO_LIVE_DOTS.filter(d=>d.lat>24&&d.lat<46&&d.lng>128&&d.lng<148);
-    if(mapView==="japan"){
+    if(liveSubTab==="japan"){
       mapRef.current.flyTo({center:[138.0,36.5],zoom:4.5,duration:1500});
-    }else{
+    }else if(liveSubTab==="world"){
       mapRef.current.flyTo({center:[139.0,20.0],zoom:1.2,duration:1500});
     }
-    // マーカーの表示/非表示
     markersRef.current.forEach(({marker,dot})=>{
       const isJapan=dot.lat>24&&dot.lat<46&&dot.lng>128&&dot.lng<148;
       const el=marker.getElement();
-      if(mapView==="japan"&&!isJapan){el.style.display="none";}
+      if(liveSubTab==="japan"&&!isJapan){el.style.display="none";}
       else{el.style.display="block";}
     });
-  },[mapView]);
+  },[liveSubTab]);
 
-  const activeDots=mapView==="japan"?DEMO_LIVE_DOTS.filter(d=>d.lat>24&&d.lat<46&&d.lng>128&&d.lng<148):DEMO_LIVE_DOTS;
+  const activeDots=liveSubTab==="japan"?DEMO_LIVE_DOTS.filter(d=>d.lat>24&&d.lat<46&&d.lng>128&&d.lng<148):DEMO_LIVE_DOTS;
 
   const handleSendReaction=(emoji,targetName)=>{setSentReactions(p=>({...p,[targetName]:[...(p[targetName]||[]),{emoji,time:new Date()}]}));};
   const handleAddToMine=(kinen)=>{onAddToMine(kinen.text,kinen.category);setAddedToast(kinen.id);setTimeout(()=>setAddedToast(null),2000);};
+
+  // Following list: merge live + all following data
+  const allFollowing=DEMO_MY_FOLLOWING.map(f=>{
+    const liveInfo=DEMO_FOLLOWING_LIVE.find(l=>l.name===f.name);
+    return {...f,isLive:!!liveInfo,startedMin:liveInfo?.startedMin||0,region:liveInfo?.region||""};
+  });
+  const liveFollowing=allFollowing.filter(f=>f.isLive).sort((a,b)=>b.startedMin-a.startedMin);
+  const offlineFollowing=allFollowing.filter(f=>!f.isLive);
 
   return (
     <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
@@ -729,74 +732,120 @@ const LiveTab = ({followingKinen,onReactKinen,onAddToMine}) => {
             <span style={{fontSize:11,color:T.colors.textMuted}}>{t("live_people_chanting")}</span>
           </div>
         </div>
+        {/* ── Sub tabs: World / Japan / Following ── */}
         <div style={{display:"flex",gap:6,marginBottom:12}}>
-          {[{key:"japan",label:t("live_japan")},{key:"world",label:t("live_world")}].map(v=>(
-            <button key={v.key} onClick={()=>setMapView(v.key)} style={{padding:"6px 16px",borderRadius:16,fontSize:12,fontFamily:T.fonts.body,border:`1px solid ${mapView===v.key?T.colors.live+"60":T.colors.border}`,background:mapView===v.key?T.colors.liveSoft:"transparent",color:mapView===v.key?T.colors.live:T.colors.textMuted,cursor:"pointer"}}>{v.label}</button>
+          {[{key:"world",label:t("live_world")},{key:"japan",label:t("live_japan")},{key:"following",label:t("live_following")}].map(v=>(
+            <button key={v.key} onClick={()=>setLiveSubTab(v.key)} style={{padding:"6px 16px",borderRadius:16,fontSize:12,fontFamily:T.fonts.body,border:`1px solid ${liveSubTab===v.key?T.colors.live+"60":T.colors.border}`,background:liveSubTab===v.key?T.colors.liveSoft:"transparent",color:liveSubTab===v.key?T.colors.live:T.colors.textMuted,cursor:"pointer",transition:"all 0.2s ease"}}>{v.label}</button>
           ))}
         </div>
       </div>
 
-      {/* Mapbox Map */}
-      <div style={{margin:"0 24px",borderRadius:20,overflow:"hidden",position:"relative",height:240,border:`1px solid ${T.colors.border}`,background:"#111",boxShadow:T.glass.shadow}}>
-        <div ref={mapContainerRef} style={{position:"absolute",top:0,left:0,right:0,bottom:0}}/>
-        <div style={{position:"absolute",bottom:8,left:12,fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.mono,zIndex:2,background:"rgba(0,0,0,0.5)",padding:"2px 6px",borderRadius:6}}>{mapView==="japan"?"JAPAN":"WORLDWIDE"} · {activeDots.length} active</div>
-      </div>
-
-      {/* Following users + kinen */}
-      <div style={{padding:"16px 24px 24px",flex:1,overflowY:"auto"}}>
-        <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>{t("live_following_chanting")}</div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {DEMO_FOLLOWING_LIVE.map((user,i)=>{
-            const isExp=expandedUser===user.id;
-            const userKinen=followingKinen.filter(k=>k.userId===user.id&&k.isOpen);
-            const userReactions=sentReactions[user.name]||[];
-            return(
-              <div key={user.id} style={{borderRadius:16,background:T.colors.surface,border:`1px solid ${isExp?T.colors.live+"40":T.colors.border}`,overflow:"hidden",animation:`slideUp ${0.15+i*0.08}s ease`,transition:"border-color 0.3s ease",...G.card}}>
-                <div onClick={()=>setExpandedUser(isExp?null:user.id)} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",cursor:"pointer"}}>
-                  <UserAvatar name={user.name} color={user.avatarColor} showLive/>
-                  <div style={{flex:1}}>
-                    <div style={{fontFamily:T.fonts.body,fontSize:14,fontWeight:500,color:T.colors.text}}>{user.name}</div>
-                    <div style={{fontSize:11,color:T.colors.textMuted,marginTop:2}}>{user.region} · {user.startedMin}{t("live_min_ago")}</div>
-                  </div>
-                  <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    {userKinen.length>0&&<span style={{fontSize:9,color:T.colors.textDim,padding:"2px 6px",borderRadius:8,background:T.colors.ring}}>祈念{userKinen.length}</span>}
-                    <div style={{padding:"4px 10px",borderRadius:10,background:T.colors.liveSoft,fontFamily:T.fonts.mono,fontSize:12,color:T.colors.live}}>{user.startedMin}分</div>
-                  </div>
-                </div>
-                {isExp&&(
-                  <div style={{borderTop:`1px solid ${T.colors.borderLight}`,animation:"slideUp 0.2s ease"}}>
-                    <div style={{padding:"10px 16px",borderBottom:`1px solid ${T.colors.borderLight}`}}>
-                      <div style={{fontSize:10,color:T.colors.textDim,marginBottom:8}}>{user.name}にエールを送る</div>
-                      <MiniReactionBar onReact={(emoji)=>handleSendReaction(emoji,user.name)}/>
-                      {userReactions.length>0&&<div style={{marginTop:6,fontSize:10,color:T.colors.textDim}}>送信済み: {userReactions.map(r=>r.emoji).join(" ")}</div>}
-                    </div>
-                    {userKinen.length>0&&(
-                      <div style={{padding:"12px 16px"}}>
-                        <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.06em",marginBottom:8}}>{user.name}の公開祈念</div>
-                        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                          {userKinen.map(k=>(
-                            <div key={k.id} style={{padding:"10px 12px",borderRadius:12,background:T.colors.bg,border:`1px solid ${T.colors.borderLight}`}}>
-                              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}><CategoryTag categoryId={k.category} size="sm"/></div>
-                              <p style={{fontFamily:T.fonts.body,fontSize:13,color:T.colors.text,lineHeight:1.5,marginBottom:8}}>{k.text}</p>
-                              <ReactionBadges reactions={k.reactions}/>
-                              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8,paddingTop:8,borderTop:`1px solid ${T.colors.borderLight}`}}>
-                                <MiniReactionBar size="sm" onReact={(emoji)=>onReactKinen(k.id,emoji)}/>
-                                <button onClick={()=>handleAddToMine(k)} style={{padding:"4px 10px",borderRadius:8,fontSize:10,fontFamily:T.fonts.body,border:`1px solid ${addedToast===k.id?T.colors.success:T.colors.border}`,background:addedToast===k.id?T.colors.successSoft:"transparent",color:addedToast===k.id?T.colors.success:T.colors.textMuted,cursor:"pointer",transition:"all 0.3s ease",whiteSpace:"nowrap"}}>
-                                  {addedToast===k.id?"✓ 追加済":"+ 一緒に祈る"}
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+      {/* ── Map view (World / Japan) ── */}
+      {(liveSubTab==="world"||liveSubTab==="japan")&&(
+        <div style={{flex:1,margin:"0 24px 24px",borderRadius:20,overflow:"hidden",position:"relative",border:`1px solid ${T.colors.border}`,background:"#111",boxShadow:T.glass.shadow}}>
+          <div ref={mapContainerRef} style={{position:"absolute",top:0,left:0,right:0,bottom:0}}/>
+          <div style={{position:"absolute",bottom:8,left:12,fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.mono,zIndex:2,background:"rgba(0,0,0,0.5)",padding:"2px 6px",borderRadius:6}}>{liveSubTab==="japan"?"JAPAN":"WORLDWIDE"} · {activeDots.length} active</div>
         </div>
-      </div>
+      )}
+
+      {/* ── Following tab ── */}
+      {liveSubTab==="following"&&(
+        <div style={{flex:1,overflowY:"auto",padding:"4px 24px 24px"}}>
+          {/* Live now section */}
+          {liveFollowing.length>0&&(
+            <div style={{marginBottom:20}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+                <div style={{width:6,height:6,borderRadius:"50%",background:T.colors.live,boxShadow:`0 0 8px ${T.colors.liveGlow}`,animation:"pulse 2s infinite"}}/>
+                <span style={{fontSize:10,color:T.colors.live,letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:600}}>{t("live_chanting_now")}</span>
+                <span style={{fontSize:10,color:T.colors.textDim,fontFamily:T.fonts.mono}}>{liveFollowing.length}</span>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                {liveFollowing.map((user,i)=>{
+                  const userKinen=followingKinen.filter(k=>k.userId===user.id&&k.isOpen);
+                  const isExp=expandedUser===user.id;
+                  return(
+                    <div key={user.id} onClick={()=>setExpandedUser(isExp?null:user.id)} style={{position:"relative",borderRadius:18,overflow:"hidden",cursor:"pointer",animation:`slideUp ${0.1+i*0.06}s ease`,transition:"all 0.3s ease"}}>
+                      {/* Glass card */}
+                      <div style={{position:"relative",padding:"14px 16px",background:"rgba(255,107,107,0.04)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:`1px solid ${isExp?T.colors.live+"50":"rgba(255,107,107,0.12)"}`,borderRadius:18,boxShadow:"inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 20px rgba(0,0,0,0.2)"}}>
+                        {/* Top refraction line */}
+                        <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg, transparent 0%, rgba(255,107,107,0.2) 30%, rgba(255,255,255,0.08) 70%, transparent 100%)",borderRadius:"18px 18px 0 0"}}/>
+                        <div style={{display:"flex",alignItems:"center",gap:14}}>
+                          <div style={{position:"relative"}}>
+                            <UserAvatar name={user.name} color={user.avatarColor} showLive/>
+                          </div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontFamily:T.fonts.body,fontSize:14,fontWeight:600,color:T.colors.text}}>{user.name}</div>
+                            <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3}}>
+                              <span style={{fontSize:10,color:T.colors.textMuted}}>{user.region}</span>
+                              {userKinen.length>0&&<span style={{fontSize:9,color:T.colors.textDim,padding:"1px 6px",borderRadius:6,background:"rgba(255,255,255,0.04)"}}>祈念 {userKinen.length}</span>}
+                            </div>
+                          </div>
+                          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4}}>
+                            <div style={{display:"flex",alignItems:"center",gap:4,padding:"4px 12px",borderRadius:12,background:`linear-gradient(135deg, ${T.colors.liveSoft}, rgba(255,107,107,0.15))`,border:"1px solid rgba(255,107,107,0.2)"}}>
+                              <span style={{fontFamily:T.fonts.mono,fontSize:14,fontWeight:600,color:T.colors.live}}>{user.startedMin}</span>
+                              <span style={{fontSize:9,color:T.colors.live,opacity:0.7}}>min</span>
+                            </div>
+                          </div>
+                        </div>
+                        {/* Expanded: cheer + kinen */}
+                        {isExp&&(
+                          <div style={{marginTop:12,paddingTop:12,borderTop:"1px solid rgba(255,255,255,0.06)",animation:"slideUp 0.2s ease"}}>
+                            <div style={{marginBottom:10}}>
+                              <div style={{fontSize:10,color:T.colors.textDim,marginBottom:6}}>{t("live_send_cheer")}</div>
+                              <MiniReactionBar onReact={(emoji)=>handleSendReaction(emoji,user.name)}/>
+                              {(sentReactions[user.name]||[]).length>0&&<div style={{marginTop:4,fontSize:10,color:T.colors.textDim}}>✓ {sentReactions[user.name].map(r=>r.emoji).join(" ")}</div>}
+                            </div>
+                            {userKinen.length>0&&(
+                              <div>
+                                <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.06em",marginBottom:6}}>{user.name}{t("live_public_kinen")}</div>
+                                {userKinen.map(k=>(
+                                  <div key={k.id} style={{padding:"10px 12px",marginBottom:6,borderRadius:12,background:"rgba(255,255,255,0.03)",border:`1px solid ${T.colors.borderLight}`}}>
+                                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><CategoryTag categoryId={k.category} size="sm"/></div>
+                                    <p style={{fontFamily:T.fonts.body,fontSize:13,color:T.colors.text,lineHeight:1.5,marginBottom:6}}>{k.text}</p>
+                                    <ReactionBadges reactions={k.reactions}/>
+                                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6,paddingTop:6,borderTop:`1px solid ${T.colors.borderLight}`}}>
+                                      <MiniReactionBar size="sm" onReact={(emoji)=>onReactKinen(k.id,emoji)}/>
+                                      <button onClick={(e)=>{e.stopPropagation();handleAddToMine(k);}} style={{padding:"4px 10px",borderRadius:8,fontSize:10,fontFamily:T.fonts.body,border:`1px solid ${addedToast===k.id?T.colors.success:T.colors.border}`,background:addedToast===k.id?T.colors.successSoft:"transparent",color:addedToast===k.id?T.colors.success:T.colors.textMuted,cursor:"pointer",transition:"all 0.3s ease",whiteSpace:"nowrap"}}>
+                                        {addedToast===k.id?"✓ 追加済":"+ 一緒に祈る"}
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Offline section */}
+          {offlineFollowing.length>0&&(
+            <div>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+                <div style={{width:6,height:6,borderRadius:"50%",background:T.colors.textDim}}/>
+                <span style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:600}}>{t("live_not_chanting")}</span>
+                <span style={{fontSize:10,color:T.colors.textDim,fontFamily:T.fonts.mono}}>{offlineFollowing.length}</span>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                {offlineFollowing.map((user,i)=>(
+                  <div key={user.id} style={{display:"flex",alignItems:"center",gap:14,padding:"10px 16px",borderRadius:14,background:"rgba(255,255,255,0.02)",border:`1px solid ${T.colors.borderLight}`,animation:`slideUp ${0.1+i*0.06}s ease`,transition:"all 0.2s ease"}}>
+                    <UserAvatar name={user.name} color={user.avatarColor}/>
+                    <div style={{flex:1}}>
+                      <div style={{fontFamily:T.fonts.body,fontSize:13,fontWeight:500,color:T.colors.textMuted}}>{user.name}</div>
+                      <div style={{fontSize:10,color:T.colors.textDim,marginTop:2}}>since {user.since}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
