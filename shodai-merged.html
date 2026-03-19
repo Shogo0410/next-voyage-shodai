@@ -1818,7 +1818,8 @@ function ShodaiApp() {
   const [lastSessionDuration,setLastSessionDuration]=useState(0);
   const [chantView,setChantView]=useState("timer"); // "timer" | "cards" | "sounds"
   const [activeSound,setActiveSound]=useState(null);
-  const SOUND_LIST=[{id:"rain",label:"🌧",name:"Rain",img:"https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=200&h=200&fit=crop",src:"sounds/rain.wav"},{id:"ocean",label:"🌊",name:"Ocean",img:"https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=200&h=200&fit=crop",src:"sounds/waves.wav"},{id:"fire",label:"🔥",name:"Fire",img:"https://images.unsplash.com/photo-1497906539264-eb74442e37a9?w=200&h=200&fit=crop",src:"sounds/fire.wav"},{id:"wind",label:"🍃",name:"Wind",img:"https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=200&h=200&fit=crop",src:"sounds/winds.wav"},{id:"birds",label:"🐦",name:"Birds",img:"https://images.unsplash.com/photo-1444464666168-49d633b86797?w=200&h=200&fit=crop",src:"sounds/birds.wav"},{id:"bowl",label:"🔔",name:"Bowl",img:"https://images.unsplash.com/photo-1514905552197-0610a4d8fd73?w=200&h=200&fit=crop",src:null},{id:"stream",label:"💧",name:"Stream",img:"https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=200&h=200&fit=crop",src:"sounds/stream.wav"},{id:"night",label:"🌙",name:"Night",img:"https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&h=200&fit=crop",src:null}];
+  const SOUND_LIST=[{id:"rain",label:"🌧",name:"Rain",img:"https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=800&h=1200&fit=crop",src:"sounds/rain.wav"},{id:"ocean",label:"🌊",name:"Ocean",img:"https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=800&h=1200&fit=crop",src:"sounds/waves.wav"},{id:"fire",label:"🔥",name:"Fire",img:"https://images.unsplash.com/photo-1497906539264-eb74442e37a9?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1497906539264-eb74442e37a9?w=800&h=1200&fit=crop",src:"sounds/fire.wav"},{id:"wind",label:"🍃",name:"Wind",img:"https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=800&h=1200&fit=crop",src:"sounds/winds.wav"},{id:"birds",label:"🐦",name:"Birds",img:"https://images.unsplash.com/photo-1444464666168-49d633b86797?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1444464666168-49d633b86797?w=800&h=1200&fit=crop",src:"sounds/birds.wav"},{id:"bowl",label:"🔔",name:"Bowl",img:"https://images.unsplash.com/photo-1514905552197-0610a4d8fd73?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1514905552197-0610a4d8fd73?w=800&h=1200&fit=crop",src:null},{id:"stream",label:"💧",name:"Stream",img:"https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&h=1200&fit=crop",src:"sounds/stream.wav"},{id:"night",label:"🌙",name:"Night",img:"https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=1200&fit=crop",src:null}];
+  const activeSoundBg=useMemo(()=>activeSound?SOUND_LIST.find(s=>s.id===activeSound)?.bgImg:null,[activeSound]);
   const intervalRef=useRef(null);
 
   useEffect(()=>{if(phase==="chanting"){intervalRef.current=setInterval(()=>{setElapsed(p=>{const n=p+1;if(timerMode==="countdown"&&targetSeconds>0&&n>=targetSeconds){setPhase("completed");clearInterval(intervalRef.current);return targetSeconds;}return n;});},1000);}else clearInterval(intervalRef.current);return()=>clearInterval(intervalRef.current);},[phase,timerMode,targetSeconds]);
@@ -1886,11 +1887,17 @@ function ShodaiApp() {
       {/* ── CHANTING TAB ── */}
       {activeTab==="chanting"&&(
         <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"auto",position:"relative",zIndex:1}}>
-          <header style={{padding:"56px 24px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative"}}>
+          {/* Sound background image */}
+          {activeSoundBg&&(<>
+            <div style={{position:"absolute",inset:0,backgroundImage:`url(${activeSoundBg})`,backgroundSize:"cover",backgroundPosition:"center",transition:"opacity 1.2s ease",opacity:1,zIndex:0}}/>
+            <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg, rgba(5,5,8,0.65) 0%, rgba(5,5,8,0.45) 30%, rgba(5,5,8,0.55) 70%, rgba(5,5,8,0.85) 100%)",zIndex:0}}/>
+          </>)}
+          {!activeSoundBg&&<div style={{position:"absolute",inset:0,background:T.colors.bg,transition:"opacity 1.2s ease",zIndex:0}}/>}
+          <header style={{padding:"56px 24px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative",zIndex:1}}>
             <ShodaiLogo size="lg" animate={phase==="chanting"}/>
             <PhaseIndicator phase={phase}/>
           </header>
-          <div style={{padding:"8px 24px 0"}}>
+          <div style={{padding:"8px 24px 0",position:"relative",zIndex:1}}>
             <div style={{padding:"14px 18px",borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",...G.card}}>
               <div>
                 <span style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>本日</span>
@@ -1903,13 +1910,13 @@ function ShodaiApp() {
 
           {/* Post-chanting journal prompt */}
           {showPostJournal&&phase==="idle"&&(
-            <div style={{padding:"16px 24px 0"}}>
+            <div style={{padding:"16px 24px 0",position:"relative",zIndex:1}}>
               <JournalForm onSave={handleSavePostJournal} onCancel={()=>setShowPostJournal(false)} sessionDuration={lastSessionDuration} isPostChanting={true}/>
             </div>
           )}
 
           {!showPostJournal&&(
-            <>
+            <div style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",flex:1}}>
               {/* ── View toggle (timer ↔ cards ↔ sounds) ── */}
               <div style={{display:"flex",justifyContent:"center",padding:"8px 24px 0"}}>
                 <div style={{display:"flex",gap:0,borderRadius:12,overflow:"hidden",border:`1px solid ${T.colors.border}`,...G.card}}>
@@ -2030,7 +2037,7 @@ function ShodaiApp() {
                 {phase==="paused"&&(<><button onClick={handleStart} style={{flex:1,padding:"16px 24px",borderRadius:30,border:"none",background:T.colors.accent,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:14,fontWeight:800,cursor:"pointer",textTransform:"uppercase"}}>再開する</button><button onClick={handleStop} style={{padding:"16px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer"}}>終了</button></>)}
                 {phase==="completed"&&(<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14,width:"100%",animation:"slideUp 0.5s ease"}}><div style={{textAlign:"center"}}><div style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:800,color:T.colors.accent,textTransform:"uppercase"}}>お疲れさまでした</div><div style={{fontFamily:T.fonts.mono,fontSize:14,fontWeight:500,color:T.colors.textMuted,marginTop:6}}>{formatTimeCompact(elapsed)}<span style={{margin:"0 6px",color:T.colors.textDim}}>·</span>約{formatHen(sessionHen)}遍</div></div><div style={{display:"flex",gap:12,width:"100%",maxWidth:300}}><button onClick={handleStop} style={{flex:1,padding:"14px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer"}}>記録する</button><button onClick={()=>{handleStop();setTimeout(handleStart,100)}} style={{flex:1,padding:"14px 24px",borderRadius:30,border:"none",background:T.colors.accent,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:14,fontWeight:800,cursor:"pointer",textTransform:"uppercase"}}>もう一回</button></div></div>)}
               </div>
-            </>
+            </div>
           )}
         </div>
       )}
