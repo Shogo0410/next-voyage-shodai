@@ -515,7 +515,8 @@ const KinenSlideshow = ({kinenList}) => {
   const touchRef=useRef(null);
   const timerRef=useRef(null);
 
-  useEffect(()=>{const demos=[{delay:3000,emoji:"🙏",from:"田中さん"},{delay:7000,emoji:"🔥",from:"山本さん"},{delay:12000,emoji:"✨",from:"佐藤さん"},{delay:18000,emoji:"💪",from:"田中さん"},{delay:25000,emoji:"🌸",from:"鈴木さん"}];const timers=demos.map(r=>setTimeout(()=>setFloats(p=>[...p,{id:Date.now()+Math.random(),emoji:r.emoji,from:r.from}]),r.delay));return()=>timers.forEach(clearTimeout);},[]);
+  const [nudge,setNudge]=useState(false);
+  useEffect(()=>{const demos=[{delay:3000,emoji:"🙏",from:"田中さん"},{delay:7000,emoji:"🔥",from:"山本さん"},{delay:12000,emoji:"✨",from:"佐藤さん"},{delay:18000,emoji:"💪",from:"田中さん"},{delay:25000,emoji:"🌸",from:"鈴木さん"}];const timers=demos.map(r=>setTimeout(()=>{setFloats(p=>[...p,{id:Date.now()+Math.random(),emoji:r.emoji,from:r.from}]);setNudge(true);setTimeout(()=>setNudge(false),600);},r.delay));return()=>timers.forEach(clearTimeout);},[]);
   const removeFloat=(id)=>setFloats(p=>p.filter(r=>r.id!==id));
 
   const [slideDir,setSlideDir]=useState(0);
@@ -574,11 +575,7 @@ const KinenSlideshow = ({kinenList}) => {
     const hasPhoto=!!card.photo;
     return(
       <React.Fragment>
-        {hasPhoto?(
-          <div style={{position:"absolute",inset:-20,backgroundImage:`url(${card.photo})`,backgroundSize:"cover",backgroundPosition:"center",filter:"blur(12px) brightness(0.4) saturate(1.3)",transform:"scale(1.15)"}}/>
-        ):(
-          <div style={{position:"absolute",inset:0,background:catGradients[card.category]||catGradients.other,opacity:0.6}}/>
-        )}
+        <div style={{position:"absolute",inset:0,background:"transparent"}}/>
         <div style={{position:"absolute",inset:0,background:"rgba(255,255,255,0.06)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",borderRadius:22,border:"1px solid rgba(255,255,255,0.12)",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(255,255,255,0.02), 0 8px 32px rgba(0,0,0,0.3)"}}/>
         {hasPhoto&&(
           <div style={{position:"absolute",top:14,right:16,width:56,height:56,borderRadius:14,overflow:"hidden",border:"1px solid rgba(255,255,255,0.15)",boxShadow:"0 4px 12px rgba(0,0,0,0.3)",zIndex:3}}>
@@ -650,7 +647,7 @@ const KinenSlideshow = ({kinenList}) => {
         </div>
       </div>
 
-      {floats.length>0&&<div style={{marginTop:4,textAlign:"center",fontSize:11,color:T.colors.textMuted,animation:"fadeIn 0.5s ease"}}>{floats[floats.length-1]?.from}さんから {floats[floats.length-1]?.emoji}</div>}
+      <div style={{marginTop:4,textAlign:"center",fontSize:11,color:T.colors.textMuted,height:17,opacity:floats.length>0?1:0,transition:"opacity 0.5s ease"}}>{floats.length>0?`${floats[floats.length-1]?.from}さんから ${floats[floats.length-1]?.emoji}`:"\u00A0"}</div>
     </div>
   );
 };
@@ -1821,12 +1818,14 @@ function ShodaiApp() {
   const [lastSessionDuration,setLastSessionDuration]=useState(0);
   const [chantView,setChantView]=useState("timer"); // "timer" | "cards" | "sounds"
   const [activeSound,setActiveSound]=useState(null);
-  const SOUND_LIST=[{id:"rain",label:"🌧",name:"Rain"},{id:"ocean",label:"🌊",name:"Ocean"},{id:"fire",label:"🔥",name:"Fire"},{id:"wind",label:"🍃",name:"Wind"},{id:"birds",label:"🐦",name:"Birds"},{id:"bowl",label:"🔔",name:"Bowl"},{id:"stream",label:"💧",name:"Stream"},{id:"night",label:"🌙",name:"Night"}];
+  const SOUND_LIST=[{id:"rain",label:"🌧",name:"Rain",img:"https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=200&h=200&fit=crop",src:"sounds/rain.wav"},{id:"ocean",label:"🌊",name:"Ocean",img:"https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=200&h=200&fit=crop",src:"sounds/waves.wav"},{id:"fire",label:"🔥",name:"Fire",img:"https://images.unsplash.com/photo-1497906539264-eb74442e37a9?w=200&h=200&fit=crop",src:"sounds/fire.wav"},{id:"wind",label:"🍃",name:"Wind",img:"https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=200&h=200&fit=crop",src:"sounds/winds.wav"},{id:"birds",label:"🐦",name:"Birds",img:"https://images.unsplash.com/photo-1444464666168-49d633b86797?w=200&h=200&fit=crop",src:"sounds/birds.wav"},{id:"bowl",label:"🔔",name:"Bowl",img:"https://images.unsplash.com/photo-1514905552197-0610a4d8fd73?w=200&h=200&fit=crop",src:null},{id:"stream",label:"💧",name:"Stream",img:"https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=200&h=200&fit=crop",src:"sounds/stream.wav"},{id:"night",label:"🌙",name:"Night",img:"https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&h=200&fit=crop",src:null}];
   const intervalRef=useRef(null);
 
   useEffect(()=>{if(phase==="chanting"){intervalRef.current=setInterval(()=>{setElapsed(p=>{const n=p+1;if(timerMode==="countdown"&&targetSeconds>0&&n>=targetSeconds){setPhase("completed");clearInterval(intervalRef.current);return targetSeconds;}return n;});},1000);}else clearInterval(intervalRef.current);return()=>clearInterval(intervalRef.current);},[phase,timerMode,targetSeconds]);
   useEffect(()=>{if(phase==="chanting"||phase==="paused"||phase==="completed")setActiveTab("chanting");},[phase]);
-  useEffect(()=>{let c=0;const tag=()=>{document.querySelectorAll('div,button').forEach(el=>{if(el.style.backdropFilter&&!el.hasAttribute('data-glass')&&!el.classList.contains('glass-timer-ring')){el.setAttribute('data-glass','');el.style.setProperty('--glass-offset',Math.floor(Math.random()*360)+'deg');el.style.animationDelay=-(c++*1.3)+'s';}});};tag();const ob=new MutationObserver(tag);ob.observe(document.body,{childList:true,subtree:true});return()=>ob.disconnect();},[]);
+  const audioRef=useRef({a:null,b:null,active:"a",fadeTimer:null,checkTimer:null});
+  useEffect(()=>{const ctx=audioRef.current;const FADE=3;const VOL=0.5;const cleanup=()=>{clearInterval(ctx.fadeTimer);clearInterval(ctx.checkTimer);if(ctx.a){ctx.a.pause();ctx.a=null;}if(ctx.b){ctx.b.pause();ctx.b=null;}};cleanup();const sound=SOUND_LIST.find(s=>s.id===activeSound);if(!sound?.src)return cleanup;const startA=()=>{ctx.a=new Audio(sound.src);ctx.a.volume=VOL;ctx.a.play().catch(()=>{});ctx.active="a";};startA();ctx.checkTimer=setInterval(()=>{const cur=ctx[ctx.active];if(!cur||!cur.duration)return;const remaining=cur.duration-cur.currentTime;if(remaining<=FADE&&!ctx[ctx.active==="a"?"b":"a"]){const next=new Audio(sound.src);next.volume=0;next.play().catch(()=>{});const nextKey=ctx.active==="a"?"b":"a";ctx[nextKey]=next;let step=0;const steps=FADE*20;ctx.fadeTimer=setInterval(()=>{step++;const pct=step/steps;if(cur)cur.volume=Math.max(0,VOL*(1-pct));next.volume=VOL*pct;if(step>=steps){if(cur){cur.pause();ctx[ctx.active]=null;}ctx.active=nextKey;clearInterval(ctx.fadeTimer);}},FADE*1000/steps);}},200);return cleanup;},[activeSound]);
+  useEffect(()=>{let c=0;const shimmer=(e)=>{const el=e.currentTarget;el.classList.remove('glass-shimmer');void el.offsetWidth;el.classList.add('glass-shimmer');setTimeout(()=>el.classList.remove('glass-shimmer'),700);};const tag=()=>{document.querySelectorAll('div,button').forEach(el=>{if(el.style.backdropFilter&&!el.hasAttribute('data-glass')&&!el.classList.contains('glass-timer-ring')){el.setAttribute('data-glass','');el.style.setProperty('--glass-offset',Math.floor(Math.random()*360)+'deg');el.style.animationDelay=-(c++*1.3)+'s';el.addEventListener('click',shimmer);}});};tag();const ob=new MutationObserver(tag);ob.observe(document.body,{childList:true,subtree:true});return()=>ob.disconnect();},[]);
 
   const handleStart=useCallback(()=>{if(phase==="idle"||phase==="completed"){setElapsed(0);setShowPostJournal(false);}setPhase("chanting");},[phase]);
   const handlePause=useCallback(()=>setPhase("paused"),[]);
@@ -1849,13 +1848,15 @@ function ShodaiApp() {
   const NAV=[{id:"chanting",icon:"◉",label:t("nav_chanting")},{id:"live",icon:"◎",label:t("nav_live")},{id:"kinen",icon:"✦",label:t("nav_kinen")},{id:"journal",icon:"⊡",label:t("nav_journal")},{id:"mypage",icon:"●",label:t("nav_mypage")}];
 
   return(
-    <div style={{height:"100vh",background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.body,display:"flex",flexDirection:"column",maxWidth:430,margin:"0 auto",overflow:"hidden"}}>
+    <div style={{height:"100vh",background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.body,display:"flex",flexDirection:"column",width:"100%",maxWidth:390,margin:"0 auto",overflow:"hidden"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap');
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
         @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
         @keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes cardNudge{0%{transform:rotate(0deg)}15%{transform:rotate(-1.5deg) scale(1.01)}30%{transform:rotate(1deg)}50%{transform:rotate(-0.5deg)}70%{transform:rotate(0.3deg)}100%{transform:rotate(0deg)}}
+        @keyframes modalFloat{0%{transform:translateY(60px) scale(0.95);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
         @keyframes slideFromRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
         @keyframes slideFromLeft{from{transform:translateX(-100%)}to{transform:translateX(0)}}
         @keyframes slideOutLeft{from{transform:translateX(0)}to{transform:translateX(-100%)}}
@@ -1865,10 +1866,13 @@ function ShodaiApp() {
         @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
         @keyframes glassEdgeRotate{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
         .glass-timer-ring{position:absolute;inset:-1px;border-radius:50%;overflow:hidden;pointer-events:none}
-        .glass-timer-ring::before{content:"";position:absolute;inset:-2px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0%,transparent 30%,rgba(255,255,255,0.5) 38%,rgba(255,255,255,0.8) 40%,rgba(255,255,255,0.5) 42%,transparent 50%,transparent 75%,rgba(255,255,255,0.25) 82%,rgba(255,255,255,0.4) 84%,rgba(255,255,255,0.25) 86%,transparent 94%,transparent 100%);animation:glassEdgeRotate 6s linear infinite}
+        .glass-timer-ring::before{content:"";position:absolute;inset:-2px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0%,transparent 30%,rgba(255,255,255,0.5) 38%,rgba(255,255,255,0.8) 40%,rgba(255,255,255,0.5) 42%,transparent 50%,transparent 75%,rgba(255,255,255,0.25) 82%,rgba(255,255,255,0.4) 84%,rgba(255,255,255,0.25) 86%,transparent 94%,transparent 100%);animation:glassEdgeRotate 20s linear infinite}
         .glass-timer-ring::after{content:"";position:absolute;inset:1px;border-radius:50%;background:#050508}
-        [data-glass]{position:relative}
-        [data-glass]::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(135deg,rgba(255,255,255,0.25) 0%,rgba(255,255,255,0.05) 40%,transparent 50%,rgba(255,255,255,0.05) 80%,rgba(255,255,255,0.15) 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:1}
+        [data-glass]{position:relative;overflow:hidden}
+        [data-glass]:has(.glass-timer-ring){overflow:visible}
+        [data-glass]::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(135deg,rgba(255,255,255,0.35) 0%,rgba(255,255,255,0.15) 30%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.15) 70%,rgba(255,255,255,0.3) 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:1}
+        @keyframes glassSheen{0%{transform:translateX(-100%) translateY(-100%)}100%{transform:translateX(100%) translateY(100%)}}
+        [data-glass].glass-shimmer::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,transparent 30%,rgba(255,255,255,0.15) 45%,rgba(255,255,255,0.3) 50%,rgba(255,255,255,0.15) 55%,transparent 70%);animation:glassSheen 0.6s ease-out forwards;pointer-events:none;z-index:2}
         *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
         ::-webkit-scrollbar{width:0}
         textarea::placeholder{color:${T.colors.textDim}}
@@ -1882,11 +1886,9 @@ function ShodaiApp() {
       {/* ── CHANTING TAB ── */}
       {activeTab==="chanting"&&(
         <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"auto",position:"relative",zIndex:1}}>
-          <header style={{padding:"56px 24px 12px",display:"flex",flexDirection:"column",alignItems:"center",position:"relative"}}>
+          <header style={{padding:"56px 24px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative"}}>
             <ShodaiLogo size="lg" animate={phase==="chanting"}/>
-            <div style={{position:"absolute",right:24,top:56}}>
-              <PhaseIndicator phase={phase}/>
-            </div>
+            <PhaseIndicator phase={phase}/>
           </header>
           <div style={{padding:"8px 24px 0"}}>
             <div style={{padding:"14px 18px",borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",...G.card}}>
@@ -1912,10 +1914,24 @@ function ShodaiApp() {
               <div style={{display:"flex",justifyContent:"center",padding:"8px 24px 0"}}>
                 <div style={{display:"flex",gap:0,borderRadius:12,overflow:"hidden",border:`1px solid ${T.colors.border}`,...G.card}}>
                   {[{key:"timer",label:t("chant_timer_label")||"Timer"},{key:"cards",label:t("chant_cards_label")||"Kinen"},{key:"sounds",label:t("chant_sounds_label")||"Sounds"}].map(v=>(
-                    <button key={v.key} onClick={()=>setChantView(v.key)} style={{padding:"7px 18px",fontSize:11,fontFamily:T.fonts.body,fontWeight:chantView===v.key?600:400,border:"none",background:chantView===v.key?T.colors.accentSoft:"transparent",color:chantView===v.key?T.colors.accent:T.colors.textMuted,cursor:"pointer"}}>{v.label}</button>
+                    <button key={v.key} onClick={()=>setChantView(v.key)} style={{padding:"7px 18px",fontSize:11,fontFamily:T.fonts.body,fontWeight:chantView===v.key?600:400,border:"none",background:chantView===v.key?T.colors.accentSoft:"transparent",color:chantView===v.key?T.colors.accent:T.colors.text,cursor:"pointer"}}>{v.label}</button>
                   ))}
                 </div>
               </div>
+
+              {/* Compact timer under tab switch (cards/sounds only) */}
+              {(chantView==="cards"||chantView==="sounds")&&(
+                <div style={{display:"flex",justifyContent:"center",padding:"8px 24px 0"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
+                      <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.textMuted}}>{displayTime}</span>
+                      <div style={{width:1,height:14,background:T.colors.border}}/>
+                      <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.accent}}>{formatHen(sessionHen)}<span style={{fontSize:9,color:T.colors.textDim,marginLeft:2}}>遍</span></span>
+                    </div>
+                    {phase==="idle"&&<button onClick={()=>setShowPresets(true)} style={{padding:"5px 10px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.text,fontFamily:T.fonts.body,fontSize:10,cursor:"pointer"}}>変更</button>}
+                  </div>
+                </div>
+              )}
 
               <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:"8px 0",minHeight:300}}>
 
@@ -1964,17 +1980,6 @@ function ShodaiApp() {
                 {/* ── Card View (replaces timer) ── */}
                 {chantView==="cards"&&(
                   <div style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:12,animation:"fadeIn 0.3s ease"}}>
-                    {/* Compact time display + change button */}
-                    <div style={{display:"flex",alignItems:"center",gap:6}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
-                        <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.textMuted}}>{displayTime}</span>
-                        <div style={{width:1,height:14,background:T.colors.border}}/>
-                        <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.accent}}>{formatHen(sessionHen)}<span style={{fontSize:9,color:T.colors.textDim,marginLeft:2}}>遍</span></span>
-                      </div>
-                      {phase==="idle"&&<button onClick={()=>setShowPresets(!showPresets)} style={{padding:"5px 10px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:showPresets?T.colors.accentSoft:"transparent",color:showPresets?T.colors.accent:T.colors.textDim,fontFamily:T.fonts.body,fontSize:10,cursor:"pointer"}}>変更</button>}
-                    </div>
-                    {phase==="idle"&&showPresets&&(<div style={{display:"flex",flexWrap:"wrap",justifyContent:"center",gap:6,animation:"slideUp 0.3s ease"}}>{TIMER_PRESETS.map(p=>{const sel=(timerMode==="countdown"&&targetSeconds===p.seconds)||(timerMode==="stopwatch"&&p.seconds===0);return<button key={p.label} onClick={()=>handlePresetSelect(p)} style={{padding:"8px 12px",borderRadius:12,display:"flex",flexDirection:"column",alignItems:"center",gap:2,border:`1px solid ${sel?T.colors.accent:T.colors.border}`,background:sel?T.colors.accentSoft:"transparent",color:sel?T.colors.accent:T.colors.text,fontFamily:T.fonts.body,fontSize:11,cursor:"pointer"}}><span>{p.label}</span>{p.seconds>0&&<span style={{fontSize:8,color:T.colors.textDim}}>≈{formatHen(secondsToHen(p.seconds))}遍</span>}</button>})}</div>)}
-                    {/* Card stack */}
                     <KinenSlideshow kinenList={kinenList}/>
                   </div>
                 )}
@@ -1982,36 +1987,41 @@ function ShodaiApp() {
                 {/* ── Sounds View ── */}
                 {chantView==="sounds"&&(
                   <div style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:12,animation:"fadeIn 0.3s ease",padding:"0 16px"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:6}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
-                        <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.textMuted}}>{displayTime}</span>
-                        <div style={{width:1,height:14,background:T.colors.border}}/>
-                        <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.accent}}>{formatHen(sessionHen)}<span style={{fontSize:9,color:T.colors.textDim,marginLeft:2}}>遍</span></span>
-                      </div>
-                      {phase==="idle"&&<button onClick={()=>setShowPresets(!showPresets)} style={{padding:"5px 10px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:showPresets?T.colors.accentSoft:"transparent",color:showPresets?T.colors.accent:T.colors.textDim,fontFamily:T.fonts.body,fontSize:10,cursor:"pointer"}}>変更</button>}
-                    </div>
-                    {phase==="idle"&&showPresets&&(<div style={{display:"flex",flexWrap:"wrap",justifyContent:"center",gap:6,animation:"slideUp 0.3s ease"}}>{TIMER_PRESETS.map(p=>{const sel=(timerMode==="countdown"&&targetSeconds===p.seconds)||(timerMode==="stopwatch"&&p.seconds===0);return<button key={p.label} onClick={()=>handlePresetSelect(p)} style={{padding:"8px 12px",borderRadius:12,display:"flex",flexDirection:"column",alignItems:"center",gap:2,border:`1px solid ${sel?T.colors.accent:T.colors.border}`,background:sel?T.colors.accentSoft:"transparent",color:sel?T.colors.accent:T.colors.text,fontFamily:T.fonts.body,fontSize:11,cursor:"pointer"}}><span>{p.label}</span>{p.seconds>0&&<span style={{fontSize:8,color:T.colors.textDim}}>≈{formatHen(secondsToHen(p.seconds))}遍</span>}</button>})}</div>)}
                     <div style={{display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:10,width:"100%",maxWidth:300}}>
                       {SOUND_LIST.map(s=>{const sel=activeSound===s.id;return(
-                        <button key={s.id} onClick={()=>setActiveSound(sel?null:s.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:"14px 8px",borderRadius:16,border:`1px solid ${sel?T.colors.accent:T.colors.border}`,background:sel?T.colors.accentSoft:T.colors.surface,cursor:"pointer",transition:"all 0.2s ease",...G.card}}>
-                          <span style={{fontSize:24}}>{s.label}</span>
-                          <span style={{fontSize:10,fontFamily:T.fonts.body,fontWeight:sel?600:400,color:sel?T.colors.accent:T.colors.textMuted}}>{s.name}</span>
+                        <button key={s.id} onClick={()=>setActiveSound(sel?null:s.id)} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",gap:0,padding:0,borderRadius:16,border:`2px solid ${sel?T.colors.accent:"transparent"}`,background:"transparent",cursor:"pointer",transition:"all 0.2s ease",overflow:"hidden",aspectRatio:"1",boxShadow:sel?`0 0 12px rgba(206,255,0,0.3)`:"none"}}>
+                          <img src={s.img} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",borderRadius:14,filter:sel?"brightness(1.1)":"brightness(0.7)",transition:"filter 0.2s ease"}}/>
+                          <div style={{position:"absolute",inset:0,borderRadius:14,background:"linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.7) 100%)"}}/>
+                          <span style={{position:"relative",zIndex:1,fontSize:10,fontFamily:T.fonts.body,fontWeight:600,color:sel?T.colors.accent:"rgba(255,255,255,0.9)",padding:"0 4px 8px"}}>{s.name}</span>
                         </button>
                       )})}
                     </div>
-                    {activeSound&&(
-                      <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 20px",borderRadius:20,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
-                        <span style={{fontSize:16}}>{SOUND_LIST.find(s=>s.id===activeSound)?.label}</span>
-                        <span style={{fontSize:12,fontFamily:T.fonts.body,color:T.colors.textMuted}}>Playing</span>
-                        <div style={{display:"flex",gap:2,alignItems:"center"}}>{[...Array(5)].map((_,i)=><div key={i} style={{width:3,height:8+Math.random()*10,borderRadius:2,background:T.colors.accent,opacity:0.6+Math.random()*0.4,animation:`pulse ${1+Math.random()}s ease-in-out infinite`,animationDelay:`${i*0.15}s`}}/>)}</div>
-                      </div>
-                    )}
+                    <div style={{height:42,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      {activeSound?(
+                        <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 20px",borderRadius:20,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card,opacity:1,transition:"opacity 0.3s ease"}}>
+                          <span style={{fontSize:12,fontFamily:T.fonts.body,color:T.colors.textMuted}}>{SOUND_LIST.find(s=>s.id===activeSound)?.name} — Playing</span>
+                          <div style={{display:"flex",gap:2,alignItems:"center"}}>{[...Array(5)].map((_,i)=><div key={i} style={{width:3,height:8+Math.random()*10,borderRadius:2,background:T.colors.accent,opacity:0.6+Math.random()*0.4,animation:`pulse ${1+Math.random()}s ease-in-out infinite`,animationDelay:`${i*0.15}s`}}/>)}</div>
+                        </div>
+                      ):null}
+                    </div>
                   </div>
                 )}
 
-                {phase==="idle"&&chantView==="timer"&&(<div style={{animation:"fadeIn 0.4s ease"}}><button onClick={()=>setShowPresets(!showPresets)} style={{padding:"8px 20px",borderRadius:20,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:12,cursor:"pointer"}}>時間を変更 {showPresets?"▴":"▾"}</button>
-                  {showPresets&&(<div style={{display:"flex",flexWrap:"wrap",justifyContent:"center",gap:8,marginTop:12,animation:"slideUp 0.3s ease"}}>{TIMER_PRESETS.map(p=>{const sel=(timerMode==="countdown"&&targetSeconds===p.seconds)||(timerMode==="stopwatch"&&p.seconds===0);return<button key={p.label} onClick={()=>handlePresetSelect(p)} style={{padding:"10px 16px",borderRadius:16,display:"flex",flexDirection:"column",alignItems:"center",gap:2,border:`1px solid ${sel?T.colors.accent:T.colors.border}`,background:sel?T.colors.accentSoft:"transparent",color:sel?T.colors.accent:T.colors.text,fontFamily:T.fonts.body,fontSize:12,cursor:"pointer"}}><span>{p.label}</span>{p.seconds>0&&<span style={{fontSize:9,color:T.colors.textDim}}>≈{formatHen(secondsToHen(p.seconds))}遍</span>}</button>})}</div>)}
-                </div>)}
+                {phase==="idle"&&chantView==="timer"&&(<div style={{animation:"fadeIn 0.4s ease"}}><button onClick={()=>setShowPresets(true)} style={{padding:"8px 20px",borderRadius:20,border:`1px solid ${T.colors.border}`,background:"transparent",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",color:T.colors.text,fontFamily:T.fonts.body,fontSize:12,cursor:"pointer"}}>時間を変更</button></div>)}
+                {showPresets&&(
+                  <div onClick={()=>setShowPresets(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,animation:"fadeIn 2s ease"}}>
+                    <div onClick={e=>e.stopPropagation()} style={{background:T.colors.surface,borderRadius:24,padding:"28px 24px",width:"85%",maxWidth:340,border:`1px solid ${T.colors.border}`,boxShadow:"0 20px 60px rgba(0,0,0,0.5)",animation:"modalFloat 2s cubic-bezier(0.05,0.7,0.1,1)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)"}}>
+                      <div style={{textAlign:"center",marginBottom:20}}>
+                        <div style={{fontFamily:T.fonts.display,fontSize:16,fontWeight:700,color:T.colors.text}}>時間を変更</div>
+                        <div style={{fontFamily:T.fonts.body,fontSize:11,color:T.colors.textDim,marginTop:4}}>唱題の目標時間を選んでください</div>
+                      </div>
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:10}}>
+                        {TIMER_PRESETS.map(p=>{const sel=(timerMode==="countdown"&&targetSeconds===p.seconds)||(timerMode==="stopwatch"&&p.seconds===0);return<button key={p.label} onClick={()=>{handlePresetSelect(p);setShowPresets(false);}} style={{padding:"14px 8px",borderRadius:16,display:"flex",flexDirection:"column",alignItems:"center",gap:4,border:`1px solid ${sel?T.colors.accent:T.colors.border}`,background:sel?T.colors.accentSoft:"transparent",color:sel?T.colors.accent:T.colors.text,fontFamily:T.fonts.body,fontSize:13,fontWeight:sel?700:500,cursor:"pointer",transition:"all 0.2s ease"}}><span>{p.label}</span>{p.seconds>0&&<span style={{fontSize:9,color:sel?T.colors.accent:T.colors.textDim}}>≈{formatHen(secondsToHen(p.seconds))}遍</span>}</button>})}
+                      </div>
+                      <button onClick={()=>setShowPresets(false)} style={{width:"100%",marginTop:16,padding:"12px",borderRadius:14,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:13,cursor:"pointer"}}>閉じる</button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div style={{padding:"0 32px 16px",display:"flex",gap:12,justifyContent:"center"}}>
