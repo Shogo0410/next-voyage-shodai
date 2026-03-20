@@ -15,7 +15,7 @@ export default function UsersPage() {
 
   const filtered = MOCK_USERS
     .filter(u => {
-      if (search && !u.name.includes(search) && !u.email.includes(search) && !u.userId.includes(search)) return false;
+      if (search && !u.userId.includes(search)) return false;
       if (filter === "premium") return u.plan === "premium" && u.subscriptionStatus === "active";
       if (filter === "free") return u.plan === "free";
       if (filter === "canceled") return u.subscriptionStatus === "canceled";
@@ -24,7 +24,7 @@ export default function UsersPage() {
     })
     .sort((a, b) => {
       let av: string | number, bv: string | number;
-      if (sortKey === "name") { av = a.name; bv = b.name; }
+      if (sortKey === "name") { av = a.userId; bv = b.userId; }
       else { av = new Date(a[sortKey]).getTime(); bv = new Date(b[sortKey]).getTime(); }
       return sortDir === "asc" ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
     });
@@ -62,7 +62,7 @@ export default function UsersPage() {
       <div className="flex items-center gap-4">
         <input
           type="text"
-          placeholder="名前、メール、IDで検索..."
+          placeholder="ユーザーIDで検索..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="w-80 px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -111,12 +111,11 @@ export default function UsersPage() {
               <tr key={u.userId} className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: `${u.avatarColor}20`, color: u.avatarColor }}>
-                      {u.name[0]}
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                      {u.userId.slice(-2)}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{u.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white font-mono">{u.userId}</p>
                     </div>
                   </div>
                 </td>

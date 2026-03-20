@@ -108,12 +108,11 @@ export default function BillingPage() {
             {canceled.map(u => (
               <div key={u.userId} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: `${u.avatarColor}20`, color: u.avatarColor }}>
-                    {u.name[0]}
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                    {u.userId.slice(-2)}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{u.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white font-mono">{u.userId}</p>
                   </div>
                 </div>
                 <div className="text-right">

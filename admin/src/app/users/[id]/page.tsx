@@ -59,16 +59,15 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
       <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold" style={{ background: `${user.avatarColor}20`, color: user.avatarColor }}>
-              {user.name[0]}
+            <div className="w-16 h-16 rounded-full flex items-center justify-center text-lg font-bold bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+              {user.userId.slice(-2)}
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">{user.name}</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white font-mono">{user.userId}</h1>
                 {statusBadge(user)}
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{user.email}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">ID: {user.userId}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">登録: {new Date(user.createdAt).toLocaleDateString("ja-JP")}</p>
             </div>
           </div>
 
