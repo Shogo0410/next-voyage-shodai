@@ -92,7 +92,7 @@ const LANG = {
     chant_timer_label:"タイマー", chant_cards_label:"祈念", chant_sounds_label:"サウンド",
     // LIVE
     live_title:"LIVE", live_subtitle:"世界中の同志とつながる", live_people_chanting:"人が唱題中",
-    live_japan:"日本", live_world:"世界", live_following:"フォロー中", live_following_chanting:"フォロー中 · 唱題中",
+    live_japan:"日本", live_world:"世界", live_asia:"アジア", live_americas:"アメリカ", live_europe:"ヨーロッパ", live_africa:"アフリカ", live_oceania:"オセアニア", live_following:"フォロー中", live_following_chanting:"フォロー中 · 唱題中",
     live_min_ago:"分前から唱題中", live_kinen_count:"祈念", live_public_kinen:"の公開祈念",
     live_active:"active", live_chanting_now:"唱題中", live_not_chanting:"オフライン", live_send_cheer:"エールを送る",
     // Kinen
@@ -168,7 +168,7 @@ const LANG = {
     chant_timer_label:"Timer", chant_cards_label:"Kinen", chant_sounds_label:"Sounds",
     // LIVE
     live_title:"LIVE", live_subtitle:"Connect with fellow practitioners", live_people_chanting:"chanting now",
-    live_japan:"Japan", live_world:"World", live_following:"Following", live_following_chanting:"Following · Chanting",
+    live_japan:"Japan", live_world:"World", live_asia:"Asia", live_americas:"Americas", live_europe:"Europe", live_africa:"Africa", live_oceania:"Oceania", live_following:"Following", live_following_chanting:"Following · Chanting",
     live_min_ago:"min ago", live_kinen_count:"prayers", live_public_kinen:"'s public prayers",
     live_active:"active", live_chanting_now:"Chanting", live_not_chanting:"Offline", live_send_cheer:"Send cheer",
     // Kinen
@@ -343,16 +343,31 @@ const DEMO_FOLLOWING_KINEN = [
 ];
 
 const DEMO_LIVE_DOTS = [
+  // Japan
   {id:"a1",lat:35.68,lng:139.77,delay:0},{id:"a2",lat:35.71,lng:139.65,delay:1.2},
   {id:"a3",lat:34.69,lng:135.50,delay:0.5},{id:"a4",lat:35.18,lng:136.91,delay:2.1},
   {id:"a5",lat:33.59,lng:130.40,delay:0.8},{id:"a6",lat:43.06,lng:141.35,delay:1.5},
   {id:"a7",lat:38.27,lng:140.87,delay:0.3},{id:"a8",lat:34.40,lng:132.46,delay:1.8},
-  {id:"a9",lat:26.34,lng:127.80,delay:2.5},{id:"a10",lat:34.05,lng:-118.24,delay:0.7},
-  {id:"a11",lat:40.71,lng:-74.01,delay:1.1},{id:"a12",lat:51.51,lng:-0.13,delay:1.9},
-  {id:"a13",lat:-23.55,lng:-46.63,delay:0.4},{id:"a14",lat:37.57,lng:126.98,delay:2.3},
-  {id:"a15",lat:37.90,lng:139.02,delay:1.3},{id:"a16",lat:48.86,lng:2.35,delay:0.9},
-  {id:"a17",lat:28.61,lng:77.21,delay:1.7},{id:"a18",lat:35.01,lng:135.77,delay:2.0},
-  {id:"a19",lat:35.45,lng:139.64,delay:1.6},{id:"a20",lat:-33.87,lng:151.21,delay:1.4},
+  {id:"a9",lat:26.34,lng:127.80,delay:2.5},{id:"a15",lat:37.90,lng:139.02,delay:1.3},
+  {id:"a18",lat:35.01,lng:135.77,delay:2.0},{id:"a19",lat:35.45,lng:139.64,delay:1.6},
+  // Asia (non-Japan)
+  {id:"a14",lat:37.57,lng:126.98,delay:2.3},{id:"a17",lat:28.61,lng:77.21,delay:1.7},
+  {id:"a21",lat:13.76,lng:100.50,delay:0.6},{id:"a22",lat:1.35,lng:103.82,delay:1.8},
+  {id:"a23",lat:31.23,lng:121.47,delay:0.2},{id:"a24",lat:-6.21,lng:106.85,delay:1.1},
+  // Americas
+  {id:"a10",lat:34.05,lng:-118.24,delay:0.7},{id:"a11",lat:40.71,lng:-74.01,delay:1.1},
+  {id:"a13",lat:-23.55,lng:-46.63,delay:0.4},{id:"a25",lat:19.43,lng:-99.13,delay:1.5},
+  {id:"a26",lat:43.65,lng:-79.38,delay:0.9},{id:"a27",lat:-34.60,lng:-58.38,delay:2.2},
+  // Europe
+  {id:"a12",lat:51.51,lng:-0.13,delay:1.9},{id:"a16",lat:48.86,lng:2.35,delay:0.9},
+  {id:"a28",lat:52.52,lng:13.41,delay:0.3},{id:"a29",lat:41.90,lng:12.50,delay:1.6},
+  {id:"a30",lat:40.42,lng:-3.70,delay:2.4},
+  // Africa
+  {id:"a31",lat:30.04,lng:31.24,delay:0.5},{id:"a32",lat:-1.29,lng:36.82,delay:1.3},
+  {id:"a33",lat:-33.93,lng:18.42,delay:2.1},
+  // Oceania
+  {id:"a20",lat:-33.87,lng:151.21,delay:1.4},{id:"a34",lat:-37.81,lng:144.96,delay:0.8},
+  {id:"a35",lat:-36.85,lng:174.76,delay:1.9},
 ];
 
 const DEMO_FOLLOWING_LIVE = [
@@ -648,9 +663,18 @@ const KinenSlideshow = ({kinenList}) => {
 };
 
 // ─── LIVE Tab (from v7) ───
+const REGIONS = [
+  {key:"world",center:[20,20],zoom:1.2,mapLabel:"WORLDWIDE"},
+  {key:"asia",center:[100,30],zoom:2.8,bounds:{latMin:-10,latMax:55,lngMin:60,lngMax:150},mapLabel:"ASIA"},
+  {key:"americas",center:[-80,15],zoom:2.2,bounds:{latMin:-56,latMax:72,lngMin:-170,lngMax:-30},mapLabel:"AMERICAS"},
+  {key:"europe",center:[15,50],zoom:3.2,bounds:{latMin:35,latMax:72,lngMin:-12,lngMax:45},mapLabel:"EUROPE"},
+  {key:"africa",center:[20,5],zoom:2.8,bounds:{latMin:-35,latMax:38,lngMin:-18,lngMax:52},mapLabel:"AFRICA"},
+  {key:"oceania",center:[145,-25],zoom:3.5,bounds:{latMin:-48,latMax:0,lngMin:110,lngMax:180},mapLabel:"OCEANIA"},
+  {key:"japan",center:[138,36.5],zoom:4.5,bounds:{latMin:24,latMax:46,lngMin:128,lngMax:148},mapLabel:"JAPAN"},
+];
 const LiveTab = ({followingKinen,onReactKinen,onAddToMine}) => {
   const [totalOnline,setTotalOnline]=useState(23);
-  const [liveSubTab,setLiveSubTab]=useState("world"); // "world" | "japan" | "following"
+  const [liveSubTab,setLiveSubTab]=useState("world");
   const [expandedUser,setExpandedUser]=useState(null);
   const [sentReactions,setSentReactions]=useState({});
   const [addedToast,setAddedToast]=useState(null);
@@ -695,23 +719,26 @@ const LiveTab = ({followingKinen,onReactKinen,onAddToMine}) => {
     };
   },[]);
 
-  // 日本/世界切替
+  // Region切替
   useEffect(()=>{
     if(!mapRef.current)return;
-    if(liveSubTab==="japan"){
-      mapRef.current.flyTo({center:[138.0,36.5],zoom:4.5,duration:1500});
-    }else if(liveSubTab==="world"){
-      mapRef.current.flyTo({center:[139.0,20.0],zoom:1.2,duration:1500});
+    const region=REGIONS.find(r=>r.key===liveSubTab);
+    if(region){
+      mapRef.current.flyTo({center:region.center,zoom:region.zoom,duration:1500});
+      markersRef.current.forEach(({marker,dot})=>{
+        const el=marker.getElement();
+        if(region.bounds){
+          const inBounds=dot.lat>=region.bounds.latMin&&dot.lat<=region.bounds.latMax&&dot.lng>=region.bounds.lngMin&&dot.lng<=region.bounds.lngMax;
+          el.style.display=inBounds?"block":"none";
+        }else{
+          el.style.display="block";
+        }
+      });
     }
-    markersRef.current.forEach(({marker,dot})=>{
-      const isJapan=dot.lat>24&&dot.lat<46&&dot.lng>128&&dot.lng<148;
-      const el=marker.getElement();
-      if(liveSubTab==="japan"&&!isJapan){el.style.display="none";}
-      else{el.style.display="block";}
-    });
   },[liveSubTab]);
 
-  const activeDots=liveSubTab==="japan"?DEMO_LIVE_DOTS.filter(d=>d.lat>24&&d.lat<46&&d.lng>128&&d.lng<148):DEMO_LIVE_DOTS;
+  const currentRegion=REGIONS.find(r=>r.key===liveSubTab);
+  const activeDots=currentRegion?.bounds?DEMO_LIVE_DOTS.filter(d=>d.lat>=currentRegion.bounds.latMin&&d.lat<=currentRegion.bounds.latMax&&d.lng>=currentRegion.bounds.lngMin&&d.lng<=currentRegion.bounds.lngMax):DEMO_LIVE_DOTS;
 
   const handleSendReaction=(emoji,targetName)=>{setSentReactions(p=>({...p,[targetName]:[...(p[targetName]||[]),{emoji,time:new Date()}]}));};
   const handleAddToMine=(kinen)=>{onAddToMine(kinen.text,kinen.category);setAddedToast(kinen.id);setTimeout(()=>setAddedToast(null),2000);};
@@ -738,19 +765,19 @@ const LiveTab = ({followingKinen,onReactKinen,onAddToMine}) => {
             <span style={{fontSize:11,color:T.colors.textMuted}}>{t("live_people_chanting")}</span>
           </div>
         </div>
-        {/* ── Sub tabs: World / Japan / Following ── */}
-        <div style={{display:"flex",gap:6,marginBottom:12}}>
-          {[{key:"world",label:t("live_world")},{key:"japan",label:t("live_japan")},{key:"following",label:t("live_following")}].map(v=>(
-            <button key={v.key} onClick={()=>setLiveSubTab(v.key)} style={{padding:"6px 16px",borderRadius:16,fontSize:12,fontFamily:T.fonts.body,border:`1px solid ${liveSubTab===v.key?T.colors.live+"60":T.colors.border}`,background:liveSubTab===v.key?T.colors.liveSoft:"transparent",color:liveSubTab===v.key?T.colors.live:T.colors.textMuted,cursor:"pointer",transition:"all 0.2s ease"}}>{v.label}</button>
+        {/* ── Sub tabs: Regions + Following ── */}
+        <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto",WebkitOverflowScrolling:"touch",scrollbarWidth:"none",msOverflowStyle:"none",paddingBottom:2}}>
+          {[...REGIONS.map(r=>({key:r.key,label:t("live_"+r.key)})),{key:"following",label:t("live_following")}].map(v=>(
+            <button key={v.key} onClick={()=>setLiveSubTab(v.key)} style={{padding:"6px 14px",borderRadius:16,fontSize:11,fontFamily:T.fonts.body,border:`1px solid ${liveSubTab===v.key?T.colors.live+"60":T.colors.border}`,background:liveSubTab===v.key?T.colors.liveSoft:"transparent",color:liveSubTab===v.key?T.colors.live:T.colors.textMuted,cursor:"pointer",transition:"all 0.2s ease",whiteSpace:"nowrap",flexShrink:0}}>{v.label}</button>
           ))}
         </div>
       </div>
 
-      {/* ── Map view (World / Japan) ── */}
-      {(liveSubTab==="world"||liveSubTab==="japan")&&(
+      {/* ── Map view (any region tab) ── */}
+      {liveSubTab!=="following"&&(
         <div style={{flex:1,margin:"0 24px 24px",borderRadius:20,overflow:"hidden",position:"relative",border:`1px solid ${T.colors.border}`,background:"#111",boxShadow:T.glass.shadow}}>
           <div ref={mapContainerRef} style={{position:"absolute",top:0,left:0,right:0,bottom:0}}/>
-          <div style={{position:"absolute",bottom:8,left:12,fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.mono,zIndex:2,background:"rgba(0,0,0,0.5)",padding:"2px 6px",borderRadius:6}}>{liveSubTab==="japan"?"JAPAN":"WORLDWIDE"} · {activeDots.length} active</div>
+          <div style={{position:"absolute",bottom:8,left:12,fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.mono,zIndex:2,background:"rgba(0,0,0,0.5)",padding:"2px 6px",borderRadius:6}}>{currentRegion?.mapLabel||"WORLDWIDE"} · {activeDots.length} active</div>
         </div>
       )}
 
