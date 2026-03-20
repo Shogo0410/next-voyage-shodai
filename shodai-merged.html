@@ -691,10 +691,16 @@ const LiveTab = ({followingKinen,onReactKinen,onAddToMine}) => {
     markersRef.current.forEach(m=>m.marker.remove());
     markersRef.current=[];
 
+    // 初期表示: 最もマーカーが多いリージョンを中心に地球全体を表示
+    const initCenter=(()=>{
+      const rr=REGIONS.filter(r=>r.bounds);let mx=0,best=null;
+      rr.forEach(r=>{const c=DEMO_LIVE_DOTS.filter(d=>d.lat>=r.bounds.latMin&&d.lat<=r.bounds.latMax&&d.lng>=r.bounds.lngMin&&d.lng<=r.bounds.lngMax).length;if(c>mx){mx=c;best=r;}});
+      return best?best.center:[20,20];
+    })();
     const map=new mapboxgl.Map({
       container:mapContainerRef.current,
       style:"mapbox://styles/mapbox/dark-v11",
-      center:[139.0,20.0],
+      center:initCenter,
       zoom:1.2,
       attributionControl:false,
     });
@@ -724,7 +730,18 @@ const LiveTab = ({followingKinen,onReactKinen,onAddToMine}) => {
     if(!mapRef.current)return;
     const region=REGIONS.find(r=>r.key===liveSubTab);
     if(region){
-      mapRef.current.flyTo({center:region.center,zoom:region.zoom,duration:1500});
+      let flyCenter=region.center;
+      if(region.key==="world"){
+        // 最もマーカーが多いリージョンの中心にフォーカス
+        const regionsWithBounds=REGIONS.filter(r=>r.bounds);
+        let maxCount=0;let bestRegion=null;
+        regionsWithBounds.forEach(r=>{
+          const count=DEMO_LIVE_DOTS.filter(d=>d.lat>=r.bounds.latMin&&d.lat<=r.bounds.latMax&&d.lng>=r.bounds.lngMin&&d.lng<=r.bounds.lngMax).length;
+          if(count>maxCount){maxCount=count;bestRegion=r;}
+        });
+        if(bestRegion)flyCenter=bestRegion.center;
+      }
+      mapRef.current.flyTo({center:flyCenter,zoom:region.zoom,duration:1500});
       markersRef.current.forEach(({marker,dot})=>{
         const el=marker.getElement();
         if(region.bounds){
