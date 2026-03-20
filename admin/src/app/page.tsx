@@ -1,6 +1,6 @@
 "use client";
 
-import { MOCK_USERS, getDashboardKPIs, generateMockSessions, generateMockKinen, MOOD_LABELS, MOOD_EMOJI } from "@/lib/mock-data";
+import { MOCK_USERS, getDashboardKPIs, generateMockSessions, generateMockKinen, MOOD_LABELS } from "@/lib/mock-data";
 
 const kpis = getDashboardKPIs(MOCK_USERS);
 
@@ -78,7 +78,6 @@ export default function DashboardPage() {
             <div className="space-y-2">
               {moodDist.slice(0, 5).map(m => (
                 <div key={m.mood} className="flex items-center gap-2">
-                  <span className="text-sm w-5">{MOOD_EMOJI[m.mood]}</span>
                   <span className="text-xs text-gray-600 dark:text-gray-300 w-12">{MOOD_LABELS[m.mood]}</span>
                   <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                     <div className="h-full bg-blue-500 dark:bg-blue-400 rounded-full" style={{ width: `${m.pct}%` }} />

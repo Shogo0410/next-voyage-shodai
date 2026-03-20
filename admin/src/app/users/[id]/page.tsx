@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import Link from "next/link";
 import {
   MOCK_USERS, generateMockSessions, generateMockKinen, generateMockJournals, generateMockBadges,
-  MOOD_LABELS, MOOD_EMOJI, CATEGORY_LABELS, BADGE_DEFS, type User
+  MOOD_LABELS, CATEGORY_LABELS, BADGE_DEFS, type User
 } from "@/lib/mock-data";
 
 function formatDuration(s: number) {
@@ -146,7 +146,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                   <td className="px-5 py-3 text-sm text-gray-600 dark:text-gray-300 font-mono">{s.hen.toLocaleString()}</td>
                   <td className="px-5 py-3 text-sm text-gray-600 dark:text-gray-300">{s.timerPreset === 0 ? "自由" : formatDuration(s.timerPreset)}</td>
                   <td className="px-5 py-3 text-sm">
-                    {s.mood ? <span>{MOOD_EMOJI[s.mood]} {MOOD_LABELS[s.mood]}</span> : <span className="text-gray-400">—</span>}
+                    {s.mood ? <span>{MOOD_LABELS[s.mood]}</span> : <span className="text-gray-400">—</span>}
                   </td>
                 </tr>
               ))}
@@ -185,7 +185,6 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
             {journals.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(j => (
               <div key={j.journalId} className="px-5 py-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm">{MOOD_EMOJI[j.mood]}</span>
                   <span className="text-xs font-medium text-gray-600 dark:text-gray-300">{MOOD_LABELS[j.mood]}</span>
                   <span className="text-xs text-gray-400">·</span>
                   <span className="text-xs text-gray-400">{new Date(j.createdAt).toLocaleString("ja-JP")}</span>
@@ -205,8 +204,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
               const def = BADGE_DEFS[b.badgeType];
               return def ? (
                 <div key={b.badgeId} className="rounded-lg border border-gray-200 dark:border-gray-800 p-4 text-center">
-                  <p className="text-2xl">{def.emoji}</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white mt-1">{def.label}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{def.label}</p>
                   <p className="text-xs text-gray-400 mt-0.5">{new Date(b.achievedAt).toLocaleDateString("ja-JP")}</p>
                 </div>
               ) : null;

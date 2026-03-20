@@ -68,26 +68,22 @@ const MOOD_LABELS: Record<string, string> = {
   peaceful: "穏やか", passionate: "情熱", grateful: "感謝", determined: "決意",
   growth: "成長", tears: "涙", conviction: "確信", joy: "歓喜",
 };
-const MOOD_EMOJI: Record<string, string> = {
-  peaceful: "😊", passionate: "🔥", grateful: "🙏", determined: "💪",
-  growth: "🌱", tears: "😢", conviction: "⚡", joy: "🌸",
-};
 const CATEGORIES = ["personal", "family", "work", "health", "study", "other"];
 const CATEGORY_LABELS: Record<string, string> = {
   personal: "自分", family: "家族", work: "仕事", health: "健康", study: "学会", other: "その他",
 };
 
-export { MOOD_LABELS, MOOD_EMOJI, CATEGORY_LABELS };
+export { MOOD_LABELS, CATEGORY_LABELS };
 
-const BADGE_DEFS: Record<string, { emoji: string; label: string }> = {
-  streak_7: { emoji: "🔥", label: "7日連続唱題" },
-  streak_30: { emoji: "🌟", label: "30日連続唱題" },
-  hen_10000: { emoji: "💎", label: "1万遍達成" },
-  journals_10: { emoji: "📖", label: "ジャーナル10件" },
-  followers_5: { emoji: "👥", label: "フォロワー5人" },
-  kinen_achieved_5: { emoji: "🎯", label: "祈念5件達成" },
-  total_hours_100: { emoji: "⏱️", label: "累計100時間" },
-  mood_complete: { emoji: "🌈", label: "全気分コンプ" },
+const BADGE_DEFS: Record<string, { label: string }> = {
+  streak_7: { label: "7日連続唱題" },
+  streak_30: { label: "30日連続唱題" },
+  hen_10000: { label: "1万遍達成" },
+  journals_10: { label: "ジャーナル10件" },
+  followers_5: { label: "フォロワー5人" },
+  kinen_achieved_5: { label: "祈念5件達成" },
+  total_hours_100: { label: "累計100時間" },
+  mood_complete: { label: "全気分コンプ" },
 };
 export { BADGE_DEFS };
 
