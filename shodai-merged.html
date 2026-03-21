@@ -1625,7 +1625,7 @@ const AddFriendModal = ({isOpen,onClose,following,onFollow,myUserId}) => {
 };
 
 // ─── MyPage Tab ───
-const MyPageTab = ({profile,setProfile,todayTotal,journals,kinenList,followers,following,onFollow,demoHistory,lang,setLang}) => {
+const MyPageTab = ({profile,setProfile,todayTotal,journals,kinenList,followers,following,onFollow,demoHistory,lang,setLang,moodLog,moodPeriod,setMoodPeriod}) => {
   const [isEditing,setIsEditing]=useState(false);
   const [editName,setEditName]=useState(profile.name);
   const [editBio,setEditBio]=useState(profile.bio);
@@ -1730,6 +1730,91 @@ const MyPageTab = ({profile,setProfile,todayTotal,journals,kinenList,followers,f
           </div>
         )}
 
+
+        {/* ── Mood Analytics ── */}
+        {moodLog&&moodLog.length>0&&(()=>{
+          const now=new Date(2026,2,20);
+          const cutoff=new Date(now);cutoff.setDate(cutoff.getDate()-moodPeriod);
+          const filtered=moodLog.filter(e=>e.dateObj>=cutoff);
+          const data=[...filtered].reverse();
+          if(data.length===0)return null;
+          const avgDiff=Math.round(data.reduce((s,e)=>s+e.diff,0)/data.length);
+          const avgPost=Math.round(data.reduce((s,e)=>s+e.post,0)/data.length);
+          const W=300,H=150,PAD_L=28,PAD_R=8,PAD_T=16,PAD_B=28;
+          const cw=W-PAD_L-PAD_R,ch=H-PAD_T-PAD_B;
+          const xStep=data.length>1?cw/(data.length-1):cw/2;
+          const y=v=>PAD_T+ch-(v/100*ch);
+          const x=i=>PAD_L+(data.length>1?i*xStep:cw/2);
+          const areaPath=data.map((e,i)=>`${x(i)},${y(e.post)}`).join(" ")+` ${x(data.length-1)},${y(0)} ${x(0)},${y(0)}`;
+          const preLine=data.map((e,i)=>`${x(i)},${y(e.pre)}`).join(" ");
+          const postLine=data.map((e,i)=>`${x(i)},${y(e.post)}`).join(" ");
+          const dateLabel=(e)=>{if(!e.dateObj)return e.date||"";const m=e.dateObj.getMonth()+1;const d=e.dateObj.getDate();return `${m}/${d}`;};
+          const labelInterval=Math.max(1,Math.floor(data.length/5));
+          const bestDuration=(()=>{
+            if(moodLog.length<3)return null;
+            const sorted=[...moodLog].sort((a,b)=>b.diff-a.diff);
+            const top=sorted.slice(0,Math.max(3,Math.ceil(sorted.length*0.4)));
+            const mins=top.map(e=>Math.round(e.duration/60));
+            const lo=Math.min(...mins);const hi=Math.max(...mins);
+            const avg=Math.round(top.reduce((s,e)=>s+e.diff,0)/top.length);
+            if(avg<=0)return null;
+            return{lo,hi,avg};
+          })();
+          return <div style={{marginBottom:20,animation:"slideUp 0.46s ease"}}>
+            <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>FEELING</div>
+            {/* Period selector */}
+            <div style={{display:"flex",gap:0,borderRadius:10,overflow:"hidden",border:`1px solid ${T.colors.border}`,marginBottom:10}}>
+              {[{label:"7日",val:7},{label:"14日",val:14},{label:"30日",val:30}].map(p=>
+                <button key={p.val} onClick={()=>setMoodPeriod(p.val)} style={{flex:1,padding:"6px 0",fontSize:11,fontFamily:T.fonts.body,fontWeight:moodPeriod===p.val?600:400,border:"none",background:moodPeriod===p.val?T.colors.accentSoft:"transparent",color:moodPeriod===p.val?T.colors.accent:T.colors.textMuted,cursor:"pointer",transition:"all 0.2s"}}>{p.label}</button>
+              )}
+            </div>
+            {/* Chart */}
+            <div style={{borderRadius:14,background:"rgba(255,255,255,0.03)",border:`1px solid ${T.colors.border}`,padding:"8px 4px 4px"}}>
+              <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",height:"auto"}}>
+                <defs><linearGradient id="moodPostFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.colors.accent} stopOpacity="0.15"/><stop offset="100%" stopColor={T.colors.accent} stopOpacity="0.02"/></linearGradient></defs>
+                {[0,25,50,75,100].map(v=><line key={v} x1={PAD_L} y1={y(v)} x2={W-PAD_R} y2={y(v)} stroke="rgba(255,255,255,0.06)" strokeWidth="0.5"/>)}
+                {[0,50,100].map(v=><text key={v} x={PAD_L-4} y={y(v)+3} fill="rgba(255,255,255,0.25)" fontSize="7" textAnchor="end" fontFamily={T.fonts.mono}>{v}</text>)}
+                <polygon points={areaPath} fill="url(#moodPostFill)"/>
+                {data.map((e,i)=><line key={`v${i}`} x1={x(i)} y1={y(e.pre)} x2={x(i)} y2={y(e.post)} stroke={e.diff>=0?"rgba(123,212,160,0.2)":"rgba(255,138,101,0.2)"} strokeWidth="1.5"/>)}
+                <polyline points={preLine} fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
+                <polyline points={postLine} fill="none" stroke={T.colors.accent} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
+                {data.map((e,i)=><React.Fragment key={i}>
+                  <circle cx={x(i)} cy={y(e.pre)} r="2.5" fill="rgba(255,255,255,0.4)" stroke="rgba(255,255,255,0.6)" strokeWidth="0.5"/>
+                  <circle cx={x(i)} cy={y(e.post)} r="2.5" fill={T.colors.accent} stroke="rgba(206,255,0,0.6)" strokeWidth="0.5"/>
+                </React.Fragment>)}
+                {data.map((e,i)=>i%labelInterval===0||i===data.length-1?<text key={`d${i}`} x={x(i)} y={H-6} fill="rgba(255,255,255,0.3)" fontSize="6.5" textAnchor="middle" fontFamily={T.fonts.mono}>{dateLabel(e)}</text>:null)}
+              </svg>
+              <div style={{display:"flex",justifyContent:"center",gap:16,padding:"2px 0"}}>
+                <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:6,height:6,borderRadius:"50%",background:"rgba(255,255,255,0.4)"}}/>
+                  <span style={{fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.body}}>唱題前</span></div>
+                <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:6,height:6,borderRadius:"50%",background:T.colors.accent}}/>
+                  <span style={{fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.body}}>唱題後</span></div>
+              </div>
+            </div>
+            {/* Summary stats */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginTop:8}}>
+              <div style={{padding:"10px 8px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:`1px solid ${T.colors.border}`,textAlign:"center"}}>
+                <div style={{fontSize:18,fontWeight:700,color:"#7BD4A0",fontFamily:T.fonts.mono}}>+{avgDiff}</div>
+                <div style={{fontSize:9,color:T.colors.textDim,marginTop:2}}>平均改善</div>
+              </div>
+              <div style={{padding:"10px 8px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:`1px solid ${T.colors.border}`,textAlign:"center"}}>
+                <div style={{fontSize:18,fontWeight:700,color:T.colors.accent,fontFamily:T.fonts.mono}}>{data.length}</div>
+                <div style={{fontSize:9,color:T.colors.textDim,marginTop:2}}>セッション</div>
+              </div>
+              <div style={{padding:"10px 8px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:`1px solid ${T.colors.border}`,textAlign:"center"}}>
+                <div style={{fontSize:18,fontWeight:700,color:T.colors.text,fontFamily:T.fonts.mono}}>{avgPost}</div>
+                <div style={{fontSize:9,color:T.colors.textDim,marginTop:2}}>平均(後)</div>
+              </div>
+            </div>
+            {/* Insight */}
+            {bestDuration&&<div style={{marginTop:8,padding:"10px 14px",borderRadius:12,background:"rgba(206,255,0,0.06)",border:`1px solid rgba(206,255,0,0.12)`,display:"flex",alignItems:"center",gap:8}}>
+              <div style={{fontSize:14,color:T.colors.accent}}>✦</div>
+              <div style={{fontFamily:T.fonts.body,fontSize:11,color:T.colors.textMuted,lineHeight:1.4}}>
+                <span style={{color:T.colors.accent,fontWeight:700}}>{bestDuration.lo===bestDuration.hi?`${bestDuration.lo}分`:`${bestDuration.lo}〜${bestDuration.hi}分`}</span>の唱題で気分が<span style={{color:T.colors.accent,fontWeight:700}}>+{bestDuration.avg}pt</span>上がる傾向
+              </div>
+            </div>}
+          </div>;
+        })()}
 
         {/* ── Follow / Followers ── */}
         <div style={{marginBottom:20,animation:"slideUp 0.5s ease"}}>
@@ -1850,6 +1935,12 @@ function ShodaiApp() {
   const [timerMode,setTimerMode]=useState("countdown");
   const [targetSeconds,setTargetSeconds]=useState(900);
   const [showPresets,setShowPresets]=useState(false);
+  const [showKinenAddModal,setShowKinenAddModal]=useState(false);
+  const [kinenModalText,setKinenModalText]=useState("");
+  const [kinenModalCategory,setKinenModalCategory]=useState("personal");
+  const [kinenModalDeadline,setKinenModalDeadline]=useState("");
+  const [kinenModalIsPublic,setKinenModalIsPublic]=useState(false);
+  const addKinenFromModal=()=>{if(!kinenModalText.trim())return;setKinenList(p=>[...p,{id:Date.now(),text:kinenModalText.trim(),category:kinenModalCategory,isOpen:true,isPublic:kinenModalIsPublic,deadline:kinenModalDeadline||null,createdAt:new Date().toISOString().split("T")[0],photo:null,subtasks:[]}]);setKinenModalText("");setKinenModalCategory("personal");setKinenModalDeadline("");setKinenModalIsPublic(false);setShowKinenAddModal(false);};
   const [todayTotal,setTodayTotal]=useState(2340);
   const [sessionHistory,setSessionHistory]=useState([{duration:1440,timestamp:"06:30"},{duration:900,timestamp:"12:15"}]);
   const [kinenList,setKinenList]=useState(DEMO_KINEN);
@@ -1866,6 +1957,7 @@ function ShodaiApp() {
   const [moodPhase,setMoodPhase]=useState("pre"); // "pre" | "post"
   const [preMoodRecorded,setPreMoodRecorded]=useState(false); // true after pre-mood step done or skipped
   const [pendingStart,setPendingStart]=useState(false); // auto-start after feeling
+  const [showMoodModal,setShowMoodModal]=useState(false);
   const [moodLog,setMoodLog]=useState(()=>{
     const seed=[
       {pre:35,post:72,duration:1200,ts:"06:45",d:0},
@@ -1907,9 +1999,9 @@ function ShodaiApp() {
   useEffect(()=>{const ctx=audioRef.current;const FADE=3;const VOL=0.5;const cleanup=()=>{clearInterval(ctx.fadeTimer);clearInterval(ctx.checkTimer);if(ctx.a){ctx.a.pause();ctx.a=null;}if(ctx.b){ctx.b.pause();ctx.b=null;}};cleanup();const sound=SOUND_LIST.find(s=>s.id===activeSound);if(!sound?.src)return cleanup;const startA=()=>{ctx.a=new Audio(sound.src);ctx.a.volume=VOL;ctx.a.play().catch(()=>{});ctx.active="a";};startA();ctx.checkTimer=setInterval(()=>{const cur=ctx[ctx.active];if(!cur||!cur.duration)return;const remaining=cur.duration-cur.currentTime;if(remaining<=FADE&&!ctx[ctx.active==="a"?"b":"a"]){const next=new Audio(sound.src);next.volume=0;next.play().catch(()=>{});const nextKey=ctx.active==="a"?"b":"a";ctx[nextKey]=next;let step=0;const steps=FADE*20;ctx.fadeTimer=setInterval(()=>{step++;const pct=step/steps;if(cur)cur.volume=Math.max(0,VOL*(1-pct));next.volume=VOL*pct;if(step>=steps){if(cur){cur.pause();ctx[ctx.active]=null;}ctx.active=nextKey;clearInterval(ctx.fadeTimer);}},FADE*1000/steps);}},200);return cleanup;},[activeSound]);
   useEffect(()=>{let c=0;const shimmer=(e)=>{const el=e.currentTarget;el.classList.remove('glass-shimmer');void el.offsetWidth;el.classList.add('glass-shimmer');setTimeout(()=>el.classList.remove('glass-shimmer'),700);};const tag=()=>{document.querySelectorAll('div,button').forEach(el=>{if(el.style.backdropFilter&&!el.hasAttribute('data-glass')&&!el.classList.contains('glass-timer-ring')){el.setAttribute('data-glass','');el.style.setProperty('--glass-offset',Math.floor(Math.random()*360)+'deg');el.style.animationDelay=-(c++*1.3)+'s';el.addEventListener('click',shimmer);}});};tag();const ob=new MutationObserver(tag);ob.observe(document.body,{childList:true,subtree:true});return()=>ob.disconnect();},[]);
 
-  const handleStart=useCallback(()=>{if((phase==="idle"||phase==="completed")&&!preMoodRecorded){setPreMood(50);setMoodPhase("pre");setChantView("feeling");setPendingStart(true);return;}if(phase==="idle"||phase==="completed"){setElapsed(0);setShowPostJournal(false);}setPhase("chanting");},[phase,preMoodRecorded]);
+  const handleStart=useCallback(()=>{if(phase==="idle"||phase==="completed"){setElapsed(0);setShowPostJournal(false);}setPhase("chanting");setPreMoodRecorded(true);},[phase]);
   const handlePause=useCallback(()=>setPhase("paused"),[]);
-  const handleStop=useCallback(()=>{if(elapsed>0){setSessionHistory(p=>[{duration:elapsed,timestamp:new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})},...p]);setTodayTotal(p=>p+elapsed);setLastSessionDuration(elapsed);setMoodPhase("post");setPostMood(50);setChantView("feeling");}setPhase("idle");setElapsed(0);setPreMoodRecorded(false);},[elapsed]);
+  const handleStop=useCallback(()=>{if(elapsed>0){setSessionHistory(p=>[{duration:elapsed,timestamp:new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})},...p]);setTodayTotal(p=>p+elapsed);setLastSessionDuration(elapsed);if(preMoodRecorded){setMoodPhase("post");setPostMood(50);setShowMoodModal(true);}}setPhase("idle");setElapsed(0);setPreMoodRecorded(false);},[elapsed,preMoodRecorded]);
   const handlePresetSelect=(p)=>{if(p.seconds===0){setTimerMode("stopwatch");setTargetSeconds(0);}else{setTimerMode("countdown");setTargetSeconds(p.seconds);}setShowPresets(false);};
 
   const handleSavePostJournal=(entry)=>{setJournals(p=>[{...entry,duration:lastSessionDuration},...p]);setShowPostJournal(false);};
@@ -1999,7 +2091,7 @@ function ShodaiApp() {
               {/* ── View toggle (timer ↔ cards ↔ sounds) ── */}
               <div style={{display:"flex",justifyContent:"center",padding:"8px 24px 0"}}>
                 <div style={{display:"flex",gap:0,borderRadius:12,overflow:"hidden",border:`1px solid ${T.colors.border}`,...G.card}}>
-                  {[{key:"timer",label:t("chant_timer_label")||"Timer"},{key:"feeling",label:t("chant_feeling_label")||"Feeling"},{key:"cards",label:t("chant_cards_label")||"Kinen"},{key:"sounds",label:t("chant_sounds_label")||"Sounds"}].map(v=>(
+                  {[{key:"timer",label:t("chant_timer_label")||"Timer"},{key:"cards",label:t("chant_cards_label")||"Kinen"},{key:"sounds",label:t("chant_sounds_label")||"Sounds"}].map(v=>(
                     <button key={v.key} onClick={()=>setChantView(v.key)} style={{padding:"7px 18px",fontSize:11,fontFamily:T.fonts.body,fontWeight:chantView===v.key?600:400,border:"none",background:chantView===v.key?T.colors.accentSoft:"transparent",color:chantView===v.key?T.colors.accent:T.colors.text,cursor:"pointer"}}>{v.label}</button>
                   ))}
                 </div>
@@ -2022,7 +2114,7 @@ function ShodaiApp() {
               <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:"8px 0"}}>
 
                 {/* ── Timer View ── */}
-                {(chantView==="timer"||(!isActive&&chantView!=="sounds"&&chantView!=="cards"&&chantView!=="feeling"))&&(
+                {(chantView==="timer"||(!isActive&&chantView!=="sounds"&&chantView!=="cards"))&&(
                   <>
                     <div style={{position:"relative",width:cs,height:cs,display:"flex",alignItems:"center",justifyContent:"center",animation:phase==="chanting"?"breathe 6s ease-in-out infinite, gentleGlow 6s ease-in-out infinite":"none",borderRadius:"50%",background:"rgba(255,255,255,0.03)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)",border:"none",boxShadow:"0 8px 40px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(255,255,255,0.05)"}}>
                       <div className="glass-timer-ring"/>
@@ -2093,142 +2185,9 @@ function ShodaiApp() {
                   </div>
                 )}
 
-                {/* ── Feeling View ── */}
-                {chantView==="feeling"&&(()=>{
-                  const isPost=moodPhase==="post";
-                  const moodVal=isPost?postMood:preMood;
-                  const setMoodVal=isPost?setPostMood:setPreMood;
-                  const mc=getMoodColor(moodVal);
-                  const mi=getMoodIndex(moodVal);
-                  const handlePostRecord=()=>{
-                    const now=new Date();
-                    const entry={pre:preMood,post:postMood,preLabel:MOOD_LABELS_7[getMoodIndex(preMood)],postLabel:MOOD_LABELS_7[getMoodIndex(postMood)],duration:lastSessionDuration,timestamp:now.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"}),dateObj:now,date:now.toLocaleDateString("ja-JP",{month:"short",day:"numeric"}),diff:postMood-preMood};
-                    setMoodLog(p=>[entry,...p]);
-                    setShowPostJournal(true);setMoodPhase("pre");setPreMood(50);
-                  };
-                  /* --- mood insight --- */
-                  const bestDuration=(()=>{
-                    if(moodLog.length<3)return null;
-                    const sorted=[...moodLog].sort((a,b)=>b.diff-a.diff);
-                    const top=sorted.slice(0,Math.max(3,Math.ceil(sorted.length*0.4)));
-                    const mins=top.map(e=>Math.round(e.duration/60));
-                    const lo=Math.min(...mins);const hi=Math.max(...mins);
-                    const avg=Math.round(top.reduce((s,e)=>s+e.diff,0)/top.length);
-                    if(avg<=0)return null;
-                    return{lo,hi,avg};
-                  })();
-                  return(
-                  <div style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:16,animation:"fadeIn 0.3s ease",padding:"0 24px 16px"}}>
-                    <div style={{position:"relative",width:cs,height:cs}}>
-                      <div style={{position:"absolute",inset:"-15%",borderRadius:"50%",background:`radial-gradient(circle, ${mc} 0%, transparent 60%)`,opacity:0.45,transition:"background 0.3s ease, opacity 0.3s ease",pointerEvents:"none",zIndex:1}}/>
-                      <div style={{position:"relative",width:cs,height:cs,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",background:"rgba(255,255,255,0.015)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",boxShadow:"0 8px 40px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.04)"}}>
-                        <div className="glass-timer-ring"/>
-                        <div style={{display:"flex",flexDirection:"column",alignItems:"center",position:"relative",zIndex:2}}>
-                          {isPost&&<div style={{fontSize:11,color:T.colors.textDim,marginBottom:4}}>お疲れさまでした</div>}
-                          <div key={`${isPost?'post':'pre'}-${mi}`} style={{fontSize:18,fontWeight:700,color:T.colors.text,fontFamily:T.fonts.body,animation:"moodLabelFade 0.6s ease-in-out"}}>{MOOD_LABELS_7[mi]}</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div style={{width:"100%",maxWidth:300}}>
-                      <div style={{display:"flex",alignItems:"center",gap:0}}>
-                        <div style={{flex:1,position:"relative",height:24,borderRadius:12,background:"rgba(255,255,255,0.08)",border:`1px solid ${T.colors.borderLight}`,display:"flex",alignItems:"center"}}>
-                          <input type="range" min="0" max="100" value={moodVal} onChange={e=>setMoodVal(Number(e.target.value))} className="mood-slider"
-                            style={{width:"100%",height:24,appearance:"none",WebkitAppearance:"none",background:"transparent",cursor:"pointer",outline:"none",position:"relative",zIndex:2,margin:0,padding:0}}
-                          />
-                          <style>{`
-                            .mood-slider::-webkit-slider-runnable-track{height:24px;border-radius:12px;background:transparent}
-                            .mood-slider::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.95);border:none;box-shadow:0 1px 4px rgba(0,0,0,0.3)}
-                            .mood-slider::-moz-range-track{height:24px;border-radius:12px;background:transparent;border:none}
-                            .mood-slider::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.95);border:none;box-shadow:0 1px 4px rgba(0,0,0,0.3)}
-                          `}</style>
-                        </div>
-                      </div>
-                    </div>
-                    {!isPost&&phase==="idle"&&<>
-                      <button onClick={()=>{setPreMoodRecorded(true);setChantView("timer");if(pendingStart){setPendingStart(false);setTimeout(()=>{setElapsed(0);setShowPostJournal(false);setPhase("chanting");},50);}}} style={{width:"100%",maxWidth:300,padding:"16px 32px",borderRadius:30,border:"none",background:`linear-gradient(180deg, ${T.colors.accent} 0%, #A8D400 100%)`,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:15,fontWeight:800,cursor:"pointer",animation:"slideUp 0.4s ease",letterSpacing:"-0.01em",boxShadow:`0 4px 20px rgba(206,255,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3)`}}>唱題前</button>
-                      {pendingStart&&<button onClick={()=>{setPreMoodRecorded(true);setPendingStart(false);setChantView("timer");setTimeout(()=>{setElapsed(0);setShowPostJournal(false);setPhase("chanting");},50);}} style={{marginTop:8,background:"none",border:"none",color:T.colors.textDim,fontFamily:T.fonts.body,fontSize:13,cursor:"pointer",padding:"8px 16px"}}>スキップ</button>}
-                    </>}
-                    {isPost&&<button onClick={handlePostRecord} style={{width:"100%",maxWidth:300,padding:"16px 32px",borderRadius:30,border:"none",background:`linear-gradient(180deg, ${T.colors.accent} 0%, #A8D400 100%)`,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:15,fontWeight:800,cursor:"pointer",animation:"slideUp 0.4s ease",letterSpacing:"-0.01em",boxShadow:`0 4px 20px rgba(206,255,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3)`}}>唱題後</button>}
-
-                    {/* ── Mood Analytics ── */}
-                    {moodLog.length>0&&!isPost&&(()=>{
-                      const now=new Date(2026,2,20);
-                      const cutoff=new Date(now);cutoff.setDate(cutoff.getDate()-moodPeriod);
-                      const filtered=moodLog.filter(e=>e.dateObj>=cutoff);
-                      const data=[...filtered].reverse();
-                      if(data.length===0)return null;
-                      const avgDiff=Math.round(data.reduce((s,e)=>s+e.diff,0)/data.length);
-                      const maxEntry=data.reduce((best,e)=>e.diff>best.diff?e:best,data[0]);
-                      const avgPre=Math.round(data.reduce((s,e)=>s+e.pre,0)/data.length);
-                      const avgPost=Math.round(data.reduce((s,e)=>s+e.post,0)/data.length);
-                      const W=300,H=150,PAD_L=28,PAD_R=8,PAD_T=16,PAD_B=28;
-                      const cw=W-PAD_L-PAD_R,ch=H-PAD_T-PAD_B;
-                      const xStep=data.length>1?cw/(data.length-1):cw/2;
-                      const y=v=>PAD_T+ch-(v/100*ch);
-                      const x=i=>PAD_L+(data.length>1?i*xStep:cw/2);
-                      const areaPath=data.map((e,i)=>`${x(i)},${y(e.post)}`).join(" ")+` ${x(data.length-1)},${y(0)} ${x(0)},${y(0)}`;
-                      const preLine=data.map((e,i)=>`${x(i)},${y(e.pre)}`).join(" ");
-                      const postLine=data.map((e,i)=>`${x(i)},${y(e.post)}`).join(" ");
-                      const dateLabel=(e)=>{if(!e.dateObj)return e.date||"";const m=e.dateObj.getMonth()+1;const d=e.dateObj.getDate();return `${m}/${d}`;};
-                      const labelInterval=Math.max(1,Math.floor(data.length/5));
-                      return <div style={{width:"100%",maxWidth:300,marginTop:4}}>
-                        {/* Period selector */}
-                        <div style={{display:"flex",gap:0,borderRadius:10,overflow:"hidden",border:`1px solid ${T.colors.border}`,marginBottom:10}}>
-                          {[{label:"7日",val:7},{label:"14日",val:14},{label:"30日",val:30}].map(p=>
-                            <button key={p.val} onClick={()=>setMoodPeriod(p.val)} style={{flex:1,padding:"6px 0",fontSize:11,fontFamily:T.fonts.body,fontWeight:moodPeriod===p.val?600:400,border:"none",background:moodPeriod===p.val?T.colors.accentSoft:"transparent",color:moodPeriod===p.val?T.colors.accent:T.colors.textMuted,cursor:"pointer",transition:"all 0.2s"}}>{p.label}</button>
-                          )}
-                        </div>
-                        {/* Chart */}
-                        <div style={{borderRadius:14,background:"rgba(255,255,255,0.03)",border:`1px solid ${T.colors.border}`,padding:"8px 4px 4px"}}>
-                          <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",height:"auto"}}>
-                            <defs><linearGradient id="postFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.colors.accent} stopOpacity="0.15"/><stop offset="100%" stopColor={T.colors.accent} stopOpacity="0.02"/></linearGradient></defs>
-                            {[0,25,50,75,100].map(v=><line key={v} x1={PAD_L} y1={y(v)} x2={W-PAD_R} y2={y(v)} stroke="rgba(255,255,255,0.06)" strokeWidth="0.5"/>)}
-                            {[0,50,100].map(v=><text key={v} x={PAD_L-4} y={y(v)+3} fill="rgba(255,255,255,0.25)" fontSize="7" textAnchor="end" fontFamily={T.fonts.mono}>{v}</text>)}
-                            <polygon points={areaPath} fill="url(#postFill)"/>
-                            {data.map((e,i)=><line key={`v${i}`} x1={x(i)} y1={y(e.pre)} x2={x(i)} y2={y(e.post)} stroke={e.diff>=0?"rgba(123,212,160,0.2)":"rgba(255,138,101,0.2)"} strokeWidth="1.5"/>)}
-                            <polyline points={preLine} fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
-                            <polyline points={postLine} fill="none" stroke={T.colors.accent} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
-                            {data.map((e,i)=><React.Fragment key={i}>
-                              <circle cx={x(i)} cy={y(e.pre)} r="2.5" fill="rgba(255,255,255,0.4)" stroke="rgba(255,255,255,0.6)" strokeWidth="0.5"/>
-                              <circle cx={x(i)} cy={y(e.post)} r="2.5" fill={T.colors.accent} stroke="rgba(206,255,0,0.6)" strokeWidth="0.5"/>
-                            </React.Fragment>)}
-                            {data.map((e,i)=>i%labelInterval===0||i===data.length-1?<text key={`d${i}`} x={x(i)} y={H-6} fill="rgba(255,255,255,0.3)" fontSize="6.5" textAnchor="middle" fontFamily={T.fonts.mono}>{dateLabel(e)}</text>:null)}
-                          </svg>
-                          <div style={{display:"flex",justifyContent:"center",gap:16,padding:"2px 0"}}>
-                            <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:6,height:6,borderRadius:"50%",background:"rgba(255,255,255,0.4)"}}/>
-                              <span style={{fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.body}}>唱題前</span></div>
-                            <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:6,height:6,borderRadius:"50%",background:T.colors.accent}}/>
-                              <span style={{fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.body}}>唱題後</span></div>
-                          </div>
-                        </div>
-                        {/* Summary stats */}
-                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginTop:8}}>
-                          <div style={{padding:"10px 8px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:`1px solid ${T.colors.border}`,textAlign:"center"}}>
-                            <div style={{fontSize:18,fontWeight:700,color:"#7BD4A0",fontFamily:T.fonts.mono}}>+{avgDiff}</div>
-                            <div style={{fontSize:9,color:T.colors.textDim,marginTop:2}}>平均改善</div>
-                          </div>
-                          <div style={{padding:"10px 8px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:`1px solid ${T.colors.border}`,textAlign:"center"}}>
-                            <div style={{fontSize:18,fontWeight:700,color:T.colors.accent,fontFamily:T.fonts.mono}}>{data.length}</div>
-                            <div style={{fontSize:9,color:T.colors.textDim,marginTop:2}}>セッション</div>
-                          </div>
-                          <div style={{padding:"10px 8px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:`1px solid ${T.colors.border}`,textAlign:"center"}}>
-                            <div style={{fontSize:18,fontWeight:700,color:T.colors.text,fontFamily:T.fonts.mono}}>{avgPost}</div>
-                            <div style={{fontSize:9,color:T.colors.textDim,marginTop:2}}>平均(後)</div>
-                          </div>
-                        </div>
-                        {/* Insight */}
-                        {bestDuration&&<div style={{marginTop:8,padding:"10px 14px",borderRadius:12,background:"rgba(206,255,0,0.06)",border:`1px solid rgba(206,255,0,0.12)`,display:"flex",alignItems:"center",gap:8}}>
-                          <div style={{fontSize:14,color:T.colors.accent}}>✦</div>
-                          <div style={{fontFamily:T.fonts.body,fontSize:11,color:T.colors.textMuted,lineHeight:1.4}}>
-                            <span style={{color:T.colors.accent,fontWeight:700}}>{bestDuration.lo===bestDuration.hi?`${bestDuration.lo}分`:`${bestDuration.lo}〜${bestDuration.hi}分`}</span>の唱題で気分が<span style={{color:T.colors.accent,fontWeight:700}}>+{bestDuration.avg}pt</span>上がる傾向
-                          </div>
-                        </div>}
-                      </div>;
-                    })()}
-                  </div>);
-                })()}
 
                 {phase==="idle"&&chantView==="timer"&&(<div style={{animation:"fadeIn 0.4s ease"}}><button onClick={()=>setShowPresets(true)} style={{padding:"8px 20px",borderRadius:20,border:`1px solid ${T.colors.border}`,background:"transparent",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",color:T.colors.text,fontFamily:T.fonts.body,fontSize:12,cursor:"pointer"}}>時間を変更</button></div>)}
+                {chantView==="cards"&&(<div style={{animation:"fadeIn 0.4s ease"}}><button onClick={()=>setShowKinenAddModal(true)} style={{padding:"8px 20px",borderRadius:20,border:`1px solid ${T.colors.border}`,background:"transparent",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",color:T.colors.text,fontFamily:T.fonts.body,fontSize:12,cursor:"pointer"}}>+ ご祈念を追加</button></div>)}
                 {showPresets&&(
                   <div onClick={()=>setShowPresets(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,animation:"fadeIn 2s ease"}}>
                     <div onClick={e=>e.stopPropagation()} style={{background:T.colors.surface,borderRadius:24,padding:"28px 24px",width:"85%",maxWidth:340,border:`1px solid ${T.colors.border}`,boxShadow:"0 20px 60px rgba(0,0,0,0.5)",animation:"modalFloat 2s cubic-bezier(0.05,0.7,0.1,1)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)"}}>
@@ -2246,13 +2205,87 @@ function ShodaiApp() {
               </div>
 
               <div style={{padding:"0 32px 16px",display:"flex",gap:12,justifyContent:"center"}}>
-                {phase==="idle"&&chantView==="timer"&&<button onClick={handleStart} style={{flex:1,maxWidth:300,padding:"18px 32px",borderRadius:30,border:"none",background:`linear-gradient(180deg, ${T.colors.accent} 0%, #A8D400 100%)`,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:16,fontWeight:800,cursor:"pointer",animation:"slideUp 0.5s ease",letterSpacing:"-0.01em",textTransform:"uppercase",boxShadow:`0 4px 20px rgba(206,255,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3)`}}>START</button>}
-                {phase==="chanting"&&(<><button onClick={handlePause} style={{flex:1,padding:"16px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer",textTransform:"uppercase"}}>一時停止</button><button onClick={handleStop} style={{padding:"16px 24px",borderRadius:30,border:"none",background:T.colors.dangerSoft,color:T.colors.danger,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer",textTransform:"uppercase"}}>終了</button></>)}
-                {phase==="paused"&&(<><button onClick={handleStart} style={{flex:1,padding:"16px 24px",borderRadius:30,border:"none",background:T.colors.accent,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:14,fontWeight:800,cursor:"pointer",textTransform:"uppercase"}}>再開する</button><button onClick={handleStop} style={{padding:"16px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer"}}>終了</button></>)}
+                {phase==="idle"&&chantView==="timer"&&<div style={{display:"flex",flexDirection:"column",gap:10,width:"100%",maxWidth:300,animation:"slideUp 0.5s ease"}}>
+                  <button onClick={handleStart} style={{width:"100%",padding:"18px 32px",borderRadius:30,border:"none",background:`linear-gradient(180deg, ${T.colors.accent} 0%, #A8D400 100%)`,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:16,fontWeight:800,cursor:"pointer",letterSpacing:"-0.01em",textTransform:"uppercase",boxShadow:`0 4px 20px rgba(206,255,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3)`}}>START</button>
+                  <button onClick={()=>{setPreMood(50);setMoodPhase("pre");setShowMoodModal(true);}} style={{width:"100%",padding:"14px 32px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.text,fontFamily:T.fonts.body,fontSize:13,fontWeight:600,cursor:"pointer",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)"}}>Mood Check & Start</button>
+                </div>}
+                {phase==="chanting"&&chantView!=="cards"&&chantView!=="sounds"&&(<><button onClick={handlePause} style={{flex:1,padding:"16px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer",textTransform:"uppercase"}}>一時停止</button><button onClick={handleStop} style={{padding:"16px 24px",borderRadius:30,border:"none",background:T.colors.dangerSoft,color:T.colors.danger,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer",textTransform:"uppercase"}}>終了</button></>)}
+                {phase==="paused"&&chantView!=="cards"&&chantView!=="sounds"&&(<><button onClick={handleStart} style={{flex:1,padding:"16px 24px",borderRadius:30,border:"none",background:T.colors.accent,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:14,fontWeight:800,cursor:"pointer",textTransform:"uppercase"}}>再開する</button><button onClick={handleStop} style={{padding:"16px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer"}}>終了</button></>)}
                 {phase==="completed"&&(<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14,width:"100%",animation:"slideUp 0.5s ease"}}><div style={{textAlign:"center"}}><div style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:800,color:T.colors.accent,textTransform:"uppercase"}}>お疲れさまでした</div><div style={{fontFamily:T.fonts.mono,fontSize:14,fontWeight:500,color:T.colors.textMuted,marginTop:6}}>{formatTimeCompact(elapsed)}<span style={{margin:"0 6px",color:T.colors.textDim}}>·</span>約{formatHen(sessionHen)}遍</div></div><div style={{display:"flex",gap:12,width:"100%",maxWidth:300}}><button onClick={handleStop} style={{flex:1,padding:"14px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer"}}>記録する</button><button onClick={()=>{handleStop();setTimeout(handleStart,100)}} style={{flex:1,padding:"14px 24px",borderRadius:30,border:"none",background:T.colors.accent,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:14,fontWeight:800,cursor:"pointer",textTransform:"uppercase"}}>もう一回</button></div></div>)}
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Mood Modal (Pre/Post) ── */}
+      {showMoodModal&&(()=>{
+        const isPost=moodPhase==="post";
+        const moodVal=isPost?postMood:preMood;
+        const setMoodVal=isPost?setPostMood:setPreMood;
+        const mc=getMoodColor(moodVal);
+        const mi=getMoodIndex(moodVal);
+        const handleMoodRecord=()=>{
+          if(isPost){
+            const now=new Date();
+            const entry={pre:preMood,post:postMood,preLabel:MOOD_LABELS_7[getMoodIndex(preMood)],postLabel:MOOD_LABELS_7[getMoodIndex(postMood)],duration:lastSessionDuration,timestamp:now.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"}),dateObj:now,date:now.toLocaleDateString("ja-JP",{month:"short",day:"numeric"}),diff:postMood-preMood};
+            setMoodLog(p=>[entry,...p]);
+            setShowMoodModal(false);setShowPostJournal(true);setMoodPhase("pre");setPreMood(50);
+          }else{
+            setPreMoodRecorded(true);setShowMoodModal(false);
+            setTimeout(()=>{setElapsed(0);setShowPostJournal(false);setPhase("chanting");},50);
+          }
+        };
+        const handleSkip=()=>{
+          if(isPost){setShowMoodModal(false);setShowPostJournal(true);setMoodPhase("pre");setPreMood(50);}
+          else{setPreMoodRecorded(false);setShowMoodModal(false);handleStart();}
+        };
+        return(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,animation:"fadeIn 0.2s ease"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:T.colors.surface,borderRadius:24,padding:"32px 24px",width:"85%",maxWidth:340,border:`1px solid ${T.colors.border}`,boxShadow:"0 20px 60px rgba(0,0,0,0.5)",animation:"modalFloat 0.4s cubic-bezier(0.05,0.7,0.1,1)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)",display:"flex",flexDirection:"column",alignItems:"center",gap:20}}>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontFamily:T.fonts.display,fontSize:16,fontWeight:700,color:T.colors.text}}>{isPost?"唱題後の気分":"唱題前の気分"}</div>
+              {isPost&&<div style={{fontSize:11,color:T.colors.textDim,marginTop:4}}>お疲れさまでした</div>}
+            </div>
+            <div style={{position:"relative",width:180,height:180}}>
+              <div style={{position:"absolute",inset:"-15%",borderRadius:"50%",background:`radial-gradient(circle, ${mc} 0%, transparent 60%)`,opacity:0.45,transition:"background 0.3s ease",pointerEvents:"none"}}/>
+              <div style={{width:180,height:180,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",background:"rgba(255,255,255,0.015)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",boxShadow:"0 8px 40px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)"}}>
+                <div key={`mood-${mi}`} style={{fontSize:16,fontWeight:700,color:T.colors.text,fontFamily:T.fonts.body,animation:"moodLabelFade 0.6s ease-in-out"}}>{MOOD_LABELS_7[mi]}</div>
+              </div>
+            </div>
+            <div style={{width:"100%",maxWidth:280}}>
+              <div style={{position:"relative",height:24,borderRadius:12,background:"rgba(255,255,255,0.08)",border:`1px solid ${T.colors.borderLight}`,display:"flex",alignItems:"center"}}>
+                <input type="range" min="0" max="100" value={moodVal} onChange={e=>setMoodVal(Number(e.target.value))} className="mood-slider" style={{width:"100%",height:24,appearance:"none",WebkitAppearance:"none",background:"transparent",cursor:"pointer",outline:"none",position:"relative",zIndex:2,margin:0,padding:0}}/>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:10,width:"100%"}}>
+              <button onClick={handleSkip} style={{flex:1,padding:"14px 20px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:13,fontWeight:600,cursor:"pointer"}}>{isPost?"スキップ":"スキップ"}</button>
+              <button onClick={handleMoodRecord} style={{flex:1,padding:"14px 20px",borderRadius:30,border:"none",background:`linear-gradient(180deg, ${T.colors.accent} 0%, #A8D400 100%)`,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:13,fontWeight:800,cursor:"pointer",boxShadow:`0 4px 20px rgba(206,255,0,0.3)`}}>{isPost?"記録する":"記録して開始"}</button>
+            </div>
+          </div>
+        </div>);
+      })()}
+
+      {/* ── Kinen Add Modal ── */}
+      {showKinenAddModal&&(
+        <div onClick={()=>setShowKinenAddModal(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,animation:"fadeIn 0.2s ease"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:T.colors.surface,borderRadius:24,padding:"28px 24px",width:"85%",maxWidth:340,border:`1px solid ${T.colors.border}`,boxShadow:"0 20px 60px rgba(0,0,0,0.5)",animation:"modalFloat 0.4s cubic-bezier(0.05,0.7,0.1,1)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)"}}>
+            <div style={{textAlign:"center",marginBottom:16}}>
+              <div style={{fontFamily:T.fonts.display,fontSize:16,fontWeight:700,color:T.colors.text}}>ご祈念を追加</div>
+            </div>
+            <textarea value={kinenModalText} onChange={e=>setKinenModalText(e.target.value)} placeholder={t("kinen_placeholder")} style={{width:"100%",padding:12,borderRadius:12,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,resize:"none",height:72,outline:"none"}}/>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:12}}>
+              {CATEGORIES.map(cat=>(<button key={cat.id} onClick={()=>setKinenModalCategory(cat.id)} style={{padding:"4px 12px",borderRadius:12,fontSize:11,border:`1px solid ${kinenModalCategory===cat.id?cat.color:T.colors.border}`,background:kinenModalCategory===cat.id?`${cat.color}15`:"transparent",color:kinenModalCategory===cat.id?cat.color:T.colors.textMuted,cursor:"pointer",fontFamily:T.fonts.body}}>{cat.label}</button>))}
+            </div>
+            <div style={{display:"flex",gap:8,marginTop:12,alignItems:"center"}}>
+              <input type="date" value={kinenModalDeadline} onChange={e=>setKinenModalDeadline(e.target.value)} style={{flex:1,padding:"8px 12px",borderRadius:10,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.mono,fontSize:12,outline:"none"}}/>
+              <button onClick={()=>setKinenModalIsPublic(!kinenModalIsPublic)} style={{padding:"8px 14px",borderRadius:10,fontSize:11,border:`1px solid ${kinenModalIsPublic?T.colors.accent:T.colors.border}`,background:kinenModalIsPublic?T.colors.accentSoft:"transparent",color:kinenModalIsPublic?T.colors.accent:T.colors.textMuted,cursor:"pointer",fontFamily:T.fonts.body}}><Icon name={kinenModalIsPublic?"lockOpen":"lockClosed"} size={13}/></button>
+            </div>
+            <div style={{display:"flex",gap:8,marginTop:16}}>
+              <button onClick={()=>setShowKinenAddModal(false)} style={{flex:1,padding:"12px 20px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:14,fontWeight:600,cursor:"pointer"}}>{t("cancel")}</button>
+              <button onClick={addKinenFromModal} disabled={!kinenModalText.trim()} style={{flex:1,padding:"12px 20px",borderRadius:12,border:"none",background:kinenModalText.trim()?T.colors.accent:T.colors.ring,color:kinenModalText.trim()?T.colors.bg:T.colors.textDim,fontFamily:T.fonts.body,fontSize:14,fontWeight:600,cursor:kinenModalText.trim()?"pointer":"default"}}>{t("kinen_add")}</button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -2272,7 +2305,7 @@ function ShodaiApp() {
             <h2 style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:800,color:T.colors.accent,letterSpacing:"-0.02em",textTransform:"uppercase"}}>{t("mypage_title")}</h2>
             <p style={{fontSize:11,color:T.colors.textDim,marginTop:2}}>{t("mypage_subtitle")}</p>
           </div>
-          <MyPageTab profile={profile} setProfile={setProfile} todayTotal={todayTotal} journals={journals} kinenList={kinenList} followers={DEMO_MY_FOLLOWERS} following={myFollowing} onFollow={handleFollowUser} demoHistory={demoHistory} lang={lang} setLang={setLang}/>
+          <MyPageTab profile={profile} setProfile={setProfile} todayTotal={todayTotal} journals={journals} kinenList={kinenList} followers={DEMO_MY_FOLLOWERS} following={myFollowing} onFollow={handleFollowUser} demoHistory={demoHistory} lang={lang} setLang={setLang} moodLog={moodLog} moodPeriod={moodPeriod} setMoodPeriod={setMoodPeriod}/>
         </div>
       )}
 
