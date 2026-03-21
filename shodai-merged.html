@@ -2116,7 +2116,7 @@ function ShodaiApp() {
                 {/* ── Timer View ── */}
                 {(chantView==="timer"||(!isActive&&chantView!=="sounds"&&chantView!=="cards"))&&(
                   <>
-                    <div style={{position:"relative",width:cs,height:cs,display:"flex",alignItems:"center",justifyContent:"center",animation:phase==="chanting"?"breathe 6s ease-in-out infinite, gentleGlow 6s ease-in-out infinite":"none",borderRadius:"50%",background:"rgba(255,255,255,0.03)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)",border:"none",boxShadow:"0 8px 40px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(255,255,255,0.05)"}}>
+                    <div style={{position:"relative",width:cs,height:cs,display:"flex",alignItems:"center",justifyContent:"center",animation:phase==="chanting"?"breathe 6s ease-in-out infinite, gentleGlow 6s ease-in-out infinite":"none",borderRadius:"50%",background:"rgba(255,255,255,0.06)",backdropFilter:T.glass.blur,WebkitBackdropFilter:T.glass.blur,border:`1px solid ${T.colors.border}`,boxShadow:T.glass.shadowLg}}>
                       <div className="glass-timer-ring"/>
                       <svg width={cs} height={cs} style={{position:"absolute"}} viewBox={`0 0 ${cs} ${cs}`}>
                         {/* 軌道リング */}
