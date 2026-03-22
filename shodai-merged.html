@@ -2403,7 +2403,7 @@ function ShodaiApp() {
 
               <div style={{padding:"0 32px 16px",display:"flex",gap:12,justifyContent:"center"}}>
                 {phase==="idle"&&chantView==="timer"&&<div style={{display:"flex",flexDirection:"column",gap:10,width:"100%",maxWidth:300,alignItems:"center"}}>
-                  <button onClick={handleStart} style={{width:"100%",padding:"18px 32px",borderRadius:30,border:"none",background:`linear-gradient(180deg, ${T.colors.accent} 0%, ${isDark?"#A8D400":"#B51A1A"} 100%)`,color:isDark?T.colors.bg:"#FFFFFF",fontFamily:T.fonts.body,fontSize:16,fontWeight:800,cursor:"pointer",animation:"slideUp 0.5s ease",letterSpacing:"-0.01em",textTransform:"uppercase",boxShadow:`0 4px 20px ${T.colors.accentGlow}, inset 0 1px 0 rgba(255,255,255,0.3)`}}>START</button>
+                  <button onClick={handleStart} style={{width:"100%",padding:"18px 32px",borderRadius:30,border:"none",background:T.colors.accent,color:isDark?T.colors.bg:"#FFFFFF",fontFamily:T.fonts.body,fontSize:16,fontWeight:800,cursor:"pointer",animation:"slideUp 0.5s ease",letterSpacing:"-0.01em",textTransform:"uppercase",boxShadow:`0 4px 20px ${T.colors.accentGlow}`}}>START</button>
                   <button onClick={()=>{setPreMood(50);setMoodPhase("pre");setShowMoodModal(true);}} style={{width:"100%",padding:"14px 32px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.text,fontFamily:T.fonts.body,fontSize:13,fontWeight:600,cursor:"pointer",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)"}}>{t("btn_mood_check")}</button>
                 </div>}
                 {phase==="chanting"&&chantView!=="cards"&&chantView!=="sounds"&&(<><button onClick={handlePause} style={{flex:1,padding:"16px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer",textTransform:"uppercase"}}>{t("btn_pause_label")}</button><button onClick={handleStop} style={{padding:"16px 24px",borderRadius:30,border:"none",background:T.colors.dangerSoft,color:T.colors.danger,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer",textTransform:"uppercase"}}>{t("btn_stop_label")}</button></>)}
@@ -2458,7 +2458,7 @@ function ShodaiApp() {
             </div>
             <div style={{display:"flex",gap:10,width:"100%"}}>
               <button onClick={handleSkip} style={{flex:1,padding:"14px 20px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:13,fontWeight:600,cursor:"pointer"}}>{t("skip")}</button>
-              <button onClick={handleMoodRecord} style={{flex:1,padding:"14px 20px",borderRadius:30,border:"none",background:`linear-gradient(180deg, ${T.colors.accent} 0%, ${isDark?"#A8D400":"#B51A1A"} 100%)`,color:isDark?T.colors.bg:"#FFFFFF",fontFamily:T.fonts.body,fontSize:13,fontWeight:800,cursor:"pointer",boxShadow:`0 4px 20px ${T.colors.accentGlow}`}}>{isPost?t("btn_record"):t("mood_record_start")}</button>
+              <button onClick={handleMoodRecord} style={{flex:1,padding:"14px 20px",borderRadius:30,border:"none",background:T.colors.accent,color:isDark?T.colors.bg:"#FFFFFF",fontFamily:T.fonts.body,fontSize:13,fontWeight:800,cursor:"pointer",boxShadow:`0 4px 20px ${T.colors.accentGlow}`}}>{isPost?t("btn_record"):t("mood_record_start")}</button>
             </div>
           </div>
         </div>);
