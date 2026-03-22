@@ -1083,7 +1083,7 @@ const LiveTab = ({followingKinen,onReactKinen,onAddToMine}) => {
 };
 
 // ─── Kinen Tab (from v7) ───
-const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMine}) => {
+const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMine,isDark}) => {
   const [viewMode,setViewMode]=useState("mine");
   const [filter,setFilter]=useState("open");
   const [categoryFilter,setCategoryFilter]=useState("all");
@@ -1126,14 +1126,14 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
     <div style={{width:"100%",flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
       <div style={{padding:"0 24px 12px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-          <div><h2 style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:800,color:T.colors.accent,letterSpacing:"-0.02em",textTransform:"uppercase"}}>{t("kinen_title")}</h2></div>
-          {viewMode==="mine"&&(<button onClick={()=>{if(showAddForm){cancelEdit();}else{setEditingId(null);setShowAddForm(true);}}} style={{width:40,height:40,borderRadius:20,border:`1px solid ${T.colors.border}`,background:showAddForm?T.colors.accentSoft:"transparent",color:T.colors.accent,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:T.fonts.body}}>{showAddForm?"×":"+"}</button>)}
+          <div><h2 style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:900,color:T.colors.text,letterSpacing:"-0.02em",textTransform:"uppercase"}}>{t("kinen_title")}</h2><p style={{fontSize:11,color:T.colors.textDim,marginTop:2}}>{t("kinen_subtitle")}</p></div>
+          {viewMode==="mine"&&(<button onClick={()=>{if(showAddForm){cancelEdit();}else{setEditingId(null);setShowAddForm(true);}}} style={{width:40,height:40,borderRadius:20,border:isDark?`1px solid ${T.colors.border}`:"none",background:isDark?(showAddForm?T.colors.accentSoft:"transparent"):(showAddForm?T.colors.accent:"#1A1A1A"),color:isDark?T.colors.accent:"#FFFFFF",fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:T.fonts.body,boxShadow:isDark?"none":"0 2px 8px rgba(0,0,0,0.12)"}}>{showAddForm?"×":"+"}</button>)}
         </div>
 
         {/* Mine / Following toggle */}
-        <div style={{display:"flex",gap:0,marginBottom:12,borderRadius:12,overflow:"hidden",border:`1px solid ${T.colors.border}`,...G.card}}>
+        <div style={{display:"flex",gap:0,marginBottom:12,borderRadius:14,overflow:"hidden",border:`1px solid ${T.colors.border}`,background:isDark?"transparent":"#FFFFFF",...G.card}}>
           {[{key:"mine",label:t("kinen_mine")},{key:"following",label:t("kinen_following")}].map(v=>(
-            <button key={v.key} onClick={()=>{setViewMode(v.key);setShowAddForm(false);}} style={{flex:1,padding:"10px 16px",fontSize:12,fontFamily:T.fonts.body,fontWeight:500,border:"none",background:viewMode===v.key?T.colors.accentSoft:"transparent",color:viewMode===v.key?T.colors.accent:T.colors.textMuted,cursor:"pointer",transition:"all 0.2s ease"}}>{v.label}</button>
+            <button key={v.key} onClick={()=>{setViewMode(v.key);setShowAddForm(false);}} style={{flex:1,padding:"12px 16px",fontSize:13,fontFamily:T.fonts.body,fontWeight:viewMode===v.key?700:400,border:"none",background:viewMode===v.key?(isDark?T.colors.accentSoft:"#1A1A1A"):"transparent",color:viewMode===v.key?(isDark?T.colors.accent:"#FFFFFF"):T.colors.textMuted,cursor:"pointer",transition:"all 0.2s ease",borderRadius:viewMode===v.key?12:0}}>{v.label}</button>
           ))}
         </div>
 
@@ -1166,8 +1166,8 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
 
         {/* Filters */}
         <div style={{display:"flex",gap:6,marginBottom:8}}>
-          {[{key:"open",label:`Open${viewMode==="mine"?` (${openCount})`:""}`},{key:"closed",label:viewMode==="mine"?`達成 (${closedCount})`:"達成"},{key:"all",label:"すべて"}].map(f=>(
-            <button key={f.key} onClick={()=>setFilter(f.key)} style={{padding:"6px 14px",borderRadius:16,fontSize:11,fontFamily:T.fonts.body,border:`1px solid ${filter===f.key?T.colors.accent:T.colors.border}`,background:filter===f.key?T.colors.accentSoft:"transparent",color:filter===f.key?T.colors.accent:T.colors.textMuted,cursor:"pointer"}}>{f.label}</button>
+          {[{key:"open",label:`Open${viewMode==="mine"?` (${openCount})`:""}`},{key:"closed",label:viewMode==="mine"?`${t("kinen_achieved_badge")} (${closedCount})`:t("kinen_achieved_badge")},{key:"all",label:t("kinen_category_all")}].map(f=>(
+            <button key={f.key} onClick={()=>setFilter(f.key)} style={{padding:"6px 14px",borderRadius:16,fontSize:11,fontFamily:T.fonts.body,fontWeight:filter===f.key?600:400,border:isDark?`1px solid ${filter===f.key?T.colors.accent:T.colors.border}`:`1px solid ${filter===f.key?"#1A1A1A":T.colors.border}`,background:filter===f.key?(isDark?T.colors.accentSoft:"#1A1A1A"):"transparent",color:filter===f.key?(isDark?T.colors.accent:"#FFFFFF"):T.colors.textMuted,cursor:"pointer"}}>{f.label}</button>
           ))}
         </div>
         <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:4}}>
@@ -1181,8 +1181,9 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
         {viewMode==="mine"&&(
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {filtered.map((kinen,i)=>{const subs=kinen.subtasks||[];const total=subs.length;const done=subs.filter(s=>s.done).length;const pct=total>0?done/total:0;return(
-              <div key={kinen.id} onClick={()=>openDetail(kinen)} style={{borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,opacity:kinen.isOpen?1:0.6,animation:`slideUp ${0.15+i*0.05}s ease`,overflow:"hidden",cursor:"pointer",...G.card}}>
-                <div style={{padding:"14px 16px"}}>
+              <div key={kinen.id} onClick={()=>openDetail(kinen)} style={{borderRadius:16,background:isDark?T.colors.surface:"#FFFFFF",border:isDark?`1px solid ${T.colors.border}`:"none",opacity:kinen.isOpen?1:0.6,animation:`slideUp ${0.15+i*0.05}s ease`,overflow:"hidden",cursor:"pointer",boxShadow:isDark?G.card.boxShadow:"0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)",display:"flex"}}>
+                {!isDark&&<div style={{width:4,flexShrink:0,background:(CATEGORIES.find(c=>c.id===kinen.category)||CATEGORIES[5]).color,borderRadius:"4px 0 0 4px"}}/>}
+                <div style={{padding:"14px 16px",flex:1}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
                     <div style={{flex:1}}>
                       <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
@@ -2491,7 +2492,7 @@ function ShodaiApp() {
       {activeTab==="live"&&<div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",zIndex:1,paddingTop:56}}><LiveTab followingKinen={followingKinen} onReactKinen={handleReactKinen} onAddToMine={handleAddToMine}/></div>}
 
       {/* ── KINEN TAB ── */}
-      {activeTab==="kinen"&&<div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",zIndex:1,paddingTop:56}}><KinenTab kinenList={kinenList} setKinenList={setKinenList} followingKinen={followingKinen} onReactKinen={handleReactKinen} onAddToMine={handleAddToMine}/></div>}
+      {activeTab==="kinen"&&<div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",zIndex:1,paddingTop:56}}><KinenTab kinenList={kinenList} setKinenList={setKinenList} followingKinen={followingKinen} onReactKinen={handleReactKinen} onAddToMine={handleAddToMine} isDark={isDark}/></div>}
 
       {/* ── JOURNAL TAB ── */}
       {activeTab==="journal"&&<div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",zIndex:1,paddingTop:56}}><JournalTab journals={journals} setJournals={setJournals}/></div>}
