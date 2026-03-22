@@ -10,28 +10,95 @@
   <link href="https://unpkg.com/mapbox-gl@2.15.0/dist/mapbox-gl.css" rel="stylesheet">
   <script src="https://unpkg.com/mapbox-gl@2.15.0/dist/mapbox-gl.js"></script>
   <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap" rel="stylesheet">
   <style>
-    .mapbox-pulse-dot {
-      width: 12px; height: 12px; border-radius: 50%;
-      background: #FF6B6B; cursor: pointer;
-      box-shadow: 0 0 6px rgba(255,107,107,0.6);
-    }
-    .mapbox-pulse-dot::after {
-      content: ''; position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%,-50%); width: 24px; height: 24px;
-      border-radius: 50%; background: rgba(255,107,107,0.25);
-      animation: mapPulse 2.5s ease-out infinite;
-    }
-    @keyframes mapPulse {
-      0% { transform: translate(-50%,-50%) scale(0.5); opacity: 1; }
-      100% { transform: translate(-50%,-50%) scale(2); opacity: 0; }
-    }
-    .mapboxgl-ctrl-logo, .mapboxgl-ctrl-attrib { display: none !important; }
-    @keyframes scanLine {
-      0% { top: 0; }
-      50% { top: calc(100% - 2px); }
-      100% { top: 0; }
-    }
+:root{--theme-bg:#050508;--glass-ring-inner:#050508;--glass-conic:conic-gradient(from 0deg,transparent 0%,transparent 30%,rgba(255,255,255,0.5) 38%,rgba(255,255,255,0.8) 40%,rgba(255,255,255,0.5) 42%,transparent 50%,transparent 75%,rgba(255,255,255,0.25) 82%,rgba(255,255,255,0.4) 84%,rgba(255,255,255,0.25) 86%,transparent 94%,transparent 100%);--glass-border:linear-gradient(135deg,rgba(255,255,255,0.35) 0%,rgba(255,255,255,0.15) 30%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.15) 70%,rgba(255,255,255,0.3) 100%)}
+
+/* ─── Mapbox overrides ─── */
+.mapbox-pulse-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: #FF6B6B; cursor: pointer;
+  box-shadow: 0 0 6px rgba(255,107,107,0.6);
+}
+.mapbox-pulse-dot::after {
+  content: ''; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%); width: 24px; height: 24px;
+  border-radius: 50%; background: rgba(255,107,107,0.25);
+  animation: mapPulse 2.5s ease-out infinite;
+}
+@keyframes mapPulse {
+  0% { transform: translate(-50%,-50%) scale(0.5); opacity: 1; }
+  100% { transform: translate(-50%,-50%) scale(2); opacity: 0; }
+}
+.mapboxgl-ctrl-logo, .mapboxgl-ctrl-attrib { display: none !important; }
+
+/* ─── Animations ─── */
+@keyframes scanLine {
+  0% { top: 0; }
+  50% { top: calc(100% - 2px); }
+  100% { top: 0; }
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+@keyframes breathe { 0%,100%{transform:scale(1)} 50%{transform:scale(1.02)} }
+@keyframes slideUp { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes moodLabelFade { 0%{opacity:0} 100%{opacity:1} }
+@keyframes cardNudge { 0%{transform:rotate(0deg)} 15%{transform:rotate(-1.5deg) scale(1.01)} 30%{transform:rotate(1deg)} 50%{transform:rotate(-0.5deg)} 70%{transform:rotate(0.3deg)} 100%{transform:rotate(0deg)} }
+@keyframes modalFloat { 0%{transform:translateY(60px) scale(0.95);opacity:0} 100%{transform:translateY(0) scale(1);opacity:1} }
+@keyframes slideFromRight { from{transform:translateX(100%)} to{transform:translateX(0)} }
+@keyframes slideFromLeft { from{transform:translateX(-100%)} to{transform:translateX(0)} }
+@keyframes slideOutLeft { from{transform:translateX(0)} to{transform:translateX(-100%)} }
+@keyframes slideOutRight { from{transform:translateX(0)} to{transform:translateX(100%)} }
+@keyframes gentleGlow { 0%,100%{box-shadow:0 0 30px rgba(206,255,0,0.05)} 50%{box-shadow:0 0 60px rgba(206,255,0,0.15)} }
+@keyframes neonPulse { 0%,100%{text-shadow:0 0 10px rgba(206,255,0,0.3)} 50%{text-shadow:0 0 20px rgba(206,255,0,0.6)} }
+@keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+@keyframes glassEdgeRotate { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+@keyframes glassSheen { 0%{transform:translateX(-100%) translateY(-100%)} 100%{transform:translateX(100%) translateY(100%)} }
+
+/* ─── Glass effects ─── */
+.glass-timer-ring {
+  position:absolute; inset:-1px; border-radius:50%; overflow:hidden; pointer-events:none;
+}
+.glass-timer-ring::before {
+  content:""; position:absolute; inset:-2px; border-radius:50%;
+  background:conic-gradient(from 0deg,transparent 0%,transparent 30%,rgba(255,255,255,0.5) 38%,rgba(255,255,255,0.8) 40%,rgba(255,255,255,0.5) 42%,transparent 50%,transparent 75%,rgba(255,255,255,0.25) 82%,rgba(255,255,255,0.4) 84%,rgba(255,255,255,0.25) 86%,transparent 94%,transparent 100%);
+  animation:glassEdgeRotate 20s linear infinite;
+}
+.glass-timer-ring::after {
+  content:""; position:absolute; inset:1px; border-radius:50%; background:var(--glass-ring-inner);
+}
+.glass-mood-ring {
+  position:absolute; inset:-1px; border-radius:50%; pointer-events:none;
+}
+.glass-mood-ring::before {
+  content:""; position:absolute; inset:0; border-radius:50%;
+  background:conic-gradient(from 0deg,transparent 0%,transparent 30%,rgba(255,255,255,0.5) 38%,rgba(255,255,255,0.8) 40%,rgba(255,255,255,0.5) 42%,transparent 50%,transparent 75%,rgba(255,255,255,0.25) 82%,rgba(255,255,255,0.4) 84%,rgba(255,255,255,0.25) 86%,transparent 94%,transparent 100%);
+  animation:glassEdgeRotate 20s linear infinite;
+  -webkit-mask:radial-gradient(circle,transparent 86%,black 88%);
+  mask:radial-gradient(circle,transparent 86%,black 88%);
+}
+
+/* ─── Glass data attribute ─── */
+[data-glass] { position:relative; overflow:hidden; }
+[data-glass]:has(.glass-timer-ring) { overflow:visible; }
+[data-glass]::before {
+  content:""; position:absolute; inset:0; border-radius:inherit; padding:1px;
+  background:linear-gradient(135deg,rgba(255,255,255,0.35) 0%,rgba(255,255,255,0.15) 30%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.15) 70%,rgba(255,255,255,0.3) 100%);
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  pointer-events:none; z-index:1;
+}
+[data-glass].glass-shimmer::after {
+  content:""; position:absolute; inset:0; border-radius:inherit;
+  background:linear-gradient(135deg,transparent 30%,rgba(255,255,255,0.15) 45%,rgba(255,255,255,0.3) 50%,rgba(255,255,255,0.15) 55%,transparent 70%);
+  animation:glassSheen 0.6s ease-out forwards; pointer-events:none; z-index:2;
+}
+
+/* ─── Global resets ─── */
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; user-select:none; }
+::-webkit-scrollbar { width:0; }
+button { transition:transform 0.15s ease, opacity 0.15s ease; }
+button:active { transform:scale(0.97); }
   </style>
 </head>
 <body>
@@ -40,11 +107,12 @@
   <script type="text/babel">
     const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
+
 // ─── Mapbox Access Token ───
 mapboxgl.accessToken = "pk.eyJ1Ijoic2hvZ28wNDEwIiwiYSI6ImNtbTdzNnlmODB4dWYycW4wdWhobXJuMnIifQ.d4ryHN7J6IdwjbVN0TlmnQ";
 
 // ─── Design Tokens (Glossy Dark UI) ───
-const T = {
+const THEME_DARK = {
   colors: {
     bg: "#050508", surface: "rgba(255,255,255,0.035)", surfaceAlt: "rgba(255,255,255,0.055)",
     surfaceSolid: "#141418",
@@ -69,12 +137,39 @@ const T = {
     blur: "blur(30px)",
   },
 };
+const THEME_LIGHT = {
+  colors: {
+    bg: "#F5F5F0", surface: "rgba(0,0,0,0.03)", surfaceAlt: "rgba(0,0,0,0.05)",
+    surfaceSolid: "#EAEAE5",
+    accent: "#5C8A00", accentSoft: "rgba(92,138,0,0.10)", accentGlow: "rgba(92,138,0,0.25)",
+    text: "#1A1A1A", textMuted: "#555555", textDim: "#888888",
+    border: "rgba(0,0,0,0.10)", borderLight: "rgba(0,0,0,0.06)",
+    success: "#2E7D32", successSoft: "rgba(46,125,50,0.1)",
+    ring: "rgba(0,0,0,0.06)", ringActive: "rgba(92,138,0,0.15)",
+    danger: "#D32F2F", dangerSoft: "rgba(211,47,47,0.08)",
+    live: "#E53935", liveSoft: "rgba(229,57,53,0.10)", liveGlow: "rgba(229,57,53,0.3)",
+    journal: "#1565C0", journalSoft: "rgba(21,101,192,0.10)",
+    tag: { personal:"#1E88E5", family:"#F57C00", work:"#2E7D32", health:"#C2185B", study:"#7B1FA2", other:"#757575" },
+  },
+  fonts: {
+    display: "'Inter', 'Noto Sans JP', sans-serif",
+    body: "'Inter', 'Noto Sans JP', sans-serif",
+    mono: "'JetBrains Mono', monospace",
+  },
+  glass: {
+    shadow: "0 4px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -1px 0 rgba(0,0,0,0.04)",
+    shadowLg: "0 8px 40px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(0,0,0,0.05)",
+    blur: "blur(30px)",
+  },
+};
+let T = THEME_DARK;
 
 // ─── Glass Card Style Helpers ───
 const G = {
   card: { backdropFilter:T.glass.blur, WebkitBackdropFilter:T.glass.blur, boxShadow:T.glass.shadow },
   cardLg: { backdropFilter:T.glass.blur, WebkitBackdropFilter:T.glass.blur, boxShadow:T.glass.shadowLg },
 };
+
 
 // ─── i18n (Internationalization) ───
 let currentLang = "ja";
@@ -154,6 +249,44 @@ const LANG = {
     prompt_1:"今日の唱題で感じたことは？", prompt_2:"心に浮かんだ決意は？",
     prompt_3:"感謝したいことは？", prompt_4:"明日への一歩は？",
     prompt_5:"今の自分に言いたいことは？", prompt_6:"祈りの中で見えたことは？",
+    // Time units
+    time_hours:"時間", time_minutes:"分", time_seconds:"秒",
+    // Chanting controls
+    btn_pause_label:"一時停止", btn_stop_label:"終了", btn_resume_label:"再開する",
+    btn_record:"記録する", btn_retry:"もう一回", btn_mood_check:"Mood Check & Start",
+    approx:"約", hen_unit:"遍",
+    // Mood
+    mood_pre_title:"唱題前の気分", mood_post_title:"唱題後の気分", mood_post_msg:"お疲れさまでした",
+    mood_record_start:"記録して開始",
+    mood_level_1:"非常に不快", mood_level_2:"不快", mood_level_3:"やや不快",
+    mood_level_4:"どちらとも言えない", mood_level_5:"やや快適", mood_level_6:"快適", mood_level_7:"非常に快適",
+    mood_pre_label:"唱題前", mood_post_label:"唱題後",
+    mood_avg_improve:"平均改善", mood_sessions:"セッション", mood_avg_post:"平均(後)",
+    mood_insight_prefix:"の唱題で気分が", mood_insight_suffix:"上がる傾向",
+    // Kinen detail
+    kinen_deadline:"期限", kinen_clear:"クリア", kinen_none:"なし",
+    kinen_edit:"編集", kinen_save:"保存",
+    kinen_subtask:"サブタスク", kinen_no_subtask:"サブタスクなし",
+    kinen_add_subtask:"サブタスクを追加...", kinen_add_subtask_btn:"+ 追加",
+    kinen_created:"作成日:", kinen_trash:"ゴミ箱に移動",
+    kinen_achieved_badge:"達成!", kinen_public_badge:"公開",
+    kinen_add_prayer:"+ ご祈念を追加", kinen_add_title:"ご祈念を追加",
+    kinen_category_all:"全て",
+    // Timer modal
+    timer_change_title:"時間を変更", timer_change_desc:"唱題の目標時間を選んでください", timer_close:"閉じる",
+    // Chart days
+    chart_day_sun:"日", chart_day_mon:"月", chart_day_tue:"火", chart_day_wed:"水",
+    chart_day_thu:"木", chart_day_fri:"金", chart_day_sat:"土",
+    chart_min:"分", chart_best_streak:"最長", chart_days_unit:"日",
+    // MyPage
+    mypage_public:"公開", mypage_joined:"参加", mypage_days_suffix:"日目",
+    mypage_name:"名前", mypage_bio:"自己紹介...",
+    mypage_sessions_unit:"回", mypage_journals_unit:"件",
+    mypage_journal_default_label:"ジャーナル初期公開",
+    // Privacy
+    privacy_public:"公開", privacy_private:"非公開",
+    // Sound
+    sound_playing:"Playing", sound_selected:"Selected",
   },
   en: {
     // Nav
@@ -230,10 +363,50 @@ const LANG = {
     prompt_1:"What did you feel during chanting?", prompt_2:"What determination arose?",
     prompt_3:"What are you grateful for?", prompt_4:"What's your next step?",
     prompt_5:"What would you say to yourself?", prompt_6:"What did you see in prayer?",
+    // Time units
+    time_hours:"h", time_minutes:"m", time_seconds:"s",
+    // Chanting controls
+    btn_pause_label:"Pause", btn_stop_label:"Stop", btn_resume_label:"Resume",
+    btn_record:"Save", btn_retry:"Again", btn_mood_check:"Mood Check & Start",
+    approx:"~", hen_unit:"reps",
+    // Mood
+    mood_pre_title:"How do you feel?", mood_post_title:"How do you feel now?", mood_post_msg:"Well done!",
+    mood_record_start:"Record & Start",
+    mood_level_1:"Very Unpleasant", mood_level_2:"Unpleasant", mood_level_3:"Slightly Unpleasant",
+    mood_level_4:"Neutral", mood_level_5:"Slightly Pleasant", mood_level_6:"Pleasant", mood_level_7:"Very Pleasant",
+    mood_pre_label:"Before", mood_post_label:"After",
+    mood_avg_improve:"Avg Improve", mood_sessions:"Sessions", mood_avg_post:"Avg (After)",
+    mood_insight_prefix:" chanting improved mood by ", mood_insight_suffix:"",
+    // Kinen detail
+    kinen_deadline:"Deadline", kinen_clear:"Clear", kinen_none:"None",
+    kinen_edit:"Edit", kinen_save:"Save",
+    kinen_subtask:"Subtasks", kinen_no_subtask:"No subtasks",
+    kinen_add_subtask:"Add subtask...", kinen_add_subtask_btn:"+ Add",
+    kinen_created:"Created:", kinen_trash:"Move to trash",
+    kinen_achieved_badge:"Achieved!", kinen_public_badge:"Public",
+    kinen_add_prayer:"+ Add Prayer", kinen_add_title:"Add Prayer",
+    kinen_category_all:"All",
+    // Timer modal
+    timer_change_title:"Change Time", timer_change_desc:"Choose your chanting goal time", timer_close:"Close",
+    // Chart days
+    chart_day_sun:"Sun", chart_day_mon:"Mon", chart_day_tue:"Tue", chart_day_wed:"Wed",
+    chart_day_thu:"Thu", chart_day_fri:"Fri", chart_day_sat:"Sat",
+    chart_min:"min", chart_best_streak:"Best", chart_days_unit:"d",
+    // MyPage
+    mypage_public:"Public", mypage_joined:"Joined", mypage_days_suffix:"days",
+    mypage_name:"Name", mypage_bio:"Bio...",
+    mypage_sessions_unit:"", mypage_journals_unit:"",
+    mypage_journal_default_label:"Journal Default Public",
+    // Privacy
+    privacy_public:"Public", privacy_private:"Private",
+    // Sound
+    sound_playing:"Playing", sound_selected:"Selected",
   }
 };
 const t = (key) => LANG[currentLang]?.[key] || LANG.ja[key] || key;
 
+
+// ─── Constants (i18n-dependent) ───
 const getCATEGORIES = () => [
   { id:"personal", label:t("cat_personal"), color:T.colors.tag.personal },
   { id:"family", label:t("cat_family"), color:T.colors.tag.family },
@@ -242,14 +415,12 @@ const getCATEGORIES = () => [
   { id:"study", label:t("cat_study"), color:T.colors.tag.study },
   { id:"other", label:t("cat_other"), color:T.colors.tag.other },
 ];
-// 静的参照用（既存コードとの互換性）
 const CATEGORIES = getCATEGORIES();
 
 const getREACTIONS = () => [
   { emoji:"🙏", label:t("react_gassho") },{ emoji:"🔥", label:t("react_fire") },{ emoji:"💪", label:t("react_strength") },
   { emoji:"🌸", label:t("react_sakura") },{ emoji:"✨", label:t("react_shine") },{ emoji:"❤️", label:t("react_love") },
 ];
-// 静的参照用
 const REACTIONS = getREACTIONS();
 
 const getMOODS = () => [
@@ -262,11 +433,9 @@ const getMOODS = () => [
   { emoji:"⚡", label:t("mood_conviction"), color:"#D4A07B" },
   { emoji:"🌸", label:t("mood_joy"), color:"#D47BA0" },
 ];
-// 静的参照用
 const MOODS = getMOODS();
 
 const getJOURNAL_PROMPTS = () => [t("prompt_1"),t("prompt_2"),t("prompt_3"),t("prompt_4"),t("prompt_5"),t("prompt_6")];
-// 静的参照用
 const JOURNAL_PROMPTS = getJOURNAL_PROMPTS();
 
 const getTIMER_PRESETS = () => [{label:t("timer_5m"),seconds:300},{label:t("timer_10m"),seconds:600},{label:t("timer_15m"),seconds:900},{label:t("timer_30m"),seconds:1800},{label:t("timer_1h"),seconds:3600},{label:t("timer_free"),seconds:0}];
@@ -319,6 +488,13 @@ const generateDemoHistory = () => {
   }
   return days;
 };
+
+// ─── Mood Helpers ───
+const MOOD_COLORS_7=["#FF5252","#FF8A65","#FFB74D","#888888","#7BD4A0","#66E088","#CEFF00"];
+const MOOD_LABELS_7=[t("mood_level_1"),t("mood_level_2"),t("mood_level_3"),t("mood_level_4"),t("mood_level_5"),t("mood_level_6"),t("mood_level_7")];
+function getMoodIndex(v){return Math.round(v/100*6);}
+function getMoodColor(v){const i=v/100*6;const lo=Math.floor(i);const hi=Math.min(6,lo+1);const t=i-lo;const c1=MOOD_COLORS_7[lo];const c2=MOOD_COLORS_7[hi];const p=(s)=>parseInt(s,16);const r=Math.round(p(c1.slice(1,3))*(1-t)+p(c2.slice(1,3))*t);const g=Math.round(p(c1.slice(3,5))*(1-t)+p(c2.slice(3,5))*t);const b=Math.round(p(c1.slice(5,7))*(1-t)+p(c2.slice(5,7))*t);const h=n=>n.toString(16).padStart(2,'0');return `#${h(r)}${h(g)}${h(b)}`;}
+
 
 // ─── Demo Data ───
 const DEMO_KINEN = [
@@ -441,6 +617,7 @@ const DEMO_JOURNALS = [
   {id:"j6",date:"2025-02-12",time:"22:00",mood:{emoji:"😢",label:"涙",color:"#A8B4E0"},text:"夜遅くの唱題。後輩が退転しそうだと聞いて、胸が痛い。自分に何ができるのか。ただ祈ることしかできない今の自分が悔しい。でも、祈り続ける。絶対に。",duration:2700,isPublic:false,photo:null},
 ];
 
+
 // ─── Logo Component (NV2.svg - combined icon + wordmark) ───
 const ShodaiLogo = ({size="md",animate=false,color=T.colors.accent}) => {
   const heights={sm:22,md:32,lg:36,xl:44};
@@ -503,6 +680,7 @@ const PhaseIndicator = ({phase}) => (
 );
 
 const Icon=({name,size=14,color="currentColor"})=>{const p={width:size,height:size,viewBox:"0 0 24 24",fill:"none",stroke:color,strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round",style:{display:"inline-block",verticalAlign:"middle"}};if(name==="edit")return(<svg {...p}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>);if(name==="lockOpen")return(<svg {...p}><rect x={3} y={11} width={18} height={11} rx={2} ry={2}/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>);if(name==="lockClosed")return(<svg {...p}><rect x={3} y={11} width={18} height={11} rx={2} ry={2}/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>);return null;};
+
 const CategoryTag = ({categoryId,size="sm"}) => {
   const cat=CATEGORIES.find(c=>c.id===categoryId)||CATEGORIES[5];
   return <span style={{display:"inline-flex",padding:size==="sm"?"2px 8px":"4px 12px",borderRadius:10,background:`${cat.color}15`,border:`1px solid ${cat.color}30`,fontFamily:T.fonts.body,fontSize:size==="sm"?10:12,color:cat.color}}>{cat.label}</span>;
@@ -514,6 +692,7 @@ const UserAvatar = ({name,color,size=38,showLive=false}) => (
     {showLive&&<div style={{position:"absolute",top:-2,right:-2,width:10,height:10,borderRadius:5,background:T.colors.live,border:`2px solid ${T.colors.bg}`,animation:"pulse 2s infinite",boxShadow:`0 0 6px ${T.colors.liveGlow}`}}/>}
   </div>
 );
+
 
 // ─── Kinen Card Slideshow (during chanting) ───
 const KinenSlideshow = ({kinenList}) => {
@@ -989,7 +1168,7 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
           ))}
         </div>
         <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:4}}>
-          <button onClick={()=>setCategoryFilter("all")} style={{padding:"4px 10px",borderRadius:10,fontSize:10,fontFamily:T.fonts.body,border:`1px solid ${categoryFilter==="all"?T.colors.accent:T.colors.borderLight}`,background:categoryFilter==="all"?T.colors.accentSoft:"transparent",color:categoryFilter==="all"?T.colors.accent:T.colors.textDim,cursor:"pointer",whiteSpace:"nowrap"}}>全て</button>
+          <button onClick={()=>setCategoryFilter("all")} style={{padding:"4px 10px",borderRadius:10,fontSize:10,fontFamily:T.fonts.body,border:`1px solid ${categoryFilter==="all"?T.colors.accent:T.colors.borderLight}`,background:categoryFilter==="all"?T.colors.accentSoft:"transparent",color:categoryFilter==="all"?T.colors.accent:T.colors.textDim,cursor:"pointer",whiteSpace:"nowrap"}}>{t("kinen_category_all")}</button>
           {CATEGORIES.map(cat=>(<button key={cat.id} onClick={()=>setCategoryFilter(cat.id)} style={{padding:"4px 10px",borderRadius:10,fontSize:10,fontFamily:T.fonts.body,border:`1px solid ${categoryFilter===cat.id?cat.color+"60":T.colors.borderLight}`,background:categoryFilter===cat.id?`${cat.color}15`:"transparent",color:categoryFilter===cat.id?cat.color:T.colors.textDim,cursor:"pointer",whiteSpace:"nowrap"}}>{cat.label}</button>))}
         </div>
       </div>
@@ -1005,7 +1184,7 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
                     <div style={{flex:1}}>
                       <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
                         <CategoryTag categoryId={kinen.category}/>
-                        {kinen.isPublic&&<span style={{fontSize:9,color:T.colors.textDim,padding:"1px 6px",borderRadius:6,background:T.colors.ring}}>公開</span>}
+                        {kinen.isPublic&&<span style={{fontSize:9,color:T.colors.textDim,padding:"1px 6px",borderRadius:6,background:T.colors.ring}}>{t("kinen_public_badge")}</span>}
                         {kinen.deadline&&<span style={{fontSize:9,fontFamily:T.fonts.mono,padding:"1px 6px",borderRadius:6,color:isOverdue(kinen.deadline)?T.colors.danger:T.colors.textDim,background:isOverdue(kinen.deadline)?T.colors.dangerSoft:T.colors.ring}}>{formatDate(kinen.deadline)}</span>}
                       </div>
                       <p style={{fontFamily:T.fonts.body,fontSize:14,color:T.colors.text,lineHeight:1.5,textDecoration:kinen.isOpen?"none":"line-through"}}>{kinen.text}</p>
@@ -1043,7 +1222,7 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
                     <div key={k.id} style={{padding:"12px 14px",borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,opacity:k.isOpen?1:0.5,...G.card}}>
                       <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
                         <CategoryTag categoryId={k.category}/>
-                        {!k.isOpen&&<span style={{fontSize:9,color:T.colors.success,padding:"1px 6px",borderRadius:6,background:T.colors.successSoft}}>達成!</span>}
+                        {!k.isOpen&&<span style={{fontSize:9,color:T.colors.success,padding:"1px 6px",borderRadius:6,background:T.colors.successSoft}}>{t("kinen_achieved_badge")}</span>}
                       </div>
                       <p style={{fontFamily:T.fonts.body,fontSize:14,color:T.colors.text,lineHeight:1.5,textDecoration:k.isOpen?"none":"line-through",marginBottom:8}}>{k.text}</p>
                       <ReactionBadges reactions={k.reactions}/>
@@ -1101,14 +1280,14 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
 
               {/* Deadline */}
               <div style={{marginBottom:16}}>
-                <div style={{fontSize:10,color:T.colors.textDim,marginBottom:4,fontFamily:T.fonts.body}}>期限</div>
+                <div style={{fontSize:10,color:T.colors.textDim,marginBottom:4,fontFamily:T.fonts.body}}>{t("kinen_deadline")}</div>
                 {isEditingDetail?(
                   <div style={{display:"flex",alignItems:"center",gap:8}}>
                     <input type="date" value={newDeadline} onChange={ev=>setNewDeadline(ev.target.value)} style={{padding:"6px 10px",borderRadius:8,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.mono,fontSize:12,outline:"none"}}/>
-                    {newDeadline&&<button onClick={()=>setNewDeadline("")} style={{fontSize:10,color:T.colors.textDim,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body}}>クリア</button>}
+                    {newDeadline&&<button onClick={()=>setNewDeadline("")} style={{fontSize:10,color:T.colors.textDim,background:"none",border:"none",cursor:"pointer",fontFamily:T.fonts.body}}>{t("kinen_clear")}</button>}
                   </div>
                 ):(
-                  <span style={{fontSize:12,fontFamily:T.fonts.mono,color:dk.deadline?(isOverdue(dk.deadline)?T.colors.danger:T.colors.text):T.colors.textDim}}>{dk.deadline?formatDate(dk.deadline):"なし"}</span>
+                  <span style={{fontSize:12,fontFamily:T.fonts.mono,color:dk.deadline?(isOverdue(dk.deadline)?T.colors.danger:T.colors.text):T.colors.textDim}}>{dk.deadline?formatDate(dk.deadline):t("kinen_none")}</span>
                 )}
               </div>
 
@@ -1120,13 +1299,13 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
                     <button onClick={saveDetail} style={{padding:"6px 14px",borderRadius:10,border:"none",background:T.colors.accent,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:11,fontWeight:600,cursor:"pointer"}}>保存</button>
                   </>
                 ):(
-                  <button onClick={()=>setIsEditingDetail(true)} style={{padding:"6px 14px",borderRadius:10,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.accent,fontFamily:T.fonts.body,fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}><Icon name="edit" size={11}/> 編集</button>
+                  <button onClick={()=>setIsEditingDetail(true)} style={{padding:"6px 14px",borderRadius:10,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.accent,fontFamily:T.fonts.body,fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}><Icon name="edit" size={11}/> {t("kinen_edit")}</button>
                 )}
               </div>
 
               {/* Subtasks */}
               <div style={{marginBottom:16}}>
-                <div style={{fontSize:10,color:T.colors.textDim,marginBottom:8,fontFamily:T.fonts.body}}>サブタスク {total>0&&<span style={{color:T.colors.textMuted}}>({done}/{total})</span>}</div>
+                <div style={{fontSize:10,color:T.colors.textDim,marginBottom:8,fontFamily:T.fonts.body}}>{t("kinen_subtask")} {total>0&&<span style={{color:T.colors.textMuted}}>({done}/{total})</span>}</div>
                 {total>0&&(
                   <div style={{height:4,borderRadius:2,background:T.colors.ring,overflow:"hidden",marginBottom:10}}>
                     <div style={{height:"100%",borderRadius:2,background:done===total?T.colors.success:T.colors.accent,width:`${(done/total)*100}%`,transition:"width 0.3s ease"}}/>
@@ -1141,17 +1320,17 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
                     <button onClick={()=>deleteSubtask(dk.id,st.id)} style={{fontSize:12,color:T.colors.textDim,background:"none",border:"none",cursor:"pointer",padding:"2px 6px",opacity:0.5}}>×</button>
                   </div>
                 ))}
-                {total===0&&<div style={{fontSize:12,color:T.colors.textDim,fontFamily:T.fonts.body,marginBottom:8}}>サブタスクなし</div>}
+                {total===0&&<div style={{fontSize:12,color:T.colors.textDim,fontFamily:T.fonts.body,marginBottom:8}}>{t("kinen_no_subtask")}</div>}
                 <div style={{display:"flex",gap:6,marginTop:10}}>
-                  <input value={newSubtaskText} onChange={ev=>setNewSubtaskText(ev.target.value)} onKeyDown={ev=>ev.key==="Enter"&&addSubtask(dk.id)} placeholder="サブタスクを追加..." style={{flex:1,padding:"8px 12px",borderRadius:10,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.body,fontSize:12,outline:"none"}}/>
-                  <button onClick={()=>addSubtask(dk.id)} style={{padding:"8px 14px",borderRadius:10,border:"none",background:T.colors.accentSoft,color:T.colors.accent,fontSize:12,fontFamily:T.fonts.body,fontWeight:600,cursor:"pointer"}}>+ 追加</button>
+                  <input value={newSubtaskText} onChange={ev=>setNewSubtaskText(ev.target.value)} onKeyDown={ev=>ev.key==="Enter"&&addSubtask(dk.id)} placeholder={t("kinen_add_subtask")} style={{flex:1,padding:"8px 12px",borderRadius:10,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.body,fontSize:12,outline:"none"}}/>
+                  <button onClick={()=>addSubtask(dk.id)} style={{padding:"8px 14px",borderRadius:10,border:"none",background:T.colors.accentSoft,color:T.colors.accent,fontSize:12,fontFamily:T.fonts.body,fontWeight:600,cursor:"pointer"}}>{t("kinen_add_subtask_btn")}</button>
                 </div>
               </div>
 
               {/* Footer meta */}
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:12,borderTop:`1px solid ${T.colors.borderLight}`}}>
-                <span style={{fontSize:10,fontFamily:T.fonts.mono,color:T.colors.textDim}}>作成日: {dk.createdAt}</span>
-                <button onClick={()=>{deleteKinen(dk.id);closeDetail();}} style={{padding:"6px 14px",borderRadius:10,border:`1px solid ${T.colors.danger}30`,background:T.colors.dangerSoft,color:T.colors.danger,fontSize:11,fontFamily:T.fonts.body,cursor:"pointer"}}>ゴミ箱に移動</button>
+                <span style={{fontSize:10,fontFamily:T.fonts.mono,color:T.colors.textDim}}>{t("kinen_created")} {dk.createdAt}</span>
+                <button onClick={()=>{deleteKinen(dk.id);closeDetail();}} style={{padding:"6px 14px",borderRadius:10,border:`1px solid ${T.colors.danger}30`,background:T.colors.dangerSoft,color:T.colors.danger,fontSize:11,fontFamily:T.fonts.body,cursor:"pointer"}}>{t("kinen_trash")}</button>
               </div>
             </div>
           </div>
@@ -1160,6 +1339,7 @@ const KinenTab = ({kinenList,setKinenList,followingKinen,onReactKinen,onAddToMin
     </div>
   );
 };
+
 
 // ─── Journal Entry Form (from v8) ───
 const JournalForm = ({onSave,onCancel,sessionDuration,isPostChanting=false}) => {
@@ -1175,14 +1355,14 @@ const JournalForm = ({onSave,onCancel,sessionDuration,isPostChanting=false}) => 
     <div style={{animation:"slideUp 0.4s ease"}}>
       {isPostChanting&&sessionDuration>0&&(
         <div style={{textAlign:"center",marginBottom:16}}>
-          <div style={{fontFamily:T.fonts.display,fontSize:20,fontWeight:800,color:T.colors.accent,marginBottom:4,textTransform:"uppercase"}}>お疲れさまでした</div>
-          <div style={{fontFamily:T.fonts.mono,fontSize:12,color:T.colors.textMuted}}>{formatTimeCompact(sessionDuration)} · 約{formatHen(secondsToHen(sessionDuration))}遍</div>
+          <div style={{fontFamily:T.fonts.display,fontSize:20,fontWeight:800,color:T.colors.accent,marginBottom:4,textTransform:"uppercase"}}>{t("post_chanting_done")}</div>
+          <div style={{fontFamily:T.fonts.mono,fontSize:12,color:T.colors.textMuted}}>{formatTimeCompact(sessionDuration)} · {t("approx")}{formatHen(secondsToHen(sessionDuration))}{t("hen_unit")}</div>
         </div>
       )}
       <div style={{padding:16,borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
         <div style={{fontSize:12,color:T.colors.journal,fontFamily:T.fonts.display,fontStyle:"italic",marginBottom:12,padding:"8px 12px",borderRadius:10,background:T.colors.journalSoft,border:`1px solid ${T.colors.journal}20`}}>"{prompt}"</div>
         <div style={{marginBottom:12}}>
-          <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:8}}>今の気持ち</div>
+          <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:8}}>{t("journal_feeling")}</div>
           <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
             {MOODS.map((m)=>(
               <button key={m.label} onClick={()=>setMood(mood?.label===m.label?null:m)} style={{padding:"6px 12px",borderRadius:14,display:"flex",alignItems:"center",gap:4,border:`1px solid ${mood?.label===m.label?m.color:T.colors.border}`,background:mood?.label===m.label?`${m.color}15`:"transparent",color:mood?.label===m.label?m.color:T.colors.textMuted,fontSize:12,fontFamily:T.fonts.body,cursor:"pointer",transition:"all 0.2s ease"}}>
@@ -1199,8 +1379,8 @@ const JournalForm = ({onSave,onCancel,sessionDuration,isPostChanting=false}) => 
           </div>
         </div>
         <div style={{display:"flex",gap:10,marginTop:14}}>
-          {onCancel&&(<button onClick={onCancel} style={{flex:1,padding:"12px 20px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:13,cursor:"pointer"}}>{isPostChanting?"スキップ":"キャンセル"}</button>)}
-          <button onClick={handleSave} disabled={!text.trim()&&!mood} style={{flex:1,padding:"12px 20px",borderRadius:12,border:"none",background:(text.trim()||mood)?T.colors.accent:T.colors.ring,color:(text.trim()||mood)?T.colors.bg:T.colors.textDim,fontFamily:T.fonts.body,fontSize:13,fontWeight:600,cursor:(text.trim()||mood)?"pointer":"default"}}>記録する</button>
+          {onCancel&&(<button onClick={onCancel} style={{flex:1,padding:"12px 20px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:13,cursor:"pointer"}}>{isPostChanting?t("skip"):t("cancel")}</button>)}
+          <button onClick={handleSave} disabled={!text.trim()&&!mood} style={{flex:1,padding:"12px 20px",borderRadius:12,border:"none",background:(text.trim()||mood)?T.colors.accent:T.colors.ring,color:(text.trim()||mood)?T.colors.bg:T.colors.textDim,fontFamily:T.fonts.body,fontSize:13,fontWeight:600,cursor:(text.trim()||mood)?"pointer":"default"}}>{t("save")}</button>
         </div>
       </div>
     </div>
@@ -1214,7 +1394,7 @@ const WeeklyBarChart = ({history}) => {
     const max=Math.max(...last7.map(d=>d.totalDuration),1);
     const avg=last7.reduce((s,d)=>s+d.totalDuration,0)/7;
     const total=last7.reduce((s,d)=>s+d.totalDuration,0);
-    const dayLabels=["日","月","火","水","木","金","土"];
+    const dayLabels=[t("chart_day_sun"),t("chart_day_mon"),t("chart_day_tue"),t("chart_day_wed"),t("chart_day_thu"),t("chart_day_fri"),t("chart_day_sat")];
     return{last7,max,avg,total,dayLabels};
   },[history]);
   const W=320,H=130,barW=32,gap=(W-barW*7)/8;
@@ -1242,7 +1422,7 @@ const WeeklyBarChart = ({history}) => {
               {barH>0&&<rect x={x} y={y} width={barW} height={barH} rx={6} fill="url(#barGrad)" opacity={isToday?1:0.6}/>}
               {isToday&&barH>0&&<rect x={x} y={y} width={barW} height={barH} rx={6} fill="none" stroke={T.colors.accent} strokeWidth={1.5} opacity={0.4}/>}
               <text x={x+barW/2} y={H+16} textAnchor="middle" fill={isToday?T.colors.accent:T.colors.textDim} fontSize={10} fontFamily={T.fonts.mono}>{label}</text>
-              {barH>0&&isToday&&<text x={x+barW/2} y={y-6} textAnchor="middle" fill={T.colors.accent} fontSize={9} fontFamily={T.fonts.mono}>{Math.round(d.totalDuration/60)}分</text>}
+              {barH>0&&isToday&&<text x={x+barW/2} y={y-6} textAnchor="middle" fill={T.colors.accent} fontSize={9} fontFamily={T.fonts.mono}>{Math.round(d.totalDuration/60)}{t("chart_min")}</text>}
             </g>
           );
         })}
@@ -1257,7 +1437,7 @@ const StreakHeatmap = ({history,streak,bestStreak}) => {
     const max=Math.max(...last35.map(d=>d.totalDuration),1);
     return{last35,max};
   },[history]);
-  const dayLabels=["月","火","水","木","金","土","日"];
+  const dayLabels=[t("chart_day_mon"),t("chart_day_tue"),t("chart_day_wed"),t("chart_day_thu"),t("chart_day_fri"),t("chart_day_sat"),t("chart_day_sun")];
   return(
     <div style={{padding:16,borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,marginBottom:12,...G.card}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
@@ -1266,7 +1446,7 @@ const StreakHeatmap = ({history,streak,bestStreak}) => {
           <span style={{fontFamily:T.fonts.mono,fontSize:28,fontWeight:800,color:T.colors.accent}}>{streak}</span>
           <span style={{fontSize:11,color:T.colors.textDim}}>{t("chart_streak_days")}</span>
         </div>
-        <div style={{fontSize:11,color:T.colors.textDim}}>最長 <span style={{fontFamily:T.fonts.mono,fontWeight:700,color:T.colors.textMuted}}>{bestStreak}</span>日</div>
+        <div style={{fontSize:11,color:T.colors.textDim}}>{t("chart_best_streak")} <span style={{fontFamily:T.fonts.mono,fontWeight:700,color:T.colors.textMuted}}>{bestStreak}</span>{t("chart_days_unit")}</div>
       </div>
       <div style={{display:"flex",gap:2,marginBottom:6}}>
         {dayLabels.map(d=><div key={d} style={{flex:1,textAlign:"center",fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.mono}}>{d}</div>)}
@@ -1450,7 +1630,7 @@ const JournalTab = ({journals,setJournals}) => {
                       </div>
                     </div>
                     <p style={{fontFamily:T.fonts.body,fontSize:13,color:T.colors.text,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{isExp?entry.text:preview}</p>
-                    {entry.duration>0&&(<div style={{marginTop:8,display:"flex",alignItems:"center",gap:8}}><span style={{fontFamily:T.fonts.mono,fontSize:10,color:T.colors.textDim,padding:"2px 8px",borderRadius:8,background:T.colors.ring}}>{formatTimeCompact(entry.duration)} · {formatHen(secondsToHen(entry.duration))}遍</span></div>)}
+                    {entry.duration>0&&(<div style={{marginTop:8,display:"flex",alignItems:"center",gap:8}}><span style={{fontFamily:T.fonts.mono,fontSize:10,color:T.colors.textDim,padding:"2px 8px",borderRadius:8,background:T.colors.ring}}>{formatTimeCompact(entry.duration)} · {formatHen(secondsToHen(entry.duration))}{t("hen_unit")}</span></div>)}
                     {isExp&&entry.photo&&(<div style={{marginTop:10,height:120,borderRadius:12,background:`linear-gradient(135deg, ${T.colors.ring}, ${T.colors.borderLight})`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${T.colors.border}`}}><span style={{fontSize:11,color:T.colors.textDim}}>📷 写真プレビュー</span></div>)}
                     {isExp&&(
                       <div style={{marginTop:10,paddingTop:8,borderTop:`1px solid ${T.colors.borderLight}`,display:"flex",gap:12}}>
@@ -1625,7 +1805,7 @@ const AddFriendModal = ({isOpen,onClose,following,onFollow,myUserId}) => {
 };
 
 // ─── MyPage Tab ───
-const MyPageTab = ({profile,setProfile,todayTotal,journals,kinenList,followers,following,onFollow,demoHistory,lang,setLang}) => {
+const MyPageTab = ({profile,setProfile,todayTotal,journals,kinenList,followers,following,onFollow,demoHistory,lang,setLang,isDark,setIsDark,moodLog,moodPeriod,setMoodPeriod}) => {
   const [isEditing,setIsEditing]=useState(false);
   const [editName,setEditName]=useState(profile.name);
   const [editBio,setEditBio]=useState(profile.bio);
@@ -1652,12 +1832,12 @@ const MyPageTab = ({profile,setProfile,todayTotal,journals,kinenList,followers,f
             <>
               <div style={{display:"inline-flex",position:"relative"}}>
                 <UserAvatar name={profile.name} color={profile.avatarColor} size={72}/>
-                {profile.isPublic&&<div style={{position:"absolute",bottom:0,right:-4,padding:"2px 6px",borderRadius:8,background:T.colors.successSoft,border:`1px solid ${T.colors.success}40`,fontSize:9,color:T.colors.success}}>公開</div>}
+                {profile.isPublic&&<div style={{position:"absolute",bottom:0,right:-4,padding:"2px 6px",borderRadius:8,background:T.colors.successSoft,border:`1px solid ${T.colors.success}40`,fontSize:9,color:T.colors.success}}>{t("mypage_public")}</div>}
               </div>
               <h2 style={{fontFamily:T.fonts.display,fontSize:24,fontWeight:800,color:T.colors.text,marginTop:12}}>{profile.name}</h2>
               <p style={{fontSize:11,color:T.colors.textDim,marginTop:4,fontFamily:T.fonts.mono}}>@{profile.userId}</p>
               <p style={{fontSize:12,color:T.colors.textMuted,marginTop:4}}>{profile.bio}</p>
-              <p style={{fontSize:10,color:T.colors.textDim,marginTop:4,fontFamily:T.fonts.mono}}>参加 {memberDays}日目</p>
+              <p style={{fontSize:10,color:T.colors.textDim,marginTop:4,fontFamily:T.fonts.mono}}>{t("mypage_joined")} {memberDays}{t("mypage_days_suffix")}</p>
               <button onClick={()=>setIsEditing(true)} style={{marginTop:10,padding:"6px 16px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontSize:11,fontFamily:T.fonts.body,cursor:"pointer"}}>{t("mypage_edit")}</button>
             </>
           ):(
@@ -1699,7 +1879,7 @@ const MyPageTab = ({profile,setProfile,todayTotal,journals,kinenList,followers,f
           <div style={{flex:1,padding:"12px 14px",borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,textAlign:"center",...G.card}}>
             <div style={{fontSize:9,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>{t("mypage_stat_best")}</div>
             <div style={{fontFamily:T.fonts.mono,fontSize:24,fontWeight:700,marginTop:4,color:T.colors.success}}>{stats.bestStreak}</div>
-            <div style={{fontSize:10,color:T.colors.textDim}}>日</div>
+            <div style={{fontSize:10,color:T.colors.textDim}}>{t("mypage_stat_days")}</div>
           </div>
         </div>
 
@@ -1711,11 +1891,11 @@ const MyPageTab = ({profile,setProfile,todayTotal,journals,kinenList,followers,f
           </div>
           <div style={{flex:1,padding:"10px 14px",borderRadius:12,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
             <div style={{fontSize:9,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>{t("mypage_stat_sessions")}</div>
-            <div style={{fontFamily:T.fonts.mono,fontSize:16,fontWeight:600,marginTop:4}}>{stats.totalSessions}回</div>
+            <div style={{fontFamily:T.fonts.mono,fontSize:16,fontWeight:600,marginTop:4}}>{stats.totalSessions}{t("mypage_sessions_unit")}</div>
           </div>
           <div style={{flex:1,padding:"10px 14px",borderRadius:12,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
             <div style={{fontSize:9,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>{t("mypage_stat_journals")}</div>
-            <div style={{fontFamily:T.fonts.mono,fontSize:16,fontWeight:600,marginTop:4}}>{journals.length}件</div>
+            <div style={{fontFamily:T.fonts.mono,fontSize:16,fontWeight:600,marginTop:4}}>{journals.length}{t("mypage_journals_unit")}</div>
           </div>
         </div>
 
@@ -1730,6 +1910,91 @@ const MyPageTab = ({profile,setProfile,todayTotal,journals,kinenList,followers,f
           </div>
         )}
 
+
+        {/* ── Mood Analytics ── */}
+        {moodLog&&moodLog.length>0&&(()=>{
+          const now=new Date(2026,2,20);
+          const cutoff=new Date(now);cutoff.setDate(cutoff.getDate()-moodPeriod);
+          const filtered=moodLog.filter(e=>e.dateObj>=cutoff);
+          const data=[...filtered].reverse();
+          if(data.length===0)return null;
+          const avgDiff=Math.round(data.reduce((s,e)=>s+e.diff,0)/data.length);
+          const avgPost=Math.round(data.reduce((s,e)=>s+e.post,0)/data.length);
+          const W=300,H=150,PAD_L=28,PAD_R=8,PAD_T=16,PAD_B=28;
+          const cw=W-PAD_L-PAD_R,ch=H-PAD_T-PAD_B;
+          const xStep=data.length>1?cw/(data.length-1):cw/2;
+          const y=v=>PAD_T+ch-(v/100*ch);
+          const x=i=>PAD_L+(data.length>1?i*xStep:cw/2);
+          const areaPath=data.map((e,i)=>`${x(i)},${y(e.post)}`).join(" ")+` ${x(data.length-1)},${y(0)} ${x(0)},${y(0)}`;
+          const preLine=data.map((e,i)=>`${x(i)},${y(e.pre)}`).join(" ");
+          const postLine=data.map((e,i)=>`${x(i)},${y(e.post)}`).join(" ");
+          const dateLabel=(e)=>{if(!e.dateObj)return e.date||"";const m=e.dateObj.getMonth()+1;const d=e.dateObj.getDate();return `${m}/${d}`;};
+          const labelInterval=Math.max(1,Math.floor(data.length/5));
+          const bestDuration=(()=>{
+            if(moodLog.length<3)return null;
+            const sorted=[...moodLog].sort((a,b)=>b.diff-a.diff);
+            const top=sorted.slice(0,Math.max(3,Math.ceil(sorted.length*0.4)));
+            const mins=top.map(e=>Math.round(e.duration/60));
+            const lo=Math.min(...mins);const hi=Math.max(...mins);
+            const avg=Math.round(top.reduce((s,e)=>s+e.diff,0)/top.length);
+            if(avg<=0)return null;
+            return{lo,hi,avg};
+          })();
+          return <div style={{marginBottom:20,animation:"slideUp 0.46s ease"}}>
+            <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>FEELING</div>
+            {/* Period selector */}
+            <div style={{display:"flex",gap:0,borderRadius:10,overflow:"hidden",border:`1px solid ${T.colors.border}`,marginBottom:10}}>
+              {[{label:"7日",val:7},{label:"14日",val:14},{label:"30日",val:30}].map(p=>
+                <button key={p.val} onClick={()=>setMoodPeriod(p.val)} style={{flex:1,padding:"6px 0",fontSize:11,fontFamily:T.fonts.body,fontWeight:moodPeriod===p.val?600:400,border:"none",background:moodPeriod===p.val?T.colors.accentSoft:"transparent",color:moodPeriod===p.val?T.colors.accent:T.colors.textMuted,cursor:"pointer",transition:"all 0.2s"}}>{p.label}</button>
+              )}
+            </div>
+            {/* Chart */}
+            <div style={{borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,padding:"8px 4px 4px"}}>
+              <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",height:"auto"}}>
+                <defs><linearGradient id="moodPostFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.colors.accent} stopOpacity="0.15"/><stop offset="100%" stopColor={T.colors.accent} stopOpacity="0.02"/></linearGradient></defs>
+                {[0,25,50,75,100].map(v=><line key={v} x1={PAD_L} y1={y(v)} x2={W-PAD_R} y2={y(v)} stroke={T.colors.border} strokeWidth="0.5"/>)}
+                {[0,50,100].map(v=><text key={v} x={PAD_L-4} y={y(v)+3} fill={T.colors.textDim} fontSize="7" textAnchor="end" fontFamily={T.fonts.mono}>{v}</text>)}
+                <polygon points={areaPath} fill="url(#moodPostFill)"/>
+                {data.map((e,i)=><line key={`v${i}`} x1={x(i)} y1={y(e.pre)} x2={x(i)} y2={y(e.post)} stroke={e.diff>=0?"rgba(123,212,160,0.2)":"rgba(255,138,101,0.2)"} strokeWidth="1.5"/>)}
+                <polyline points={preLine} fill="none" stroke={T.colors.textMuted} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
+                <polyline points={postLine} fill="none" stroke={T.colors.accent} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
+                {data.map((e,i)=><React.Fragment key={i}>
+                  <circle cx={x(i)} cy={y(e.pre)} r="2.5" fill={T.colors.textMuted} stroke={T.colors.textDim} strokeWidth="0.5"/>
+                  <circle cx={x(i)} cy={y(e.post)} r="2.5" fill={T.colors.accent} stroke={T.colors.accentGlow} strokeWidth="0.5"/>
+                </React.Fragment>)}
+                {data.map((e,i)=>i%labelInterval===0||i===data.length-1?<text key={`d${i}`} x={x(i)} y={H-6} fill={T.colors.textDim} fontSize="6.5" textAnchor="middle" fontFamily={T.fonts.mono}>{dateLabel(e)}</text>:null)}
+              </svg>
+              <div style={{display:"flex",justifyContent:"center",gap:16,padding:"2px 0"}}>
+                <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:6,height:6,borderRadius:"50%",background:T.colors.textMuted}}/>
+                  <span style={{fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.body}}>{t("mood_pre_label")}</span></div>
+                <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:6,height:6,borderRadius:"50%",background:T.colors.accent}}/>
+                  <span style={{fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.body}}>{t("mood_post_label")}</span></div>
+              </div>
+            </div>
+            {/* Summary stats */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginTop:8}}>
+              <div style={{padding:"10px 8px",borderRadius:12,background:T.colors.surface,border:`1px solid ${T.colors.border}`,textAlign:"center"}}>
+                <div style={{fontSize:18,fontWeight:700,color:T.colors.success,fontFamily:T.fonts.mono}}>+{avgDiff}</div>
+                <div style={{fontSize:9,color:T.colors.textDim,marginTop:2}}>{t("mood_avg_improve")}</div>
+              </div>
+              <div style={{padding:"10px 8px",borderRadius:12,background:T.colors.surface,border:`1px solid ${T.colors.border}`,textAlign:"center"}}>
+                <div style={{fontSize:18,fontWeight:700,color:T.colors.accent,fontFamily:T.fonts.mono}}>{data.length}</div>
+                <div style={{fontSize:9,color:T.colors.textDim,marginTop:2}}>{t("mood_sessions")}</div>
+              </div>
+              <div style={{padding:"10px 8px",borderRadius:12,background:T.colors.surface,border:`1px solid ${T.colors.border}`,textAlign:"center"}}>
+                <div style={{fontSize:18,fontWeight:700,color:T.colors.text,fontFamily:T.fonts.mono}}>{avgPost}</div>
+                <div style={{fontSize:9,color:T.colors.textDim,marginTop:2}}>{t("mood_avg_post")}</div>
+              </div>
+            </div>
+            {/* Insight */}
+            {bestDuration&&<div style={{marginTop:8,padding:"10px 14px",borderRadius:12,background:T.colors.accentSoft,border:`1px solid ${T.colors.accentGlow}`,display:"flex",alignItems:"center",gap:8}}>
+              <div style={{fontSize:14,color:T.colors.accent}}>✦</div>
+              <div style={{fontFamily:T.fonts.body,fontSize:11,color:T.colors.textMuted,lineHeight:1.4}}>
+                <span style={{color:T.colors.accent,fontWeight:700}}>{bestDuration.lo===bestDuration.hi?`${bestDuration.lo}${t("time_minutes")}`:`${bestDuration.lo}〜${bestDuration.hi}${t("time_minutes")}`}</span>{t("mood_insight_prefix")}<span style={{color:T.colors.accent,fontWeight:700}}>+{bestDuration.avg}pt</span>{t("mood_insight_suffix")}
+              </div>
+            </div>}
+          </div>;
+        })()}
 
         {/* ── Follow / Followers ── */}
         <div style={{marginBottom:20,animation:"slideUp 0.5s ease"}}>
@@ -1791,9 +2056,19 @@ const MyPageTab = ({profile,setProfile,todayTotal,journals,kinenList,followers,f
           </div>
         </div>
 
+        {/* ── Theme Toggle ── */}
+        <div style={{marginBottom:20,animation:"slideUp 0.53s ease"}}>
+          <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>{lang==="ja"?"テーマ":"Theme"}</div>
+          <div style={{display:"flex",gap:8}}>
+            {[{key:true,label:lang==="ja"?"🌙 ダーク":"🌙 Dark"},{key:false,label:lang==="ja"?"☀️ ライト":"☀️ Light"}].map(v=>(
+              <button key={String(v.key)} onClick={()=>setIsDark(v.key)} style={{flex:1,padding:"12px 16px",borderRadius:14,fontSize:13,fontFamily:T.fonts.body,fontWeight:isDark===v.key?700:400,border:`1px solid ${isDark===v.key?T.colors.accent+"60":T.colors.border}`,background:isDark===v.key?T.colors.accentSoft:"transparent",color:isDark===v.key?T.colors.accent:T.colors.textMuted,cursor:"pointer",transition:"all 0.2s ease"}}>{v.label}</button>
+            ))}
+          </div>
+        </div>
+
         {/* ── Privacy Settings ── */}
         <div style={{animation:"slideUp 0.55s ease"}}>
-          <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>公開設定</div>
+          <div style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>{lang==="ja"?"公開設定":"Privacy"}</div>
           <div style={{borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,overflow:"hidden",...G.card}}>
             {/* Profile public */}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px",borderBottom:`1px solid ${T.colors.borderLight}`}}>
@@ -1820,7 +2095,7 @@ const MyPageTab = ({profile,setProfile,todayTotal,journals,kinenList,followers,f
             {/* Journal default */}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px"}}>
               <div>
-                <div style={{fontSize:13,color:T.colors.text}}>ジャーナル初期公開</div>
+                <div style={{fontSize:13,color:T.colors.text}}>{t("mypage_journal_default_label")}</div>
                 <div style={{fontSize:10,color:T.colors.textDim,marginTop:2}}>{t("mypage_journal_default_desc")}</div>
               </div>
               <button onClick={()=>setProfile(p=>({...p,journalDefaultPublic:!p.journalDefaultPublic}))} style={{width:44,height:24,borderRadius:12,border:"none",background:profile.journalDefaultPublic?T.colors.success:T.colors.ring,cursor:"pointer",position:"relative",transition:"background 0.3s ease"}}>
@@ -1842,14 +2117,23 @@ function getMoodColor(v){const i=v/100*6;const lo=Math.floor(i);const hi=Math.mi
 
 // ─── Main App (Merged v5+v7+v8) ───
 function ShodaiApp() {
-  const [lang,setLang]=useState("en");
+  const [lang,setLang]=useState(()=>{try{return localStorage.getItem("nv-lang")||"en";}catch{return "en";}});
   currentLang=lang;
+  const [isDark,setIsDark]=useState(()=>{try{const v=localStorage.getItem("nv-dark");return v===null?true:v==="true";}catch{return true;}});
+  T=isDark?THEME_DARK:THEME_LIGHT;
+  useEffect(()=>{try{localStorage.setItem("nv-dark",isDark);localStorage.setItem("nv-lang",lang);}catch{}const r=document.documentElement.style;r.setProperty("--theme-bg",T.colors.bg);r.setProperty("--glass-ring-inner",T.colors.bg);r.setProperty("--glass-conic",isDark?"conic-gradient(from 0deg,transparent 0%,transparent 30%,rgba(255,255,255,0.5) 38%,rgba(255,255,255,0.8) 40%,rgba(255,255,255,0.5) 42%,transparent 50%,transparent 75%,rgba(255,255,255,0.25) 82%,rgba(255,255,255,0.4) 84%,rgba(255,255,255,0.25) 86%,transparent 94%,transparent 100%)":"conic-gradient(from 0deg,transparent 0%,transparent 30%,rgba(92,138,0,0.3) 38%,rgba(92,138,0,0.5) 40%,rgba(92,138,0,0.3) 42%,transparent 50%,transparent 75%,rgba(92,138,0,0.15) 82%,rgba(92,138,0,0.25) 84%,rgba(92,138,0,0.15) 86%,transparent 94%,transparent 100%)");r.setProperty("--glass-border",isDark?"linear-gradient(135deg,rgba(255,255,255,0.35) 0%,rgba(255,255,255,0.15) 30%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.15) 70%,rgba(255,255,255,0.3) 100%)":"linear-gradient(135deg,rgba(0,0,0,0.12) 0%,rgba(0,0,0,0.06) 30%,rgba(0,0,0,0.03) 50%,rgba(0,0,0,0.06) 70%,rgba(0,0,0,0.12) 100%)");},[isDark,lang]);
   const [activeTab,setActiveTab]=useState("chanting");
   const [phase,setPhase]=useState("idle");
   const [elapsed,setElapsed]=useState(0);
   const [timerMode,setTimerMode]=useState("countdown");
   const [targetSeconds,setTargetSeconds]=useState(900);
   const [showPresets,setShowPresets]=useState(false);
+  const [showKinenAddModal,setShowKinenAddModal]=useState(false);
+  const [kinenModalText,setKinenModalText]=useState("");
+  const [kinenModalCategory,setKinenModalCategory]=useState("personal");
+  const [kinenModalDeadline,setKinenModalDeadline]=useState("");
+  const [kinenModalIsPublic,setKinenModalIsPublic]=useState(false);
+  const addKinenFromModal=()=>{if(!kinenModalText.trim())return;setKinenList(p=>[...p,{id:Date.now(),text:kinenModalText.trim(),category:kinenModalCategory,isOpen:true,isPublic:kinenModalIsPublic,deadline:kinenModalDeadline||null,createdAt:new Date().toISOString().split("T")[0],photo:null,subtasks:[]}]);setKinenModalText("");setKinenModalCategory("personal");setKinenModalDeadline("");setKinenModalIsPublic(false);setShowKinenAddModal(false);};
   const [todayTotal,setTodayTotal]=useState(2340);
   const [sessionHistory,setSessionHistory]=useState([{duration:1440,timestamp:"06:30"},{duration:900,timestamp:"12:15"}]);
   const [kinenList,setKinenList]=useState(DEMO_KINEN);
@@ -1897,14 +2181,14 @@ function ShodaiApp() {
   });
   const [moodPeriod,setMoodPeriod]=useState(14);
   const [activeSound,setActiveSound]=useState(null);
-  const SOUND_LIST=[{id:"rain",label:"🌧",name:"Rain",img:"https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=800&h=1200&fit=crop",src:"sounds/rain.wav"},{id:"ocean",label:"🌊",name:"Ocean",img:"https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=800&h=1200&fit=crop",src:"sounds/waves.wav"},{id:"fire",label:"🔥",name:"Fire",img:"https://images.unsplash.com/photo-1497906539264-eb74442e37a9?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1497906539264-eb74442e37a9?w=800&h=1200&fit=crop",src:"sounds/fire.wav"},{id:"wind",label:"🍃",name:"Wind",img:"https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=800&h=1200&fit=crop",src:"sounds/winds.wav"},{id:"birds",label:"🐦",name:"Birds",img:"https://images.unsplash.com/photo-1444464666168-49d633b86797?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1444464666168-49d633b86797?w=800&h=1200&fit=crop",src:"sounds/birds.wav"},{id:"bowl",label:"🔔",name:"Bowl",img:"https://images.unsplash.com/photo-1514905552197-0610a4d8fd73?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1514905552197-0610a4d8fd73?w=800&h=1200&fit=crop",src:null},{id:"stream",label:"💧",name:"Stream",img:"https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&h=1200&fit=crop",src:"sounds/stream.wav"},{id:"night",label:"🌙",name:"Night",img:"https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=1200&fit=crop",src:null}];
+  const SOUND_LIST=[{id:"rain",label:"🌧",name:"Rain",img:"https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=800&h=1200&fit=crop",src:"sounds/rain.wav"},{id:"ocean",label:"🌊",name:"Ocean",img:"https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=800&h=1200&fit=crop",src:"sounds/waves.wav"},{id:"fire",label:"🔥",name:"Fire",img:"https://images.unsplash.com/photo-1497906539264-eb74442e37a9?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1497906539264-eb74442e37a9?w=800&h=1200&fit=crop",src:"sounds/fire.wav"},{id:"wind",label:"🍃",name:"Wind",img:"https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=800&h=1200&fit=crop",src:"sounds/winds.wav"},{id:"birds",label:"🐦",name:"Birds",img:"https://images.unsplash.com/photo-1444464666168-49d633b86797?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1444464666168-49d633b86797?w=800&h=1200&fit=crop",src:"sounds/birds.wav"},{id:"bowl",label:"🔔",name:"Bowl",img:"https://images.unsplash.com/photo-1621789939908-fdce2616aabf?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1621789939908-fdce2616aabf?w=800&h=1200&fit=crop",src:"sounds/freesound_community-tibetan-bowl-26240.mp3"},{id:"stream",label:"💧",name:"Stream",img:"https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&h=1200&fit=crop",src:"sounds/stream.wav"},{id:"night",label:"🌙",name:"Night",img:"https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&h=200&fit=crop",bgImg:"https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=1200&fit=crop",src:"sounds/night-forest.mp3"}];
   const activeSoundBg=useMemo(()=>activeSound?SOUND_LIST.find(s=>s.id===activeSound)?.bgImg:null,[activeSound]);
   const intervalRef=useRef(null);
 
   useEffect(()=>{if(phase==="chanting"){intervalRef.current=setInterval(()=>{setElapsed(p=>{const n=p+1;if(timerMode==="countdown"&&targetSeconds>0&&n>=targetSeconds){setPhase("completed");clearInterval(intervalRef.current);return targetSeconds;}return n;});},1000);}else clearInterval(intervalRef.current);return()=>clearInterval(intervalRef.current);},[phase,timerMode,targetSeconds]);
   useEffect(()=>{if(phase==="chanting"||phase==="paused"||phase==="completed")setActiveTab("chanting");},[phase]);
   const audioRef=useRef({a:null,b:null,active:"a",fadeTimer:null,checkTimer:null});
-  useEffect(()=>{const ctx=audioRef.current;const FADE=3;const VOL=0.5;const cleanup=()=>{clearInterval(ctx.fadeTimer);clearInterval(ctx.checkTimer);if(ctx.a){ctx.a.pause();ctx.a=null;}if(ctx.b){ctx.b.pause();ctx.b=null;}};cleanup();const sound=SOUND_LIST.find(s=>s.id===activeSound);if(!sound?.src)return cleanup;const startA=()=>{ctx.a=new Audio(sound.src);ctx.a.volume=VOL;ctx.a.play().catch(()=>{});ctx.active="a";};startA();ctx.checkTimer=setInterval(()=>{const cur=ctx[ctx.active];if(!cur||!cur.duration)return;const remaining=cur.duration-cur.currentTime;if(remaining<=FADE&&!ctx[ctx.active==="a"?"b":"a"]){const next=new Audio(sound.src);next.volume=0;next.play().catch(()=>{});const nextKey=ctx.active==="a"?"b":"a";ctx[nextKey]=next;let step=0;const steps=FADE*20;ctx.fadeTimer=setInterval(()=>{step++;const pct=step/steps;if(cur)cur.volume=Math.max(0,VOL*(1-pct));next.volume=VOL*pct;if(step>=steps){if(cur){cur.pause();ctx[ctx.active]=null;}ctx.active=nextKey;clearInterval(ctx.fadeTimer);}},FADE*1000/steps);}},200);return cleanup;},[activeSound]);
+  useEffect(()=>{const ctx=audioRef.current;const FADE=3;const VOL=0.5;const cleanup=()=>{clearInterval(ctx.fadeTimer);clearInterval(ctx.checkTimer);if(ctx.a){ctx.a.pause();ctx.a=null;}if(ctx.b){ctx.b.pause();ctx.b=null;}};cleanup();if(phase!=="chanting"){return cleanup;}const sound=SOUND_LIST.find(s=>s.id===activeSound);if(!sound?.src)return cleanup;const startA=()=>{ctx.a=new Audio(sound.src);ctx.a.volume=VOL;ctx.a.play().catch(()=>{});ctx.active="a";};startA();ctx.checkTimer=setInterval(()=>{const cur=ctx[ctx.active];if(!cur||!cur.duration)return;const remaining=cur.duration-cur.currentTime;if(remaining<=FADE&&!ctx[ctx.active==="a"?"b":"a"]){const next=new Audio(sound.src);next.volume=0;next.play().catch(()=>{});const nextKey=ctx.active==="a"?"b":"a";ctx[nextKey]=next;let step=0;const steps=FADE*20;ctx.fadeTimer=setInterval(()=>{step++;const pct=step/steps;if(cur)cur.volume=Math.max(0,VOL*(1-pct));next.volume=VOL*pct;if(step>=steps){if(cur){cur.pause();ctx[ctx.active]=null;}ctx.active=nextKey;clearInterval(ctx.fadeTimer);}},FADE*1000/steps);}},200);return cleanup;},[activeSound,phase]);
   useEffect(()=>{let c=0;const shimmer=(e)=>{const el=e.currentTarget;el.classList.remove('glass-shimmer');void el.offsetWidth;el.classList.add('glass-shimmer');setTimeout(()=>el.classList.remove('glass-shimmer'),700);};const tag=()=>{document.querySelectorAll('div,button').forEach(el=>{if(el.style.backdropFilter&&!el.hasAttribute('data-glass')&&!el.classList.contains('glass-timer-ring')){el.setAttribute('data-glass','');el.style.setProperty('--glass-offset',Math.floor(Math.random()*360)+'deg');el.style.animationDelay=-(c++*1.3)+'s';el.addEventListener('click',shimmer);}});};tag();const ob=new MutationObserver(tag);ob.observe(document.body,{childList:true,subtree:true});return()=>ob.disconnect();},[]);
 
   const handleStart=useCallback(()=>{if((phase==="idle"||phase==="completed")&&!preMoodRecorded){setPreMood(50);setMoodPhase("pre");setChantView("feeling");setPendingStart(true);return;}if(phase==="idle"||phase==="completed"){setElapsed(0);setShowPostJournal(false);}setPhase("chanting");},[phase,preMoodRecorded]);
@@ -1948,10 +2232,13 @@ function ShodaiApp() {
         @keyframes glassEdgeRotate{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
         .glass-timer-ring{position:absolute;inset:-1px;border-radius:50%;overflow:hidden;pointer-events:none}
         .glass-timer-ring::before{content:"";position:absolute;inset:-2px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0%,transparent 30%,rgba(255,255,255,0.5) 38%,rgba(255,255,255,0.8) 40%,rgba(255,255,255,0.5) 42%,transparent 50%,transparent 75%,rgba(255,255,255,0.25) 82%,rgba(255,255,255,0.4) 84%,rgba(255,255,255,0.25) 86%,transparent 94%,transparent 100%);animation:glassEdgeRotate 20s linear infinite}
-        .glass-timer-ring::after{content:"";position:absolute;inset:1px;border-radius:50%;background:#050508}
+        .glass-timer-ring::after{content:"";position:absolute;inset:1px;border-radius:50%;background:var(--glass-ring-inner)}
+        .glass-mood-ring{position:absolute;inset:-1px;border-radius:50%;pointer-events:none}
+        .glass-mood-ring::before{content:"";position:absolute;inset:0;border-radius:50%;background:var(--glass-conic);animation:glassEdgeRotate 20s linear infinite;-webkit-mask:radial-gradient(circle,transparent 86%,black 88%);mask:radial-gradient(circle,transparent 86%,black 88%)}
+        .glass-timer-ring::before{background:var(--glass-conic)}
         [data-glass]{position:relative;overflow:hidden}
         [data-glass]:has(.glass-timer-ring){overflow:visible}
-        [data-glass]::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(135deg,rgba(255,255,255,0.35) 0%,rgba(255,255,255,0.15) 30%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.15) 70%,rgba(255,255,255,0.3) 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:1}
+        [data-glass]::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:var(--glass-border);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:1}
         @keyframes glassSheen{0%{transform:translateX(-100%) translateY(-100%)}100%{transform:translateX(100%) translateY(100%)}}
         [data-glass].glass-shimmer::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,transparent 30%,rgba(255,255,255,0.15) 45%,rgba(255,255,255,0.3) 50%,rgba(255,255,255,0.15) 55%,transparent 70%);animation:glassSheen 0.6s ease-out forwards;pointer-events:none;z-index:2}
         *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
@@ -1970,20 +2257,24 @@ function ShodaiApp() {
           {/* Sound background image */}
           {activeSoundBg&&(<>
             <div style={{position:"absolute",inset:0,backgroundImage:`url(${activeSoundBg})`,backgroundSize:"cover",backgroundPosition:"center",transition:"opacity 1.2s ease",opacity:1,zIndex:0}}/>
-            <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg, rgba(5,5,8,0.65) 0%, rgba(5,5,8,0.45) 30%, rgba(5,5,8,0.55) 70%, rgba(5,5,8,0.85) 100%)",zIndex:0}}/>
+            <div style={{position:"absolute",inset:0,background:isDark?"linear-gradient(180deg, rgba(5,5,8,0.65) 0%, rgba(5,5,8,0.45) 30%, rgba(5,5,8,0.55) 70%, rgba(5,5,8,0.85) 100%)":"linear-gradient(180deg, rgba(245,245,240,0.7) 0%, rgba(245,245,240,0.5) 30%, rgba(245,245,240,0.6) 70%, rgba(245,245,240,0.9) 100%)",zIndex:0}}/>
           </>)}
           {!activeSoundBg&&<div style={{position:"absolute",inset:0,background:T.colors.bg,transition:"opacity 1.2s ease",zIndex:0}}/>}
-          <header style={{padding:"56px 24px 12px",display:"flex",alignItems:"center",justifyContent:"flex-end",position:"relative",zIndex:1}}>
+          <header style={{padding:"56px 24px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative",zIndex:1}}>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setIsDark(!isDark)} style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.colors.border}`,background:T.colors.surface,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",transition:"all 0.3s ease"}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.colors.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{isDark?<><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></>:<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>}</svg></button>
+              <button onClick={()=>setLang(lang==="ja"?"en":"ja")} style={{height:36,padding:"0 12px",borderRadius:18,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.text,fontSize:11,fontWeight:700,fontFamily:T.fonts.mono,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",transition:"all 0.3s ease",letterSpacing:"0.05em"}}>{lang==="ja"?"EN":"JP"}</button>
+            </div>
             <PhaseIndicator phase={phase}/>
           </header>
           <div style={{padding:"8px 24px 0",position:"relative",zIndex:1}}>
             <div style={{padding:"14px 18px",borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",...G.card}}>
               <div>
                 <span style={{fontSize:10,color:T.colors.textDim,letterSpacing:"0.1em",textTransform:"uppercase"}}>本日</span>
-                <div style={{display:"flex",alignItems:"baseline",gap:6,marginTop:3}}><span style={{fontFamily:T.fonts.mono,fontSize:28,fontWeight:700}}>{formatHen(todayHen)}</span><span style={{fontSize:11,color:T.colors.textDim,fontWeight:600}}>遍</span></div>
+                <div style={{display:"flex",alignItems:"baseline",gap:6,marginTop:3}}><span style={{fontFamily:T.fonts.mono,fontSize:28,fontWeight:700}}>{formatHen(todayHen)}</span><span style={{fontSize:11,color:T.colors.textDim,fontWeight:600}}>{t("hen_unit")}</span></div>
                 <span style={{fontSize:11,fontFamily:T.fonts.mono,color:T.colors.textMuted}}>{formatTimeCompact(liveTodayTotal)}</span>
               </div>
-              {isActive&&<span style={{fontSize:10,color:T.colors.success,animation:"pulse 2s infinite",fontFamily:T.fonts.mono}}>+{formatHen(sessionHen)}遍</span>}
+              {isActive&&<span style={{fontSize:10,color:T.colors.success,animation:"pulse 2s infinite",fontFamily:T.fonts.mono}}>+{formatHen(sessionHen)}{t("hen_unit")}</span>}
             </div>
           </div>
 
@@ -2012,9 +2303,9 @@ function ShodaiApp() {
                     <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:16,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card}}>
                       <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.textMuted}}>{displayTime}</span>
                       <div style={{width:1,height:14,background:T.colors.border}}/>
-                      <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.accent}}>{formatHen(sessionHen)}<span style={{fontSize:9,color:T.colors.textDim,marginLeft:2}}>遍</span></span>
+                      <span style={{fontFamily:T.fonts.mono,fontSize:13,fontWeight:600,color:T.colors.accent}}>{formatHen(sessionHen)}<span style={{fontSize:9,color:T.colors.textDim,marginLeft:2}}>{t("hen_unit")}</span></span>
                     </div>
-                    {phase==="idle"&&<button onClick={()=>setShowPresets(true)} style={{padding:"5px 10px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.text,fontFamily:T.fonts.body,fontSize:10,cursor:"pointer"}}>変更</button>}
+                    {phase==="idle"&&<button onClick={()=>setShowPresets(true)} style={{padding:"5px 10px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.text,fontFamily:T.fonts.body,fontSize:10,cursor:"pointer"}}>{t("change_time")}</button>}
                   </div>
                 </div>
               )}
@@ -2024,7 +2315,7 @@ function ShodaiApp() {
                 {/* ── Timer View ── */}
                 {(chantView==="timer"||(!isActive&&chantView!=="sounds"&&chantView!=="cards"&&chantView!=="feeling"))&&(
                   <>
-                    <div style={{position:"relative",width:cs,height:cs,display:"flex",alignItems:"center",justifyContent:"center",animation:phase==="chanting"?"breathe 6s ease-in-out infinite, gentleGlow 6s ease-in-out infinite":"none",borderRadius:"50%",background:"rgba(255,255,255,0.03)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)",border:"none",boxShadow:"0 8px 40px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(255,255,255,0.05)"}}>
+                    <div style={{position:"relative",width:cs,height:cs,display:"flex",alignItems:"center",justifyContent:"center",animation:phase==="chanting"?"breathe 6s ease-in-out infinite, gentleGlow 6s ease-in-out infinite":"none",borderRadius:"50%",background:"rgba(255,255,255,0.06)",backdropFilter:T.glass.blur,WebkitBackdropFilter:T.glass.blur,border:`1px solid ${T.colors.border}`,boxShadow:T.glass.shadowLg}}>
                       <div className="glass-timer-ring"/>
                       <svg width={cs} height={cs} style={{position:"absolute"}} viewBox={`0 0 ${cs} ${cs}`}>
                         {/* 軌道リング */}
@@ -2056,8 +2347,8 @@ function ShodaiApp() {
                       </svg>
                       <div style={{display:"flex",flexDirection:"column",alignItems:"center",position:"relative",zIndex:2}}>
                         <div style={{fontFamily:T.fonts.mono,fontSize:52,fontWeight:700,letterSpacing:"-0.02em",color:phase==="completed"?T.colors.accent:T.colors.text,lineHeight:1}}>{displayTime}</div>
-                        {(isActive||phase==="completed")&&<div style={{marginTop:10,fontFamily:T.fonts.mono,fontSize:18,fontWeight:700,color:T.colors.accent}}>{formatHen(sessionHen)}<span style={{fontSize:11,color:T.colors.textDim,marginLeft:3,fontWeight:600}}>遍</span></div>}
-                        {phase==="idle"&&<div style={{marginTop:6,fontSize:11,color:T.colors.textDim}}>{timerMode==="countdown"&&targetSeconds>0?`${formatTimeCompact(targetSeconds)} ≈ ${formatHen(secondsToHen(targetSeconds))}遍`:"自由モード"}</div>}
+                        {(isActive||phase==="completed")&&<div style={{marginTop:10,fontFamily:T.fonts.mono,fontSize:18,fontWeight:700,color:T.colors.accent}}>{formatHen(sessionHen)}<span style={{fontSize:11,color:T.colors.textDim,marginLeft:3,fontWeight:600}}>{t("hen_unit")}</span></div>}
+                        {phase==="idle"&&<div style={{marginTop:6,fontSize:11,color:T.colors.textDim}}>{timerMode==="countdown"&&targetSeconds>0?`${formatTimeCompact(targetSeconds)} ≈ ${formatHen(secondsToHen(targetSeconds))}${t("hen_unit")}`:`${t("free_mode")}`}</div>}
                       </div>
                     </div>
                   </>
@@ -2085,13 +2376,15 @@ function ShodaiApp() {
                     <div style={{height:42,display:"flex",alignItems:"center",justifyContent:"center"}}>
                       {activeSound?(
                         <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 20px",borderRadius:20,background:T.colors.surface,border:`1px solid ${T.colors.border}`,...G.card,opacity:1,transition:"opacity 0.3s ease"}}>
-                          <span style={{fontSize:12,fontFamily:T.fonts.body,color:T.colors.textMuted}}>{SOUND_LIST.find(s=>s.id===activeSound)?.name} — Playing</span>
-                          <div style={{display:"flex",gap:2,alignItems:"center"}}>{[...Array(5)].map((_,i)=><div key={i} style={{width:3,height:8+Math.random()*10,borderRadius:2,background:T.colors.accent,opacity:0.6+Math.random()*0.4,animation:`pulse ${1+Math.random()}s ease-in-out infinite`,animationDelay:`${i*0.15}s`}}/>)}</div>
+                          <span style={{fontSize:12,fontFamily:T.fonts.body,color:T.colors.textMuted}}>{SOUND_LIST.find(s=>s.id===activeSound)?.name} — {phase==="chanting"?t("sound_playing"):t("sound_selected")}</span>
+                          {phase==="chanting"&&<div style={{display:"flex",gap:2,alignItems:"center"}}>{[...Array(5)].map((_,i)=><div key={i} style={{width:3,height:8+Math.random()*10,borderRadius:2,background:T.colors.accent,opacity:0.6+Math.random()*0.4,animation:`pulse ${1+Math.random()}s ease-in-out infinite`,animationDelay:`${i*0.15}s`}}/>)}</div>}
                         </div>
                       ):null}
                     </div>
                   </div>
                 )}
+
+
 
                 {/* ── Feeling View ── */}
                 {chantView==="feeling"&&(()=>{
@@ -2121,17 +2414,17 @@ function ShodaiApp() {
                   <div style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:16,animation:"fadeIn 0.3s ease",padding:"0 24px 16px"}}>
                     <div style={{position:"relative",width:cs,height:cs}}>
                       <div style={{position:"absolute",inset:"-15%",borderRadius:"50%",background:`radial-gradient(circle, ${mc} 0%, transparent 60%)`,opacity:0.45,transition:"background 0.3s ease, opacity 0.3s ease",pointerEvents:"none",zIndex:1}}/>
-                      <div style={{position:"relative",width:cs,height:cs,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",background:"rgba(255,255,255,0.015)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",boxShadow:"0 8px 40px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.04)"}}>
+                      <div style={{position:"relative",width:cs,height:cs,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",background:isDark?"rgba(255,255,255,0.015)":"rgba(0,0,0,0.02)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",boxShadow:isDark?"0 8px 40px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.04)":"0 8px 40px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8)"}}>
                         <div className="glass-timer-ring"/>
                         <div style={{display:"flex",flexDirection:"column",alignItems:"center",position:"relative",zIndex:2}}>
-                          {isPost&&<div style={{fontSize:11,color:T.colors.textDim,marginBottom:4}}>お疲れさまでした</div>}
+                          {isPost&&<div style={{fontSize:11,color:T.colors.textDim,marginBottom:4}}>{t("mood_post_msg")}</div>}
                           <div key={`${isPost?'post':'pre'}-${mi}`} style={{fontSize:18,fontWeight:700,color:T.colors.text,fontFamily:T.fonts.body,animation:"moodLabelFade 0.6s ease-in-out"}}>{MOOD_LABELS_7[mi]}</div>
                         </div>
                       </div>
                     </div>
                     <div style={{width:"100%",maxWidth:300}}>
                       <div style={{display:"flex",alignItems:"center",gap:0}}>
-                        <div style={{flex:1,position:"relative",height:24,borderRadius:12,background:"rgba(255,255,255,0.08)",border:`1px solid ${T.colors.borderLight}`,display:"flex",alignItems:"center"}}>
+                        <div style={{flex:1,position:"relative",height:24,borderRadius:12,background:T.colors.ring,border:`1px solid ${T.colors.borderLight}`,display:"flex",alignItems:"center"}}>
                           <input type="range" min="0" max="100" value={moodVal} onChange={e=>setMoodVal(Number(e.target.value))} className="mood-slider"
                             style={{width:"100%",height:24,appearance:"none",WebkitAppearance:"none",background:"transparent",cursor:"pointer",outline:"none",position:"relative",zIndex:2,margin:0,padding:0}}
                           />
@@ -2145,10 +2438,10 @@ function ShodaiApp() {
                       </div>
                     </div>
                     {!isPost&&phase==="idle"&&<>
-                      <button onClick={()=>{setPreMoodRecorded(true);setChantView("timer");if(pendingStart){setPendingStart(false);setTimeout(()=>{setElapsed(0);setShowPostJournal(false);setPhase("chanting");},50);}}} style={{width:"100%",maxWidth:300,padding:"16px 32px",borderRadius:30,border:"none",background:`linear-gradient(180deg, ${T.colors.accent} 0%, #A8D400 100%)`,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:15,fontWeight:800,cursor:"pointer",animation:"slideUp 0.4s ease",letterSpacing:"-0.01em",boxShadow:`0 4px 20px rgba(206,255,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3)`}}>唱題前</button>
+                      <button onClick={()=>{setPreMoodRecorded(true);setChantView("timer");if(pendingStart){setPendingStart(false);setTimeout(()=>{setElapsed(0);setShowPostJournal(false);setPhase("chanting");},50);}}} style={{width:"100%",maxWidth:300,padding:"16px 32px",borderRadius:30,border:"none",background:`linear-gradient(180deg, ${T.colors.accent} 0%, ${isDark?"#A8D400":"#4A7A00"} 100%)`,color:isDark?T.colors.bg:"#FFFFFF",fontFamily:T.fonts.body,fontSize:15,fontWeight:800,cursor:"pointer",animation:"slideUp 0.4s ease",letterSpacing:"-0.01em",boxShadow:`0 4px 20px ${T.colors.accentGlow}, inset 0 1px 0 rgba(255,255,255,0.3)`}}>{t("mood_pre_label")}</button>
                       {pendingStart&&<button onClick={()=>{setPreMoodRecorded(true);setPendingStart(false);setChantView("timer");setTimeout(()=>{setElapsed(0);setShowPostJournal(false);setPhase("chanting");},50);}} style={{marginTop:8,background:"none",border:"none",color:T.colors.textDim,fontFamily:T.fonts.body,fontSize:13,cursor:"pointer",padding:"8px 16px"}}>スキップ</button>}
                     </>}
-                    {isPost&&<button onClick={handlePostRecord} style={{width:"100%",maxWidth:300,padding:"16px 32px",borderRadius:30,border:"none",background:`linear-gradient(180deg, ${T.colors.accent} 0%, #A8D400 100%)`,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:15,fontWeight:800,cursor:"pointer",animation:"slideUp 0.4s ease",letterSpacing:"-0.01em",boxShadow:`0 4px 20px rgba(206,255,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3)`}}>唱題後</button>}
+                    {isPost&&<button onClick={handlePostRecord} style={{width:"100%",maxWidth:300,padding:"16px 32px",borderRadius:30,border:"none",background:`linear-gradient(180deg, ${T.colors.accent} 0%, ${isDark?"#A8D400":"#4A7A00"} 100%)`,color:isDark?T.colors.bg:"#FFFFFF",fontFamily:T.fonts.body,fontSize:15,fontWeight:800,cursor:"pointer",animation:"slideUp 0.4s ease",letterSpacing:"-0.01em",boxShadow:`0 4px 20px ${T.colors.accentGlow}, inset 0 1px 0 rgba(255,255,255,0.3)`}}>{t("mood_post_label")}</button>}
 
                     {/* ── Mood Analytics ── */}
                     {moodLog.length>0&&!isPost&&(()=>{
@@ -2179,48 +2472,48 @@ function ShodaiApp() {
                           )}
                         </div>
                         {/* Chart */}
-                        <div style={{borderRadius:14,background:"rgba(255,255,255,0.03)",border:`1px solid ${T.colors.border}`,padding:"8px 4px 4px"}}>
+                        <div style={{borderRadius:14,background:T.colors.surface,border:`1px solid ${T.colors.border}`,padding:"8px 4px 4px"}}>
                           <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",height:"auto"}}>
                             <defs><linearGradient id="postFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.colors.accent} stopOpacity="0.15"/><stop offset="100%" stopColor={T.colors.accent} stopOpacity="0.02"/></linearGradient></defs>
-                            {[0,25,50,75,100].map(v=><line key={v} x1={PAD_L} y1={y(v)} x2={W-PAD_R} y2={y(v)} stroke="rgba(255,255,255,0.06)" strokeWidth="0.5"/>)}
-                            {[0,50,100].map(v=><text key={v} x={PAD_L-4} y={y(v)+3} fill="rgba(255,255,255,0.25)" fontSize="7" textAnchor="end" fontFamily={T.fonts.mono}>{v}</text>)}
+                            {[0,25,50,75,100].map(v=><line key={v} x1={PAD_L} y1={y(v)} x2={W-PAD_R} y2={y(v)} stroke={T.colors.border} strokeWidth="0.5"/>)}
+                            {[0,50,100].map(v=><text key={v} x={PAD_L-4} y={y(v)+3} fill={T.colors.textDim} fontSize="7" textAnchor="end" fontFamily={T.fonts.mono}>{v}</text>)}
                             <polygon points={areaPath} fill="url(#postFill)"/>
                             {data.map((e,i)=><line key={`v${i}`} x1={x(i)} y1={y(e.pre)} x2={x(i)} y2={y(e.post)} stroke={e.diff>=0?"rgba(123,212,160,0.2)":"rgba(255,138,101,0.2)"} strokeWidth="1.5"/>)}
-                            <polyline points={preLine} fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
+                            <polyline points={preLine} fill="none" stroke={T.colors.textMuted} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
                             <polyline points={postLine} fill="none" stroke={T.colors.accent} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
                             {data.map((e,i)=><React.Fragment key={i}>
-                              <circle cx={x(i)} cy={y(e.pre)} r="2.5" fill="rgba(255,255,255,0.4)" stroke="rgba(255,255,255,0.6)" strokeWidth="0.5"/>
-                              <circle cx={x(i)} cy={y(e.post)} r="2.5" fill={T.colors.accent} stroke="rgba(206,255,0,0.6)" strokeWidth="0.5"/>
+                              <circle cx={x(i)} cy={y(e.pre)} r="2.5" fill={T.colors.textMuted} stroke={T.colors.textDim} strokeWidth="0.5"/>
+                              <circle cx={x(i)} cy={y(e.post)} r="2.5" fill={T.colors.accent} stroke={T.colors.accentGlow} strokeWidth="0.5"/>
                             </React.Fragment>)}
-                            {data.map((e,i)=>i%labelInterval===0||i===data.length-1?<text key={`d${i}`} x={x(i)} y={H-6} fill="rgba(255,255,255,0.3)" fontSize="6.5" textAnchor="middle" fontFamily={T.fonts.mono}>{dateLabel(e)}</text>:null)}
+                            {data.map((e,i)=>i%labelInterval===0||i===data.length-1?<text key={`d${i}`} x={x(i)} y={H-6} fill={T.colors.textDim} fontSize="6.5" textAnchor="middle" fontFamily={T.fonts.mono}>{dateLabel(e)}</text>:null)}
                           </svg>
                           <div style={{display:"flex",justifyContent:"center",gap:16,padding:"2px 0"}}>
-                            <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:6,height:6,borderRadius:"50%",background:"rgba(255,255,255,0.4)"}}/>
-                              <span style={{fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.body}}>唱題前</span></div>
+                            <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:6,height:6,borderRadius:"50%",background:T.colors.textMuted}}/>
+                              <span style={{fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.body}}>{t("mood_pre_label")}</span></div>
                             <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:6,height:6,borderRadius:"50%",background:T.colors.accent}}/>
-                              <span style={{fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.body}}>唱題後</span></div>
+                              <span style={{fontSize:9,color:T.colors.textDim,fontFamily:T.fonts.body}}>{t("mood_post_label")}</span></div>
                           </div>
                         </div>
                         {/* Summary stats */}
                         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginTop:8}}>
-                          <div style={{padding:"10px 8px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:`1px solid ${T.colors.border}`,textAlign:"center"}}>
-                            <div style={{fontSize:18,fontWeight:700,color:"#7BD4A0",fontFamily:T.fonts.mono}}>+{avgDiff}</div>
-                            <div style={{fontSize:9,color:T.colors.textDim,marginTop:2}}>平均改善</div>
+                          <div style={{padding:"10px 8px",borderRadius:12,background:T.colors.surface,border:`1px solid ${T.colors.border}`,textAlign:"center"}}>
+                            <div style={{fontSize:18,fontWeight:700,color:T.colors.success,fontFamily:T.fonts.mono}}>+{avgDiff}</div>
+                            <div style={{fontSize:9,color:T.colors.textDim,marginTop:2}}>{t("mood_avg_improve")}</div>
                           </div>
-                          <div style={{padding:"10px 8px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:`1px solid ${T.colors.border}`,textAlign:"center"}}>
+                          <div style={{padding:"10px 8px",borderRadius:12,background:T.colors.surface,border:`1px solid ${T.colors.border}`,textAlign:"center"}}>
                             <div style={{fontSize:18,fontWeight:700,color:T.colors.accent,fontFamily:T.fonts.mono}}>{data.length}</div>
-                            <div style={{fontSize:9,color:T.colors.textDim,marginTop:2}}>セッション</div>
+                            <div style={{fontSize:9,color:T.colors.textDim,marginTop:2}}>{t("mood_sessions")}</div>
                           </div>
-                          <div style={{padding:"10px 8px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:`1px solid ${T.colors.border}`,textAlign:"center"}}>
+                          <div style={{padding:"10px 8px",borderRadius:12,background:T.colors.surface,border:`1px solid ${T.colors.border}`,textAlign:"center"}}>
                             <div style={{fontSize:18,fontWeight:700,color:T.colors.text,fontFamily:T.fonts.mono}}>{avgPost}</div>
-                            <div style={{fontSize:9,color:T.colors.textDim,marginTop:2}}>平均(後)</div>
+                            <div style={{fontSize:9,color:T.colors.textDim,marginTop:2}}>{t("mood_avg_post")}</div>
                           </div>
                         </div>
                         {/* Insight */}
-                        {bestDuration&&<div style={{marginTop:8,padding:"10px 14px",borderRadius:12,background:"rgba(206,255,0,0.06)",border:`1px solid rgba(206,255,0,0.12)`,display:"flex",alignItems:"center",gap:8}}>
+                        {bestDuration&&<div style={{marginTop:8,padding:"10px 14px",borderRadius:12,background:T.colors.accentSoft,border:`1px solid ${T.colors.accentGlow}`,display:"flex",alignItems:"center",gap:8}}>
                           <div style={{fontSize:14,color:T.colors.accent}}>✦</div>
                           <div style={{fontFamily:T.fonts.body,fontSize:11,color:T.colors.textMuted,lineHeight:1.4}}>
-                            <span style={{color:T.colors.accent,fontWeight:700}}>{bestDuration.lo===bestDuration.hi?`${bestDuration.lo}分`:`${bestDuration.lo}〜${bestDuration.hi}分`}</span>の唱題で気分が<span style={{color:T.colors.accent,fontWeight:700}}>+{bestDuration.avg}pt</span>上がる傾向
+                            <span style={{color:T.colors.accent,fontWeight:700}}>{bestDuration.lo===bestDuration.hi?`${bestDuration.lo}${t("time_minutes")}`:`${bestDuration.lo}〜${bestDuration.hi}${t("time_minutes")}`}</span>{t("mood_insight_prefix")}<span style={{color:T.colors.accent,fontWeight:700}}>+{bestDuration.avg}pt</span>{t("mood_insight_suffix")}
                           </div>
                         </div>}
                       </div>;
@@ -2228,31 +2521,103 @@ function ShodaiApp() {
                   </div>);
                 })()}
 
-                {phase==="idle"&&chantView==="timer"&&(<div style={{animation:"fadeIn 0.4s ease"}}><button onClick={()=>setShowPresets(true)} style={{padding:"8px 20px",borderRadius:20,border:`1px solid ${T.colors.border}`,background:"transparent",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",color:T.colors.text,fontFamily:T.fonts.body,fontSize:12,cursor:"pointer"}}>時間を変更</button></div>)}
+                {phase==="idle"&&chantView==="timer"&&(<div style={{animation:"fadeIn 0.4s ease"}}><button onClick={()=>setShowPresets(true)} style={{padding:"8px 20px",borderRadius:20,border:`1px solid ${T.colors.border}`,background:"transparent",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",color:T.colors.text,fontFamily:T.fonts.body,fontSize:12,cursor:"pointer"}}>{t("timer_change_title")}</button></div>)}
                 {showPresets&&(
                   <div onClick={()=>setShowPresets(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,animation:"fadeIn 2s ease"}}>
                     <div onClick={e=>e.stopPropagation()} style={{background:T.colors.surface,borderRadius:24,padding:"28px 24px",width:"85%",maxWidth:340,border:`1px solid ${T.colors.border}`,boxShadow:"0 20px 60px rgba(0,0,0,0.5)",animation:"modalFloat 2s cubic-bezier(0.05,0.7,0.1,1)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)"}}>
                       <div style={{textAlign:"center",marginBottom:20}}>
-                        <div style={{fontFamily:T.fonts.display,fontSize:16,fontWeight:700,color:T.colors.text}}>時間を変更</div>
-                        <div style={{fontFamily:T.fonts.body,fontSize:11,color:T.colors.textDim,marginTop:4}}>唱題の目標時間を選んでください</div>
+                        <div style={{fontFamily:T.fonts.display,fontSize:16,fontWeight:700,color:T.colors.text}}>{t("timer_change_title")}</div>
+                        <div style={{fontFamily:T.fonts.body,fontSize:11,color:T.colors.textDim,marginTop:4}}>{t("timer_change_desc")}</div>
                       </div>
                       <div style={{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:10}}>
-                        {TIMER_PRESETS.map(p=>{const sel=(timerMode==="countdown"&&targetSeconds===p.seconds)||(timerMode==="stopwatch"&&p.seconds===0);return<button key={p.label} onClick={()=>{handlePresetSelect(p);setShowPresets(false);}} style={{padding:"14px 8px",borderRadius:16,display:"flex",flexDirection:"column",alignItems:"center",gap:4,border:`1px solid ${sel?T.colors.accent:T.colors.border}`,background:sel?T.colors.accentSoft:"transparent",color:sel?T.colors.accent:T.colors.text,fontFamily:T.fonts.body,fontSize:13,fontWeight:sel?700:500,cursor:"pointer",transition:"all 0.2s ease"}}><span>{p.label}</span>{p.seconds>0&&<span style={{fontSize:9,color:sel?T.colors.accent:T.colors.textDim}}>≈{formatHen(secondsToHen(p.seconds))}遍</span>}</button>})}
+                        {TIMER_PRESETS.map(p=>{const sel=(timerMode==="countdown"&&targetSeconds===p.seconds)||(timerMode==="stopwatch"&&p.seconds===0);return<button key={p.label} onClick={()=>{handlePresetSelect(p);setShowPresets(false);}} style={{padding:"14px 8px",borderRadius:16,display:"flex",flexDirection:"column",alignItems:"center",gap:4,border:`1px solid ${sel?T.colors.accent:T.colors.border}`,background:sel?T.colors.accentSoft:"transparent",color:sel?T.colors.accent:T.colors.text,fontFamily:T.fonts.body,fontSize:13,fontWeight:sel?700:500,cursor:"pointer",transition:"all 0.2s ease"}}><span>{p.label}</span>{p.seconds>0&&<span style={{fontSize:9,color:sel?T.colors.accent:T.colors.textDim}}>≈{formatHen(secondsToHen(p.seconds))}{t("hen_unit")}</span>}</button>})}
                       </div>
-                      <button onClick={()=>setShowPresets(false)} style={{width:"100%",marginTop:16,padding:"12px",borderRadius:14,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:13,cursor:"pointer"}}>閉じる</button>
+                      <button onClick={()=>setShowPresets(false)} style={{width:"100%",marginTop:16,padding:"12px",borderRadius:14,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:13,cursor:"pointer"}}>{t("timer_close")}</button>
                     </div>
                   </div>
                 )}
               </div>
 
               <div style={{padding:"0 32px 16px",display:"flex",gap:12,justifyContent:"center"}}>
-                {phase==="idle"&&chantView==="timer"&&<button onClick={handleStart} style={{flex:1,maxWidth:300,padding:"18px 32px",borderRadius:30,border:"none",background:`linear-gradient(180deg, ${T.colors.accent} 0%, #A8D400 100%)`,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:16,fontWeight:800,cursor:"pointer",animation:"slideUp 0.5s ease",letterSpacing:"-0.01em",textTransform:"uppercase",boxShadow:`0 4px 20px rgba(206,255,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3)`}}>START</button>}
-                {phase==="chanting"&&(<><button onClick={handlePause} style={{flex:1,padding:"16px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer",textTransform:"uppercase"}}>一時停止</button><button onClick={handleStop} style={{padding:"16px 24px",borderRadius:30,border:"none",background:T.colors.dangerSoft,color:T.colors.danger,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer",textTransform:"uppercase"}}>終了</button></>)}
-                {phase==="paused"&&(<><button onClick={handleStart} style={{flex:1,padding:"16px 24px",borderRadius:30,border:"none",background:T.colors.accent,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:14,fontWeight:800,cursor:"pointer",textTransform:"uppercase"}}>再開する</button><button onClick={handleStop} style={{padding:"16px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer"}}>終了</button></>)}
-                {phase==="completed"&&(<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14,width:"100%",animation:"slideUp 0.5s ease"}}><div style={{textAlign:"center"}}><div style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:800,color:T.colors.accent,textTransform:"uppercase"}}>お疲れさまでした</div><div style={{fontFamily:T.fonts.mono,fontSize:14,fontWeight:500,color:T.colors.textMuted,marginTop:6}}>{formatTimeCompact(elapsed)}<span style={{margin:"0 6px",color:T.colors.textDim}}>·</span>約{formatHen(sessionHen)}遍</div></div><div style={{display:"flex",gap:12,width:"100%",maxWidth:300}}><button onClick={handleStop} style={{flex:1,padding:"14px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer"}}>記録する</button><button onClick={()=>{handleStop();setTimeout(handleStart,100)}} style={{flex:1,padding:"14px 24px",borderRadius:30,border:"none",background:T.colors.accent,color:T.colors.bg,fontFamily:T.fonts.body,fontSize:14,fontWeight:800,cursor:"pointer",textTransform:"uppercase"}}>もう一回</button></div></div>)}
+                {phase==="idle"&&chantView==="timer"&&<button onClick={handleStart} style={{flex:1,maxWidth:300,padding:"18px 32px",borderRadius:30,border:"none",background:`linear-gradient(180deg, ${T.colors.accent} 0%, ${isDark?"#A8D400":"#4A7A00"} 100%)`,color:isDark?T.colors.bg:"#FFFFFF",fontFamily:T.fonts.body,fontSize:16,fontWeight:800,cursor:"pointer",animation:"slideUp 0.5s ease",letterSpacing:"-0.01em",textTransform:"uppercase",boxShadow:`0 4px 20px ${T.colors.accentGlow}, inset 0 1px 0 rgba(255,255,255,0.3)`}}>START</button>}
+                {phase==="chanting"&&chantView!=="cards"&&chantView!=="sounds"&&(<><button onClick={handlePause} style={{flex:1,padding:"16px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer",textTransform:"uppercase"}}>{t("btn_pause_label")}</button><button onClick={handleStop} style={{padding:"16px 24px",borderRadius:30,border:"none",background:T.colors.dangerSoft,color:T.colors.danger,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer",textTransform:"uppercase"}}>{t("btn_stop_label")}</button></>)}
+                {phase==="paused"&&chantView!=="cards"&&chantView!=="sounds"&&(<><button onClick={handleStart} style={{flex:1,padding:"16px 24px",borderRadius:30,border:"none",background:T.colors.accent,color:isDark?T.colors.bg:"#FFFFFF",fontFamily:T.fonts.body,fontSize:14,fontWeight:800,cursor:"pointer",textTransform:"uppercase"}}>{t("btn_resume_label")}</button><button onClick={handleStop} style={{padding:"16px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("btn_stop_label")}</button></>)}
+                {phase==="completed"&&(<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14,width:"100%",animation:"slideUp 0.5s ease"}}><div style={{textAlign:"center"}}><div style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:800,color:T.colors.accent,textTransform:"uppercase"}}>{t("post_chanting_done")}</div><div style={{fontFamily:T.fonts.mono,fontSize:14,fontWeight:500,color:T.colors.textMuted,marginTop:6}}>{formatTimeCompact(elapsed)}<span style={{margin:"0 6px",color:T.colors.textDim}}>·</span>{t("approx")}{formatHen(sessionHen)}{t("hen_unit")}</div></div><div style={{display:"flex",gap:12,width:"100%",maxWidth:300}}><button onClick={handleStop} style={{flex:1,padding:"14px 24px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:T.colors.surface,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("btn_record")}</button><button onClick={()=>{handleStop();setTimeout(handleStart,100)}} style={{flex:1,padding:"14px 24px",borderRadius:30,border:"none",background:T.colors.accent,color:isDark?T.colors.bg:"#FFFFFF",fontFamily:T.fonts.body,fontSize:14,fontWeight:800,cursor:"pointer",textTransform:"uppercase"}}>{t("btn_retry")}</button></div></div>)}
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Mood Modal (Pre/Post) ── */}
+      {showMoodModal&&(()=>{
+        const isPost=moodPhase==="post";
+        const moodVal=isPost?postMood:preMood;
+        const setMoodVal=isPost?setPostMood:setPreMood;
+        const mc=getMoodColor(moodVal);
+        const mi=getMoodIndex(moodVal);
+        const handleMoodRecord=()=>{
+          if(isPost){
+            const now=new Date();
+            const entry={pre:preMood,post:postMood,preLabel:MOOD_LABELS_7[getMoodIndex(preMood)],postLabel:MOOD_LABELS_7[getMoodIndex(postMood)],duration:lastSessionDuration,timestamp:now.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"}),dateObj:now,date:now.toLocaleDateString("ja-JP",{month:"short",day:"numeric"}),diff:postMood-preMood};
+            setMoodLog(p=>[entry,...p]);
+            setShowMoodModal(false);setShowPostJournal(true);setMoodPhase("pre");setPreMood(50);
+          }else{
+            setPreMoodRecorded(true);setShowMoodModal(false);
+            setTimeout(()=>{setElapsed(0);setShowPostJournal(false);setPhase("chanting");},50);
+          }
+        };
+        const handleSkip=()=>{
+          if(isPost){setShowMoodModal(false);setShowPostJournal(true);setMoodPhase("pre");setPreMood(50);}
+          else{setPreMoodRecorded(false);setShowMoodModal(false);handleStart();}
+        };
+        return(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,animation:"fadeIn 0.2s ease"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:T.colors.surfaceSolid,borderRadius:24,padding:"32px 24px",width:"85%",maxWidth:340,border:`1px solid ${T.colors.border}`,boxShadow:isDark?"0 20px 60px rgba(0,0,0,0.5)":"0 20px 60px rgba(0,0,0,0.12)",animation:"modalFloat 0.4s cubic-bezier(0.05,0.7,0.1,1)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)",display:"flex",flexDirection:"column",alignItems:"center",gap:20}}>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontFamily:T.fonts.display,fontSize:16,fontWeight:700,color:T.colors.text}}>{isPost?t("mood_post_title"):t("mood_pre_title")}</div>
+              {isPost&&<div style={{fontSize:11,color:T.colors.textDim,marginTop:4}}>{t("mood_post_msg")}</div>}
+            </div>
+            <div style={{position:"relative",width:180,height:180}}>
+              <div style={{position:"absolute",inset:"-15%",borderRadius:"50%",background:`radial-gradient(circle, ${mc} 0%, transparent 60%)`,opacity:0.45,transition:"background 0.3s ease",pointerEvents:"none"}}/>
+              <div style={{position:"relative",width:180,height:180,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",background:isDark?"rgba(255,255,255,0.015)":"rgba(0,0,0,0.02)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",boxShadow:isDark?"0 8px 40px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)":"0 8px 40px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8)",overflow:"visible"}}>
+                <div className="glass-mood-ring"/>
+                <div key={`mood-${mi}`} style={{fontSize:16,fontWeight:700,color:T.colors.text,fontFamily:T.fonts.body,animation:"moodLabelFade 0.6s ease-in-out",position:"relative",zIndex:2}}>{MOOD_LABELS_7[mi]}</div>
+              </div>
+            </div>
+            <div style={{width:"100%",maxWidth:280}}>
+              <div style={{position:"relative",height:24,borderRadius:12,background:T.colors.ring,border:`1px solid ${T.colors.borderLight}`,display:"flex",alignItems:"center"}}>
+                <input type="range" min="0" max="100" value={moodVal} onChange={e=>setMoodVal(Number(e.target.value))} className="mood-slider" style={{width:"100%",height:24,appearance:"none",WebkitAppearance:"none",background:"transparent",cursor:"pointer",outline:"none",position:"relative",zIndex:2,margin:0,padding:0}}/>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:10,width:"100%"}}>
+              <button onClick={handleSkip} style={{flex:1,padding:"14px 20px",borderRadius:30,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:13,fontWeight:600,cursor:"pointer"}}>{t("skip")}</button>
+              <button onClick={handleMoodRecord} style={{flex:1,padding:"14px 20px",borderRadius:30,border:"none",background:`linear-gradient(180deg, ${T.colors.accent} 0%, ${isDark?"#A8D400":"#4A7A00"} 100%)`,color:isDark?T.colors.bg:"#FFFFFF",fontFamily:T.fonts.body,fontSize:13,fontWeight:800,cursor:"pointer",boxShadow:`0 4px 20px ${T.colors.accentGlow}`}}>{isPost?t("btn_record"):t("mood_record_start")}</button>
+            </div>
+          </div>
+        </div>);
+      })()}
+
+      {/* ── Kinen Add Modal ── */}
+      {showKinenAddModal&&(
+        <div onClick={()=>setShowKinenAddModal(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,animation:"fadeIn 0.2s ease"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:T.colors.surface,borderRadius:24,padding:"28px 24px",width:"85%",maxWidth:340,border:`1px solid ${T.colors.border}`,boxShadow:"0 20px 60px rgba(0,0,0,0.5)",animation:"modalFloat 0.4s cubic-bezier(0.05,0.7,0.1,1)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)"}}>
+            <div style={{textAlign:"center",marginBottom:16}}>
+              <div style={{fontFamily:T.fonts.display,fontSize:16,fontWeight:700,color:T.colors.text}}>{t("kinen_add_title")}</div>
+            </div>
+            <textarea value={kinenModalText} onChange={e=>setKinenModalText(e.target.value)} placeholder={t("kinen_placeholder")} style={{width:"100%",padding:12,borderRadius:12,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.body,fontSize:14,resize:"none",height:72,outline:"none"}}/>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:12}}>
+              {CATEGORIES.map(cat=>(<button key={cat.id} onClick={()=>setKinenModalCategory(cat.id)} style={{padding:"4px 12px",borderRadius:12,fontSize:11,border:`1px solid ${kinenModalCategory===cat.id?cat.color:T.colors.border}`,background:kinenModalCategory===cat.id?`${cat.color}15`:"transparent",color:kinenModalCategory===cat.id?cat.color:T.colors.textMuted,cursor:"pointer",fontFamily:T.fonts.body}}>{cat.label}</button>))}
+            </div>
+            <div style={{display:"flex",gap:8,marginTop:12,alignItems:"center"}}>
+              <input type="date" value={kinenModalDeadline} onChange={e=>setKinenModalDeadline(e.target.value)} style={{flex:1,padding:"8px 12px",borderRadius:10,border:`1px solid ${T.colors.border}`,background:T.colors.bg,color:T.colors.text,fontFamily:T.fonts.mono,fontSize:12,outline:"none"}}/>
+              <button onClick={()=>setKinenModalIsPublic(!kinenModalIsPublic)} style={{padding:"8px 14px",borderRadius:10,fontSize:11,border:`1px solid ${kinenModalIsPublic?T.colors.accent:T.colors.border}`,background:kinenModalIsPublic?T.colors.accentSoft:"transparent",color:kinenModalIsPublic?T.colors.accent:T.colors.textMuted,cursor:"pointer",fontFamily:T.fonts.body}}><Icon name={kinenModalIsPublic?"lockOpen":"lockClosed"} size={13}/></button>
+            </div>
+            <div style={{display:"flex",gap:8,marginTop:16}}>
+              <button onClick={()=>setShowKinenAddModal(false)} style={{flex:1,padding:"12px 20px",borderRadius:12,border:`1px solid ${T.colors.border}`,background:"transparent",color:T.colors.textMuted,fontFamily:T.fonts.body,fontSize:14,fontWeight:600,cursor:"pointer"}}>{t("cancel")}</button>
+              <button onClick={addKinenFromModal} disabled={!kinenModalText.trim()} style={{flex:1,padding:"12px 20px",borderRadius:12,border:"none",background:kinenModalText.trim()?T.colors.accent:T.colors.ring,color:kinenModalText.trim()?T.colors.bg:T.colors.textDim,fontFamily:T.fonts.body,fontSize:14,fontWeight:600,cursor:kinenModalText.trim()?"pointer":"default"}}>{t("kinen_add")}</button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -2272,12 +2637,12 @@ function ShodaiApp() {
             <h2 style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:800,color:T.colors.accent,letterSpacing:"-0.02em",textTransform:"uppercase"}}>{t("mypage_title")}</h2>
             <p style={{fontSize:11,color:T.colors.textDim,marginTop:2}}>{t("mypage_subtitle")}</p>
           </div>
-          <MyPageTab profile={profile} setProfile={setProfile} todayTotal={todayTotal} journals={journals} kinenList={kinenList} followers={DEMO_MY_FOLLOWERS} following={myFollowing} onFollow={handleFollowUser} demoHistory={demoHistory} lang={lang} setLang={setLang}/>
+          <MyPageTab profile={profile} setProfile={setProfile} todayTotal={todayTotal} journals={journals} kinenList={kinenList} followers={DEMO_MY_FOLLOWERS} following={myFollowing} onFollow={handleFollowUser} demoHistory={demoHistory} lang={lang} setLang={setLang} isDark={isDark} setIsDark={setIsDark} moodLog={moodLog} moodPeriod={moodPeriod} setMoodPeriod={setMoodPeriod}/>
         </div>
       )}
 
       {/* ── NAV ── */}
-      <nav style={{width:"100%",padding:"12px 24px 28px",display:"flex",justifyContent:"space-around",borderTop:`1px solid ${T.colors.border}`,background:"rgba(5,5,8,0.88)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",position:"relative",zIndex:10,boxShadow:"0 -4px 20px rgba(0,0,0,0.3)"}}>
+      <nav style={{width:"100%",padding:"12px 24px 28px",display:"flex",justifyContent:"space-around",borderTop:`1px solid ${T.colors.border}`,background:isDark?"rgba(5,5,8,0.88)":"rgba(245,245,240,0.92)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",position:"relative",zIndex:10,boxShadow:isDark?"0 -4px 20px rgba(0,0,0,0.3)":"0 -4px 20px rgba(0,0,0,0.06)"}}>
         {NAV.map(item=>{const cur=activeTab===item.id;const dis=(phase==="chanting"||phase==="paused"||phase==="completed")&&item.id!=="chanting";return(
           <button key={item.id} onClick={()=>!dis&&setActiveTab(item.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:dis?"default":"pointer",opacity:dis?0.2:cur?1:0.4,background:"none",border:"none",padding:0}}>
             {item.id==="chanting"?<ShodaiLogo size="sm" showText={false}/>:<span style={{fontSize:18,color:T.colors.text}}>{item.icon}</span>}
@@ -2292,6 +2657,7 @@ function ShodaiApp() {
     const container = document.getElementById('root');
     const root = ReactDOM.createRoot(container);
     root.render(<ShodaiApp />);
+
   </script>
 </body>
 </html>
