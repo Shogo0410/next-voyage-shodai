@@ -463,7 +463,7 @@ const smoothPath = (pts) => {
   return d;
 };
 const INTENSITY_DARK=["#1A3300","#3D6600","#6B9900"];
-const INTENSITY_LIGHT=["rgba(255,255,255,0.15)","rgba(255,255,255,0.3)","rgba(255,255,255,0.5)"];
+const INTENSITY_LIGHT=["rgba(206,255,0,0.12)","rgba(206,255,0,0.3)","rgba(206,255,0,0.55)"];
 const intensityColor = (dur, max) => {
   if(!dur||dur===0) return T.colors.ring;
   const pal=T===THEME_DARK?INTENSITY_DARK:INTENSITY_LIGHT;
@@ -1411,7 +1411,7 @@ const WeeklyBarChart = ({history}) => {
       </div>
       <svg width="100%" viewBox={`0 0 ${W} ${H+24}`} style={{display:"block"}}>
         <defs>
-          <linearGradient id="barGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stopColor={T===THEME_DARK?"#3D6600":"rgba(255,255,255,0.2)"}/><stop offset="100%" stopColor={T===THEME_DARK?"#CEFF00":"rgba(255,255,255,0.6)"}/></linearGradient>
+          <linearGradient id="barGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stopColor={T===THEME_DARK?"#3D6600":"rgba(206,255,0,0.3)"}/><stop offset="100%" stopColor={T===THEME_DARK?"#CEFF00":"#CEFF00"}/></linearGradient>
         </defs>
         {data.avg>0&&<line x1={0} y1={avgY} x2={W} y2={avgY} stroke={T.colors.textDim} strokeDasharray="4 3" strokeWidth={0.5} opacity={0.5}/>}
         {data.last7.map((d,i)=>{
@@ -1423,7 +1423,7 @@ const WeeklyBarChart = ({history}) => {
           const label=data.dayLabels[dayDate.getDay()];
           return(
             <g key={i}>
-              {barH>0&&<rect x={x} y={y} width={barW} height={barH} rx={6} fill="url(#barGrad)" opacity={isToday?1:0.6}/>}
+              {barH>0&&<rect x={x} y={y} width={barW} height={barH} rx={6} fill={isToday?"#CEFF00":"url(#barGrad)"} opacity={isToday?1:0.5}/>}
               {isToday&&barH>0&&<rect x={x} y={y} width={barW} height={barH} rx={6} fill="none" stroke={T.colors.accent} strokeWidth={1.5} opacity={0.4}/>}
               <text x={x+barW/2} y={H+16} textAnchor="middle" fill={isToday?T.colors.accent:T.colors.textDim} fontSize={10} fontFamily={T.fonts.mono}>{label}</text>
               {barH>0&&isToday&&<text x={x+barW/2} y={y-6} textAnchor="middle" fill={T.colors.accent} fontSize={9} fontFamily={T.fonts.mono}>{Math.round(d.totalDuration/60)}{t("chart_min")}</text>}
@@ -2494,7 +2494,7 @@ function ShodaiApp() {
       {activeTab==="mypage"&&(
         <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",zIndex:1,paddingTop:56}}>
           <div style={{padding:"0 24px 12px"}}>
-            <h2 style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:800,color:T.colors.accent,letterSpacing:"-0.02em",textTransform:"uppercase"}}>{t("mypage_title")}</h2>
+            <h2 style={{fontFamily:T.fonts.display,fontSize:22,fontWeight:800,color:T.colors.text,letterSpacing:"-0.02em",textTransform:"uppercase"}}>{t("mypage_title")}</h2>
             <p style={{fontSize:11,color:T.colors.textDim,marginTop:2}}>{t("mypage_subtitle")}</p>
           </div>
           <MyPageTab profile={profile} setProfile={setProfile} todayTotal={todayTotal} journals={journals} kinenList={kinenList} followers={DEMO_MY_FOLLOWERS} following={myFollowing} onFollow={handleFollowUser} demoHistory={demoHistory} lang={lang} setLang={setLang} isDark={isDark} setIsDark={setIsDark} moodLog={moodLog} moodPeriod={moodPeriod} setMoodPeriod={setMoodPeriod}/>
