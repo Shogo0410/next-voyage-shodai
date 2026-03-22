@@ -462,12 +462,15 @@ const smoothPath = (pts) => {
   }
   return d;
 };
+const INTENSITY_DARK=["#1A3300","#3D6600","#6B9900"];
+const INTENSITY_LIGHT=["#E0E0D8","#C8C8BC","#A0A090"];
 const intensityColor = (dur, max) => {
   if(!dur||dur===0) return T.colors.ring;
+  const pal=T===THEME_DARK?INTENSITY_DARK:INTENSITY_LIGHT;
   const r=Math.min(1,dur/(max||1));
-  if(r<0.25) return "#1A3300";
-  if(r<0.5) return "#3D6600";
-  if(r<0.75) return "#6B9900";
+  if(r<0.25) return pal[0];
+  if(r<0.5) return pal[1];
+  if(r<0.75) return pal[2];
   return T.colors.accent;
 };
 
@@ -1407,7 +1410,7 @@ const WeeklyBarChart = ({history}) => {
       </div>
       <svg width="100%" viewBox={`0 0 ${W} ${H+24}`} style={{display:"block"}}>
         <defs>
-          <linearGradient id="barGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stopColor="#3D6600"/><stop offset="100%" stopColor="#CEFF00"/></linearGradient>
+          <linearGradient id="barGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stopColor={T===THEME_DARK?"#3D6600":"#C8C8BC"}/><stop offset="100%" stopColor={T===THEME_DARK?"#CEFF00":T.colors.accent}/></linearGradient>
         </defs>
         {data.avg>0&&<line x1={0} y1={avgY} x2={W} y2={avgY} stroke={T.colors.textDim} strokeDasharray="4 3" strokeWidth={0.5} opacity={0.5}/>}
         {data.last7.map((d,i)=>{
@@ -1461,7 +1464,7 @@ const StreakHeatmap = ({history,streak,bestStreak}) => {
       </div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end",gap:4,marginTop:8}}>
         <span style={{fontSize:9,color:T.colors.textDim}}>{t("chart_less")}</span>
-        {[T.colors.ring,"#1A3300","#3D6600","#6B9900",T.colors.accent].map((c,i)=><div key={i} style={{width:10,height:10,borderRadius:2,background:c}}/>)}
+        {[T.colors.ring,...(T===THEME_DARK?INTENSITY_DARK:INTENSITY_LIGHT),T.colors.accent].map((c,i)=><div key={i} style={{width:10,height:10,borderRadius:2,background:c}}/>)}
         <span style={{fontSize:9,color:T.colors.textDim}}>{t("chart_more")}</span>
       </div>
     </div>
