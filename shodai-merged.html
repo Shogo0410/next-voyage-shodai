@@ -2110,11 +2110,6 @@ const MyPageTab = ({profile,setProfile,todayTotal,journals,kinenList,followers,f
   );
 };
 
-const MOOD_COLORS_7=["#FF5252","#FF8A65","#FFB74D","#888888","#7BD4A0","#66E088","#CEFF00"];
-const MOOD_LABELS_7=["非常に不快","不快","やや不快","どちらとも言えない","やや快適","快適","非常に快適"];
-function getMoodIndex(v){return Math.round(v/100*6);}
-function getMoodColor(v){const i=v/100*6;const lo=Math.floor(i);const hi=Math.min(6,lo+1);const t=i-lo;const c1=MOOD_COLORS_7[lo];const c2=MOOD_COLORS_7[hi];const p=(s)=>parseInt(s,16);const r=Math.round(p(c1.slice(1,3))*(1-t)+p(c2.slice(1,3))*t);const g=Math.round(p(c1.slice(3,5))*(1-t)+p(c2.slice(3,5))*t);const b=Math.round(p(c1.slice(5,7))*(1-t)+p(c2.slice(5,7))*t);const h=n=>n.toString(16).padStart(2,'0');return `#${h(r)}${h(g)}${h(b)}`;}
-
 // ─── Main App (Merged v5+v7+v8) ───
 function ShodaiApp() {
   const [lang,setLang]=useState(()=>{try{return localStorage.getItem("nv-lang")||"en";}catch{return "en";}});
@@ -2144,6 +2139,7 @@ function ShodaiApp() {
   const [myFollowing,setMyFollowing]=useState(DEMO_MY_FOLLOWING);
   const [demoHistory]=useState(()=>generateDemoHistory());
   const [lastSessionDuration,setLastSessionDuration]=useState(0);
+  const [showMoodModal,setShowMoodModal]=useState(false);
   const [chantView,setChantView]=useState("timer"); // "timer" | "cards" | "sounds"
   const [preMood,setPreMood]=useState(50); // 0-100 continuous
   const [postMood,setPostMood]=useState(50);
